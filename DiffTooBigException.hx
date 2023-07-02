@@ -1,0 +1,1 @@
+class DiffTooBigException extends Exception {}
