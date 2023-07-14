@@ -1,19 +1,22 @@
-import haxe.Exception;
-
 using Lambda;
+
+import haxe.Exception;
 
 class MergeResolveUtil {
 	static public function tryResolve(leftText:String, baseText:String, rightText:String):Null<String> {
 		try {
-			var resolved = trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT);
+			var resolved = trySimpleResolveHelper(leftText, baseText, rightText, ComparisonPolicy.DEFAULT);
 			if (resolved != null) {
 				return resolved;
 			}
 
-			return trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES);
+			return trySimpleResolveHelper(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES);
 		} catch (e:DiffTooBigException) {
 			return null;
 		}
+
+		// Why is an extra return needed? Weird type inference?
+		return null;
 	}
 
 	/*
@@ -30,23 +33,26 @@ class MergeResolveUtil {
 	 */
 	static public function tryGreedyResolve(leftText:String, baseText:String, rightText:String):Null<String> {
 		try {
-			var resolved = tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
-			if (resolved != null)
-				return resolved
+			var resolved = tryGreedyResolveHelper(leftText, baseText, rightText, ComparisonPolicy.DEFAULT);
+			if (resolved != null) {
+				return resolved;
+			}
 
-			return tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
+			return tryGreedyResolveHelper(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES);
 		} catch (e:DiffTooBigException) {
-			return null
+			return null;
 		}
+
+		return null;
 	}
 }
 
-function trySimpleResolve(leftText:String, baseText:String, rightText:String, policy:ComparisonPolicy):Null<String> {
-	return SimpleHelper(leftText, baseText, rightText).execute(policy)
+function trySimpleResolveHelper(leftText:String, baseText:String, rightText:String, policy:ComparisonPolicy):Null<String> {
+	return new SimpleHelper(leftText, baseText, rightText).execute(policy);
 }
 
-function tryGreedyResolve(leftText:String, baseText:String, rightText:String, policy:ComparisonPolicy):Null<String> {
-	return GreedyHelper(leftText, baseText, rightText).execute(policy)
+function tryGreedyResolveHelper(leftText:String, baseText:String, rightText:String, policy:ComparisonPolicy):Null<String> {
+	return new GreedyHelper(leftText, baseText, rightText).execute(policy);
 }
 
 class SimpleHelper {
@@ -61,9 +67,9 @@ class SimpleHelper {
 	private var baseText:String = "";
 
 	public function new(leftText:String, baseText:String, rightText:String) {
-		this.leftText = leftText
-		this.rightText = rightText
-		this.baseText = baseText
+		this.leftText = leftText;
+		this.rightText = rightText;
+		this.baseText = baseText;
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
@@ -159,7 +165,7 @@ class GreedyHelper {
 		this.baseText = baseText
 	}
 
-	function execute(policy:ComparisonPolicy):Null<String> {
+	public function execute(policy:ComparisonPolicy):Null<String> {
 		var fragments1 = ByWordRt.compare(baseText, leftText, policy, CancellationChecker.EMPTY)
 		var fragments2 = ByWordRt.compare(baseText, rightText, policy, CancellationChecker.EMPTY)
 
