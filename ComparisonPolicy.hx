@@ -1,0 +1,5 @@
+enum ComparisonPolicy {
+  DEFAULT;
+  TRIM_WHITESPACES;
+  IGNORE_WHITESPACES;
+}
