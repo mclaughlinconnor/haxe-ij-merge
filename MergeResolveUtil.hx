@@ -140,34 +140,35 @@ class SimpleHelper {
 	}
 
 	private function getConflictType(range:MergeRange, policy:ComparisonPolicy):MergeConflictType {
-		return MergeRangeUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy)
+		return MergeRangeUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy);
 	}
 
 	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Boolean {
 		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.LEFT)
-			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT)}
+			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT);
+	}
 }
 
 class GreedyHelper {
-	private var newContent = new StringBuf()
+	private var newContent = new StringBuf();
 
-	private var lastBaseOffset = 0
-	private var index1 = 0
-	private var index2 = 0
+	private var lastBaseOffset = 0;
+	private var index1 = 0;
+	private var index2 = 0;
 
 	private var leftText:String = "";
 	private var rightText:String = "";
 	private var baseText:String = "";
 
 	public function new(leftText:String, baseText:String, rightText:String) {
-		this.leftText = leftText
-		this.rightText = rightText
-		this.baseText = baseText
+		this.leftText = leftText;
+		this.rightText = rightText;
+		this.baseText = baseText;
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var fragments1 = ByWordRt.compare(baseText, leftText, policy, CancellationChecker.EMPTY)
-		var fragments2 = ByWordRt.compare(baseText, rightText, policy, CancellationChecker.EMPTY)
+		var fragments1 = ByWordRt.compare(baseText, leftText, policy, CancellationChecker.EMPTY);
+		var fragments2 = ByWordRt.compare(baseText, rightText, policy, CancellationChecker.EMPTY);
 
 		while (true) {
 			var fragmentIndex1:Null<Int> = fragments1.getOrNull(index1);
@@ -189,11 +190,11 @@ class GreedyHelper {
 
 			// skip till the next block of changes
 			if (changeStart1 != -1 && changeStart2 != -1) {
-				appendBase(Math.min(changeStart1, changeStart2))
+				appendBase(Math.min(changeStart1, changeStart2));
 			} else if (changeStart1 != -1) {
-				appendBase(changeStart1)
+				appendBase(changeStart1);
 			} else {
-				appendBase(changeStart2)
+				appendBase(changeStart2);
 			}
 
 			// collect next block of changes, that intersect one another.
@@ -252,10 +253,10 @@ class GreedyHelper {
 			}
 
 			// we faced conflicting insertions - resolve failed
-			return null
+			return null;
 		}
 
-		return newContent.toString()
+		return newContent.toString();
 	}
 
 	private function appendBase(endOffset:Int) {
@@ -273,6 +274,6 @@ class GreedyHelper {
 			subList.push(fragments[i]);
 		}
 
-		return subList.fold((prefix, fragment) -> MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2)), empty)
+		return subList.fold((prefix, fragment) -> MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2)), empty);
 	}
 }
