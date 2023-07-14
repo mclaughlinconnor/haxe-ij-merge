@@ -3,13 +3,13 @@ class ByWordRt {
 		var words1:List<InlineChunk> = getInlineChunks(text1);
 		var words2:List<InlineChunk> = getInlineChunks(text2);
 
-		var x = compare(text1, words1, text2, words2, policy);
-		return x;
+    // TODO: check naming and how overloading works
+		return compareB(text1, words1, text2, words2, policy);
 	}
 
 	static function compareB(text1:String, words1:List<InlineChunk>, text2:String, words2:List<InlineChunk>, policy:ComparisonPolicy):List<DiffFragment> {
-		var delimitersIterable:FairDiffIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, wordChanges);
-		var iterable:DiffIterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy);
+		var delimitersIterable:FairDiffIterable = matchAdjustmentDelimitersA(text1, text2, words1, words2, wordChanges);
+		var iterable:DiffIterable = matchAdjustmentWhitespacesA(text1, text2, delimitersIterable, policy);
 
 		return convertIntoDiffFragments(iterable);
 	}
@@ -21,14 +21,14 @@ class ByWordRt {
 
 		var wordChanges1:FairDiffIterable = diff(words2, words1);
 		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
-		var iterable1:FairDiffIterable = matchAdjustmentDelimiters(text2, text1, words2, words1, wordChanges1);
+		var iterable1:FairDiffIterable = matchAdjustmentDelimitersA(text2, text1, words2, words1, wordChanges1);
 
 		var wordChanges2:FairDiffIterable = diff(words2, words3);
 		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
-		var iterable2:FairDiffIterable = matchAdjustmentDelimiters(text2, text3, words2, words3, wordChanges2);
+		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
 		var wordConflicts:List<MergeRange> = ComparisonMergeUtil.buildSimple(iterable1, iterable2);
-		var result:List<MergeRange> = matchAdjustmentWhitespaces(text1, text2, text3, wordConflicts, policy);
+		var result:List<MergeRange> = matchAdjustmentWhitespacesA(text1, text2, text3, wordConflicts, policy);
 
 		return convertIntoMergeWordFragments(result);
 	}
@@ -124,17 +124,17 @@ class ByWordRt {
 		return new ChunkOptimizer.WordChunkOptimizer(words1, words2, text1, text2, iterable).build();
 	}
 
-	private static function matchAdjustmentDelimiters(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
+	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
 			changes:FairDiffIterable):FairDiffIterable {
 		return matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0);
 	}
 
-	private static function matchAdjustmentDelimiters(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
+	private static function matchAdjustmentDelimitersB(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
 			changes:FairDiffIterable, startShift1:Int, startShift2:Int):FairDiffIterable {
 		return new AdjustmentPunctuationMatcher(text1, text2, words1, words2, startShift1, startShift2, changes).build();
 	}
 
-	private static function matchAdjustmentWhitespaces(text1:String, text2:String, iterable:FairDiffIterable, policy:ComparisonPolicy):DiffIterable {
+	private static function matchAdjustmentWhitespacesA(text1:String, text2:String, iterable:FairDiffIterable, policy:ComparisonPolicy):DiffIterable {
 		switch (policy) {
 			case DEFAULT:
 				return new DefaultCorrector(iterable, text1, text2).build();
@@ -148,7 +148,7 @@ class ByWordRt {
 		}
 	}
 
-	private static function matchAdjustmentWhitespaces(text1:String, text2:String, text3:String, conflicts:List<MergeRange>,
+	private static function matchAdjustmentWhitespacesB(text1:String, text2:String, text3:String, conflicts:List<MergeRange>,
 			policy:ComparisonPolicy):List<MergeRange> {
 		switch (policy) {
 			case DEFAULT:
@@ -555,7 +555,8 @@ class TrimSpacesCorrector {
 	private var myText1:String;
 	private var myText2:String;
 
-	private var myChanges:List<Range>;
+  // TODO: is dynamic?
+	private var myChanges:List<Range<Dynamic>>;
 
 	public function new(iterable:DiffIterable, text1:String, text2:String) {
 		myIterable = iterable;
@@ -741,7 +742,7 @@ class AdjustmentPunctuationMatcher {
 		lastEnd2 = -1;
 	}
 
-	private function matchBackward(index1:Int, index2:Int):Void {
+	private function matchBackwardA(index1:Int, index2:Int):Void {
 		var start1:Int = index1 == 0 ? 0 : getEndOffset1(index1 - 1);
 		var start2:Int = index2 == 0 ? 0 : getEndOffset2(index2 - 1);
 		var end1:Int = index1 == myWords1.size() ? myLen1 : getStartOffset1(index1);
@@ -751,7 +752,7 @@ class AdjustmentPunctuationMatcher {
 		clearLastRange();
 	}
 
-	private function matchForward(index1:Int, index2:Int):Void {
+	private function matchForwardA(index1:Int, index2:Int):Void {
 		var start1:Int = index1 == -1 ? 0 : getEndOffset1(index1);
 		var start2:Int = index2 == -1 ? 0 : getEndOffset2(index2);
 		var end1:Int = index1 + 1 == myWords1.size() ? myLen1 : getStartOffset1(index1 + 1);
@@ -760,7 +761,7 @@ class AdjustmentPunctuationMatcher {
 		matchForward(start1, start2, end1, end2);
 	}
 
-	private function matchForward(start1:Int, start2:Int, end1:Int, end2:Int):Void {
+	private function matchForwardB(start1:Int, start2:Int, end1:Int, end2:Int):Void {
 		// assert lastStart1 == -1 && lastStart2 == -1 && lastEnd1 == -1 && lastEnd2 == -1;
 
 		lastStart1 = start1;
@@ -769,7 +770,7 @@ class AdjustmentPunctuationMatcher {
 		lastEnd2 = end2;
 	}
 
-	private function matchBackward(start1:Int, start2:Int, end1:Int, end2:Int):Void {
+	private function matchBackwardB(start1:Int, start2:Int, end1:Int, end2:Int):Void {
 		// assert lastStart1 != -1 && lastStart2 != -1 && lastEnd1 != -1 && lastEnd2 != -1;
 
 		if (lastStart1 == start1 && lastStart2 == start2) { // pair of adjustment matched words, match gap between ("A B" - "A B")
