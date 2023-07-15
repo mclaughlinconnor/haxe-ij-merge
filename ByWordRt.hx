@@ -3,11 +3,14 @@ class ByWordRt {
 		var words1:List<InlineChunk> = getInlineChunks(text1);
 		var words2:List<InlineChunk> = getInlineChunks(text2);
 
-    // TODO: check naming and how overloading works
+		// TODO: check naming and how overloading works
 		return compareB(text1, words1, text2, words2, policy);
 	}
 
 	static function compareB(text1:String, words1:List<InlineChunk>, text2:String, words2:List<InlineChunk>, policy:ComparisonPolicy):List<DiffFragment> {
+		var wordChanges:FairDiffIterable = diff(words1, words2);
+		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
+
 		var delimitersIterable:FairDiffIterable = matchAdjustmentDelimitersA(text1, text2, words1, words2, wordChanges);
 		var iterable:DiffIterable = matchAdjustmentWhitespacesA(text1, text2, delimitersIterable, policy);
 
@@ -28,7 +31,7 @@ class ByWordRt {
 		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
 		var wordConflicts:List<MergeRange> = ComparisonMergeUtil.buildSimple(iterable1, iterable2);
-		var result:List<MergeRange> = matchAdjustmentWhitespacesA(text1, text2, text3, wordConflicts, policy);
+		var result:List<MergeRange> = matchAdjustmentWhitespacesB(text1, text2, text3, wordConflicts, policy);
 
 		return convertIntoMergeWordFragments(result);
 	}
@@ -398,12 +401,12 @@ class NewlineChunk implements InlineChunk {
 }
 
 class LineBlock {
-	public static var fragments:List<DiffFragment>;
+	public var fragments:List<DiffFragment>;
 
-	public static var offsets:Range;
+	public var offsets:Range;
 
-	public static var newlines1:Int;
-	public static var newlines2:Int;
+	public var newlines1:Int;
+	public var newlines2:Int;
 
 	public function new(fragments:List<DiffFragment>, offsets:Range, newlines1:Int, newlines2:Int) {
 		this.fragments = fragments;
@@ -425,13 +428,13 @@ class DefaultCorrector {
 		myText1 = text1;
 		myText2 = text2;
 
-		myChanges = new ArrayList();
+		myChanges = new List();
 	}
 
 	public function build():DiffIterable {
 		for (range in myIterable.iterateChanges()) {
-			var endCut:Int = expandWhitespacesBackward(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
-			var startCut:Int = expandWhitespacesForward(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
+			var endCut:Int = expandWhitespacesBackwardA(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
+			var startCut:Int = expandWhitespacesForwardA(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
 
 			var expand:Range = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
 
@@ -440,7 +443,7 @@ class DefaultCorrector {
 			}
 		}
 
-		return create(myChanges, myText1.length(), myText2.length());
+		return DefaultCorrector(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -515,7 +518,7 @@ class IgnoreSpacesCorrector {
 			}
 		}
 
-		return create(myChanges, myText1.length(), myText2.length());
+		return create(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -555,8 +558,8 @@ class TrimSpacesCorrector {
 	private var myText1:String;
 	private var myText2:String;
 
-  // TODO: is dynamic?
-	private var myChanges:List<Range<Dynamic>>;
+	// TODO: is dynamic?
+	private var myChanges:List<Range>;
 
 	public function new(iterable:DiffIterable, text1:String, text2:String) {
 		myIterable = iterable;

@@ -25,15 +25,15 @@ abstract class DiffIterable {
 	 */
 	abstract public function getLength2():Int;
 
-	abstract public function changes():Iterable<Range<Dynamic>>;
+	abstract public function changes():Iterable<Range>;
 
-	abstract public function unchanged():Iterable<Range<Dynamic>>;
+	abstract public function unchanged():Iterable<Range>;
 
-	public function iterateChanges():Iterable<Range<Dynamic>> {
+	public function iterateChanges():Iterable<Range> {
 		return this.changes();
 	}
 
-	public function iterateUnchanged():Iterable<Range<Dynamic>> {
+	public function iterateUnchanged():Iterable<Range> {
 		return this.unchanged();
 	}
 }
@@ -62,11 +62,11 @@ class FairDiffIterable {
 		return myIterable.getLength2();
 	}
 
-	public function changes():Iterable<Range<Dynamic>> {
+	public function changes():Iterable<Range> {
 		return myIterable.changes();
 	}
 
-	public function unchanged():Iterable<Range<Dynamic>> {
+	public function unchanged():Iterable<Range> {
 		return myIterable.unchanged();
 	}
 }

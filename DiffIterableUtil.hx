@@ -8,9 +8,9 @@ class DiffIterableUtil {
 	public static function diffA(data1:Array<Int>, data2:Array<Int>):FairDiffIterable {
 		try {
 			var change:Diff.Change = Diff.buildChanges(data1, data2);
-			return fair(create(change, data1.length, data2.length));
+			return DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
-			throw new DiffTooBigException();
+			throw new DiffTooBigException('');
 		}
 	}
 
@@ -22,18 +22,10 @@ class DiffIterableUtil {
 		try {
 			// TODO: use CancellationChecker inside
 			var change:Diff.Change = Diff.buildChanges(data1, data2);
-			return fair(create(change, data1.length, data2.length));
+			return DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
-			throw new DiffTooBigException();
+			throw new DiffTooBigException('');
 		}
-	}
-
-	/*
-	 * Compare two lists, basing on equals() and hashCode() of it's elements
-	 */
-	public static function diffC(objects1:List<T>, objects2:List<T>):FairDiffIterable {
-		// TODO: compare lists instead of arrays in Diff
-		return diff(objects1.toArray(), objects2.toArray(), indicator);
 	}
 
 	//
@@ -46,7 +38,7 @@ class DiffIterableUtil {
 		return iterable;
 	}
 
-	public static function createB(ranges:List<Range<Dynamic>>, length1:Int, length2:Int):DiffIterable {
+	public static function createB(ranges:List<Range>, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffIterable = new RangesDiffIterable(ranges, length1, length2);
 		verify(iterable);
 		return iterable;
@@ -58,7 +50,7 @@ class DiffIterableUtil {
 		return iterable;
 	}
 
-	public static function createUnchanged(ranges:List<Range<Dynamic>>, length1:Int, length2:Int):DiffIterable {
+	public static function createUnchanged(ranges:List<Range>, length1:Int, length2:Int):DiffIterable {
 		var invert:DiffIterable = invert(create(ranges, length1, length2));
 		verify(invert);
 		return invert;
@@ -71,7 +63,7 @@ class DiffIterableUtil {
 	}
 
 	public static function fair(iterable:DiffIterable):FairDiffIterable {
-		if (Std.downcast(iterable, FairDiffIterable)) {
+		if (Std.downcast(iterable, FairDiffIterable) != null) {
 			return cast(iterable, FairDiffIterable);
 		}
 		var wrapper:FairDiffIterable = new FairDiffIterableWrapper(iterable);
@@ -92,7 +84,7 @@ class DiffIterableUtil {
 	/**
 	 * Iterate both changed and unchanged ranges one-by-one.
 	 */
-	public static function iterateAll(iterable:DiffIterable):Iterable<Pair<Range<Dynamic>, /* isUnchanged */ Bool>> {
+	public static function iterateAll(iterable:DiffIterable):Iterable<Pair<Range, /* isUnchanged */ Bool>> {
 		// return () -> new Iterator<Pair<Range, Bool>>() {
 		//
 		//
@@ -130,7 +122,7 @@ class DiffIterableUtil {
 		// };
 	}
 
-	public static function getRangeDelta(range:Range<Dynamic>):Int {
+	public static function getRangeDelta(range:Range):Int {
 		var deleted:Int = range.end1 - range.start1;
 		var inserted:Int = range.end2 - range.start2;
 		return inserted - deleted;
@@ -158,7 +150,7 @@ class DiffIterableUtil {
 		verifyFullCover(iterable);
 	}
 
-	private static function verifyB(iterable:Iterable<Range<Dynamic>>):Void {
+	private static function verifyB(iterable:Iterable<Range>):Void {
 		for (range in iterable) {
 			// verify range
 			// assert range.start1 <= range.end1;
@@ -209,7 +201,7 @@ class DiffIterableUtil {
 		var result:List<LineRangeData<T>> = new List();
 
 		for (pair in iterateAll(iterable)) {
-			var range:Range<Dynamic> = pair.first;
+			var range:Range = pair.first;
 			var equals:Bool = pair.second;
 
 			var data1:List<T> = new List();
@@ -334,7 +326,7 @@ class ExpandChangeBuilder extends ChangeBuilder {
 	}
 
 	override private function addChange(start1:Int, start2:Int, end1:Int, end2:Int):Void {
-		var range:Range<Dynamic> = TrimUtil.expand(myObjects1, myObjects2, start1, start2, end1, end2);
+		var range:Range = TrimUtil.expand(myObjects1, myObjects2, start1, start2, end1, end2);
 		if (!range.isEmpty()) {
 			super.addChange(range.start1, range.start2, range.end1, range.end2);
 		}

@@ -51,7 +51,7 @@ class FairMergeBuilder {
 		return myChangesBuilder.finish(fragments1.getLength2(), fragments1.getLength1(), fragments2.getLength2());
 	}
 
-	private function add(range1:DifferentRange<Dynamic>, range2:DifferentRange<Dynamic>):SideEnum {
+	private function add(range1:DifferentRange, range2:DifferentRange):SideEnum {
 		var start1:Int = range1.start1;
 		var end1:Int = range1.end1;
 

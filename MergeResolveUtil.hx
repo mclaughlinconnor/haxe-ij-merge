@@ -1,3 +1,5 @@
+import Side.SideEnum;
+import ThreeSide.ThreeSideEnum;
 using Lambda;
 
 import haxe.Exception;
@@ -73,13 +75,14 @@ class SimpleHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var changes = ByWordRt.compare(leftText, baseText, rightText, policy, CancellationChecker.EMPTY);
+		var changes: List<DiffFragment> = ByWordRt.compareA(leftText, baseText, rightText, policy, CancellationChecker.EMPTY);
+    // TODO: fairdiffiterator isn't implemented which makes this bad
 		for (fragment in changes) {
-			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSide.LEFT), fragment.getStartOffset(ThreeSide.BASE),
-				fragment.getStartOffset(ThreeSide.RIGHT));
+			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSideEnum.LEFT), fragment.getStartOffset(ThreeSideEnum.BASE),
+				fragment.getStartOffset(ThreeSideEnum.RIGHT));
 			appendBase(baseRange);
 			var conflictRange = nextMergeRange(fragment.getEndOffset(ThreeSide.LEFT), fragment.getEndOffset(ThreeSide.BASE),
-				fragment.getEndOffset(ThreeSide.RIGHT));
+				fragment.getEndOffset(ThreeSideEnum.RIGHT));
 			if (!appendConflict(conflictRange, policy)) {
 				return null;
 			}
@@ -90,7 +93,7 @@ class SimpleHelper {
 	}
 
 	private function nextMergeRange(end1:Int, end2:Int, end3:Int):MergeRange {
-		var range = MergeRange(last1, end1, last2, end2, last3, end3);
+		var range = new MergeRange(last1, end1, last2, end2, last3, end3);
 		this.last1 = end1;
 		this.last2 = end2;
 		this.last3 = end3;
@@ -98,20 +101,21 @@ class SimpleHelper {
 	}
 
 	private function appendBase(range:MergeRange) {
-		if (range.isEmpty) {
-			return val;
+		if (range.isEmpty()) {
+			return;
 		}
-		policy = ComparisonPolicy.DEFAULT;
+
+		var policy = ComparisonPolicy.DEFAULT;
 		if (isUnchangedRange(range, policy)) {
-			append(range, ThreeSide.BASE);
+			append(range, ThreeSideEnum.BASE);
 		} else {
 			var type = getConflictType(range, policy);
-			if (type.isChange(Side.LEFT)) {
-				append(range, ThreeSide.LEFT);
-			} else if (type.isChange(Side.RIGHT)) {
-				append(range, ThreeSide.RIGHT);
+			if (type.isChange(SideEnum.LEFT)) {
+				append(range, ThreeSideEnum.LEFT);
+			} else if (type.isChange(SideEnum.RIGHT)) {
+				append(range, ThreeSideEnum.RIGHT);
 			} else {
-				append(range, ThreeSide.BASE);
+				append(range, ThreeSideEnum.BASE);
 			}
 		}
 	}
@@ -128,13 +132,13 @@ class SimpleHelper {
 		return true;
 	}
 
-	private function append(range:MergeRange, side:ThreeSide) {
+	private function append(range:MergeRange, side:ThreeSideEnum) {
 		switch (side) {
-			case ThreeSide.LEFT:
+			case ThreeSideEnum.LEFT:
 				newContent.append(leftText, range.start1, range.end1);
-			case ThreeSide.BASE:
+			case ThreeSideEnum.BASE:
 				newContent.append(baseText, range.start2, range.end2);
-			case ThreeSide.RIGHT:
+			case ThreeSideEnum.RIGHT:
 				newContent.append(rightText, range.start3, range.end3);
 		}
 	}
