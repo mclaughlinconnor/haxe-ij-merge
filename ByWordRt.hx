@@ -8,7 +8,7 @@ class ByWordRt {
 	}
 
 	static function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>, policy:ComparisonPolicy):Array<DiffFragment> {
-		var wordChanges:FairDiffIterable = diff(words1, words2);
+		var wordChanges:FairDiffIterable = DiffIterableUtil.diffB(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
 		var delimitersIterable:FairDiffIterable = matchAdjustmentDelimitersA(text1, text2, words1, words2, wordChanges);
@@ -22,11 +22,11 @@ class ByWordRt {
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 		var words3:Array<InlineChunk> = getInlineChunks(text3);
 
-		var wordChanges1:FairDiffIterable = diff(words2, words1);
+		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffB(words2, words1);
 		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
 		var iterable1:FairDiffIterable = matchAdjustmentDelimitersA(text2, text1, words2, words1, wordChanges1);
 
-		var wordChanges2:FairDiffIterable = diff(words2, words3);
+		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffB(words2, words3);
 		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
 		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
@@ -57,7 +57,7 @@ class ByWordRt {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 
-		var wordChanges:FairDiffIterable = diff(words1, words2);
+		var wordChanges:FairDiffIterable = DiffIterableUtil.diffB(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
 		var wordBlocks:Array<WordBlock> = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges).run();
@@ -114,7 +114,7 @@ class ByWordRt {
 				}
 				break;
 			}
-			subIterables.add(fair(new SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)));
+			subIterables.add(DiffIterableUtil.fair(new SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)));
 		}
 		return subIterables;
 	}
@@ -129,7 +129,7 @@ class ByWordRt {
 
 	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			changes:FairDiffIterable):FairDiffIterable {
-		return matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0);
+		return ByWordRt.matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0);
 	}
 
 	private static function matchAdjustmentDelimitersB(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
@@ -157,24 +157,24 @@ class ByWordRt {
 			case DEFAULT:
 				return new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
 			case TRIM_WHITESPACES:
-				Array<MergeRange>defaultConflicts = new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
+				var defaultConflicts:Array<MergeRange> = new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
 				return new MergeTrimSpacesCorrector(defaultConflicts, text1, text2, text3).build();
 			case IGNORE_WHITESPACES:
 				return new MergeIgnoreSpacesCorrector(conflicts, text1, text2, text3).build();
 			default:
-				throw new IllegalArgumentException(policy.name());
+				throw new IllegalArgumentException('');
 		}
 	}
 
 	static function convertIntoMergeWordFragments(conflicts:Array<MergeRange>):Array<MergeWordFragment> {
 		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return conflicts.stream().map(ch -> new MergeWordFragmentImpl(ch)).collect(Collectors.toArray());
+		return conflicts.map(ch -> new MergeWordFragmentImpl(ch));
 	}
 
 	static function convertIntoDiffFragments(changes:DiffIterable):Array<DiffFragment> {
 		var fragments:Array<DiffFragment> = new Array();
 		for (ch in changes.iterateChanges()) {
-			fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
+			fragments.push(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
 		}
 		return fragments;
 	}
@@ -190,8 +190,8 @@ class ByWordRt {
 
 		var ranges:Couple<Array<Range>> = splitIterable2Side(changes, text21.length());
 
-		var iterable1:FairDiffIterable = fair(createUnchanged(ranges.first, text1.length(), text21.length()));
-		var iterable2:FairDiffIterable = fair(createUnchanged(ranges.second, text1.length(), text22.length()));
+		var iterable1:FairDiffIterable = ByWordRt.fair(createUnchanged(ranges.first, text1.length(), text21.length()));
+		var iterable2:FairDiffIterable = ByWordRt.fair(createUnchanged(ranges.second, text1.length(), text22.length()));
 
 		return Couple.of(iterable1, iterable2);
 	}
@@ -223,14 +223,14 @@ class ByWordRt {
 	//
 	// Whitespaces matching
 	//
-	public static function isLeadingTrailingSpace(text:String, start:Int):Bool{
+	public static function isLeadingTrailingSpace(text:String, start:Int):Bool {
 		return isLeadingSpace(text, start) || isTrailingSpace(text, start);
 	}
 
 	private static function isLeadingSpace(text:String, start:Int):Bool {
 		if (start < 0)
 			return false;
-		if (start == text.length())
+		if (start == text.length)
 			return false;
 		if (!isWhiteSpace(text.charAt(start)))
 			return false;
@@ -246,7 +246,7 @@ class ByWordRt {
 		return true;
 	}
 
-	private static function isTrailingSpace(text:String, end:Int):Bool{
+	private static function isTrailingSpace(text:String, end:Int):Bool {
 		if (end < 0)
 			return false;
 		if (end == text.length())
@@ -271,7 +271,7 @@ class ByWordRt {
 	private static function countNewlines(words:Array<InlineChunk>):Int {
 		var count = 0;
 		for (word in words) {
-			if (Std.downcast(word, NewlineChunk)) {
+			if (Std.downcast(word, NewlineChunk) != null) {
 				count++;
 			}
 		}
@@ -281,7 +281,7 @@ class ByWordRt {
 	static function getInlineChunks(text:String):Array<InlineChunk> {
 		var chunks:Array<InlineChunk> = new Array();
 
-		var len:Int = text.length();
+		var len:Int = text.length;
 		var offset:Int = 0;
 
 		var wordStart:Int = -1;
@@ -302,14 +302,14 @@ class ByWordRt {
 				wordHash = wordHash * 31 + ch;
 			} else {
 				if (wordStart != -1) {
-					chunks.add(new WordChunk(text, wordStart, offset, wordHash));
+					chunks.push(new WordChunk(text, wordStart, offset, wordHash));
 					wordStart = -1;
 				}
 
 				if (isAlpha) { // continuous script
-					chunks.add(new WordChunk(text, offset, offset + characterCount, ch));
-				} else if (ch == '\n') {
-					chunks.add(new NewlineChunk(offset));
+					chunks.push(new WordChunk(text, offset, offset + characterCount, ch));
+				} else if (ch == '\n'.code) {
+					chunks.push(new NewlineChunk(offset));
 				}
 			}
 
@@ -317,7 +317,7 @@ class ByWordRt {
 		}
 
 		if (wordStart != -1) {
-			chunks.add(new WordChunk(text, wordStart, len, wordHash));
+			chunks.push(new WordChunk(text, wordStart, len, wordHash));
 		}
 
 		return chunks;
@@ -355,7 +355,7 @@ class WordChunk implements InlineChunk {
 	public function equals(word:WordChunk):Bool {
 		if (this == word) {
 			return true;
-    }
+		}
 
 		return ComparisonUtil.isEquals(getContent(), word.getContent(), ComparisonPolicy.DEFAULT);
 	}
@@ -383,7 +383,7 @@ class NewlineChunk implements InlineChunk {
 	public function equals(o:NewlineChunk):Bool {
 		if (this == o) {
 			return true;
-    }
+		}
 
 		return true;
 	}
@@ -855,10 +855,10 @@ class AdjustmentPunctuationMatcher {
 	}
 }
 
-function charCount(ch: Int): Int {
-  if (ch >= 0x010000) {
-    return 2;
-  }
+function charCount(ch:Int):Int {
+	if (ch >= 0x010000) {
+		return 2;
+	}
 
-  return 1;
+	return 1;
 }
