@@ -1,1 +1,1 @@
-class DiffTooBigException extends Exception {}
+class DiffTooBigException extends haxe.Exception {}
