@@ -1,5 +1,5 @@
 class ByWordRt {
-	static function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
+	static public function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 
@@ -7,7 +7,7 @@ class ByWordRt {
 		return compareB(text1, words1, text2, words2, policy);
 	}
 
-	static function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>, policy:ComparisonPolicy):Array<DiffFragment> {
+	static public function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>, policy:ComparisonPolicy):Array<DiffFragment> {
 		var wordChanges:FairDiffIterable = DiffIterableUtil.diffB(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
@@ -17,7 +17,7 @@ class ByWordRt {
 		return convertIntoDiffFragments(iterable);
 	}
 
-	static function compareC(text1:String, text2:String, text3:String, policy:ComparisonPolicy):Array<MergeWordFragment> {
+	static public function compareC(text1:String, text2:String, text3:String, policy:ComparisonPolicy):Array<MergeWordFragment> {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 		var words3:Array<InlineChunk> = getInlineChunks(text3);

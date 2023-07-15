@@ -81,7 +81,7 @@ class SimpleHelper {
 			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSideEnum.LEFT), fragment.getStartOffset(ThreeSideEnum.BASE),
 				fragment.getStartOffset(ThreeSideEnum.RIGHT));
 			appendBase(baseRange);
-			var conflictRange = nextMergeRange(fragment.getEndOffset(ThreeSide.LEFT), fragment.getEndOffset(ThreeSide.BASE),
+			var conflictRange = nextMergeRange(fragment.getEndOffset(ThreeSideEnum.LEFT), fragment.getEndOffset(ThreeSideEnum.BASE),
 				fragment.getEndOffset(ThreeSideEnum.RIGHT));
 			if (!appendConflict(conflictRange, policy)) {
 				return null;
@@ -124,10 +124,10 @@ class SimpleHelper {
 		var type = getConflictType(range, policy);
 		if (type.type == Type.CONFLICT)
 			return false;
-		if (type.isChange(Side.LEFT)) {
-			append(range, ThreeSide.LEFT);
+		if (type.isChange(SideEnum.LEFT)) {
+			append(range, ThreeSideEnum.LEFT);
 		} else {
-			append(range, ThreeSide.RIGHT);
+			append(range, ThreeSideEnum.RIGHT);
 		}
 		return true;
 	}
@@ -135,11 +135,11 @@ class SimpleHelper {
 	private function append(range:MergeRange, side:ThreeSideEnum) {
 		switch (side) {
 			case ThreeSideEnum.LEFT:
-				newContent.append(leftText, range.start1, range.end1);
+				newContent.add(leftText.substring(range.start1, range.end1));
 			case ThreeSideEnum.BASE:
-				newContent.append(baseText, range.start2, range.end2);
+				newContent.add(baseText.substring(range.start2, range.end2));
 			case ThreeSideEnum.RIGHT:
-				newContent.append(rightText, range.start3, range.end3);
+				newContent.add(rightText.substring(range.start3, range.end3));
 		}
 	}
 
@@ -148,8 +148,8 @@ class SimpleHelper {
 	}
 
 	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Boolean {
-		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.LEFT)
-			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT);
+		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.LEFT)
+			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.RIGHT);
 	}
 }
 
@@ -171,12 +171,21 @@ class GreedyHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var fragments1 = ByWordRt.compare(baseText, leftText, policy, CancellationChecker.EMPTY);
-		var fragments2 = ByWordRt.compare(baseText, rightText, policy, CancellationChecker.EMPTY);
+		var fragments1 = ByWordRt.compareA(baseText, leftText, policy);
+		var fragments2 = ByWordRt.compareA(baseText, rightText, policy);
 
 		while (true) {
-			var fragmentIndex1:Null<Int> = fragments1.getOrNull(index1);
-			var fragmentIndex2:Null<Int> = fragments2.getOrNull(index2);
+			var fragIdx1:Null<Int> = fragments1[index1]?.getStartOffset1();
+      if (fragIdx1 == null) {
+        fragIdx1 = -1;
+      }
+			var fragmentIndex1:Int = fragIdx1;
+
+			var fragIdx2:Null<Int> = fragments1[index1]?.getStartOffset1();
+      if (fragIdx2 == null) {
+        fragIdx2 = -1;
+      }
+			var fragmentIndex2:Int = fragments2.getOrNull(index2);
 
 			var changeStart1 = -1;
 			var changeStart2 = -1;
