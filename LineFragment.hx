@@ -10,20 +10,20 @@ class LineFragment {
 	private var myStartOffset2:Int;
 	private var myEndOffset2:Int;
 
-	private var myInnerFragments:List<DiffFragment>;
+	private var myInnerFragments:Array<DiffFragment>;
 
 	public function newFromExpanded(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
 			endOffset2:Int) {
 		newFromSomethingDifferent(startLine1, endLine1, startLine2, endLine2, startOffset1, endOffset1, startOffset2, endOffset2, null);
 	}
 
-	public function newFromFragment(fragment:LineFragment, fragments:Null<List<DiffFragment>>) {
+	public function newFromFragment(fragment:LineFragment, fragments:Null<Array<DiffFragment>>) {
 		newFromSomethingDifferent(fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartLine2(), fragment.getEndLine2(), fragment.getStartOffset1(),
 			fragment.getEndOffset1(), fragment.getStartOffset2(), fragment.getEndOffset2(), fragments);
 	}
 
 	public function newFromSomethingDifferent(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
-			endOffset2:Int, innerFragments:Null<List<DiffFragment>>) {
+			endOffset2:Int, innerFragments:Null<Array<DiffFragment>>) {
 		myStartLine1 = startLine1;
 		myEndLine1 = endLine1;
 		myStartLine2 = startLine2;
@@ -75,11 +75,11 @@ class LineFragment {
 		return myEndOffset2;
 	}
 
-	public function getInnerFragments():List<DiffFragment> {
+	public function getInnerFragments():Array<DiffFragment> {
 		return myInnerFragments;
 	}
 
-	private static function dropWholeChangedFragments(fragments:Null<List<DiffFragment>>, length1:Int, length2:Int):List<DiffFragment> {
+	private static function dropWholeChangedFragments(fragments:Null<Array<DiffFragment>>, length1:Int, length2:Int):Array<DiffFragment> {
 		if (fragments != null && fragments.length == 1) {
 			var diffFragment: DiffFragment = fragments.first();
 			if (diffFragment.getStartOffset1() == 0

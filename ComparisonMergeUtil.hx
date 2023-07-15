@@ -7,13 +7,13 @@ interface SideEquality {
 }
 
 class ComparisonMergeUtil {
-	public static function buildSimple(fragments1:FairDiffIterable, fragments2:FairDiffIterable, indicator:CancellationChecker):List<MergeRange> {
+	public static function buildSimple(fragments1:FairDiffIterable, fragments2:FairDiffIterable, indicator:CancellationChecker):Array<MergeRange> {
 		// assert fragments1.getLength1() == fragments2.getLength1();
 		return new FairMergeBuilder().execute(fragments1, fragments2);
 	}
 
 	public static function buildMerge(fragments1:FairDiffIterable, fragments2:FairDiffIterable, trueEquality:SideEquality,
-			indicator:CancellationChecker):List<MergeRange> {
+			indicator:CancellationChecker):Array<MergeRange> {
 		// assert fragments1.getLength1() == fragments2.getLength1();
 		return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
 	}
@@ -38,7 +38,7 @@ class FairMergeBuilder {
 		myChangesBuilder = new ChangeBuilder();
 	}
 
-	public function execute(fragments1:FairDiffIterable, fragments2:FairDiffIterable):List<MergeRange> {
+	public function execute(fragments1:FairDiffIterable, fragments2:FairDiffIterable):Array<MergeRange> {
 		var unchanged1:PeekableIterator<Range> = new PeekableIteratorWrapper(fragments1.unchanged());
 		var unchanged2:PeekableIterator<Range> = new PeekableIteratorWrapper(fragments2.unchanged());
 
@@ -84,7 +84,7 @@ class FairMergeBuilder {
 }
 
 class ChangeBuilder {
-	final myChanges:List<MergeRange> = new List();
+	final myChanges:Array<MergeRange> = new Array();
 
 	private var myIndex1:Int = 0;
 	private var myIndex2:Int = 0;
@@ -114,7 +114,7 @@ class ChangeBuilder {
 		myIndex3 = end3;
 	}
 
-	public function finish(length1:Int, length2:Int, length3:Int):List<MergeRange> {
+	public function finish(length1:Int, length2:Int, length3:Int):Array<MergeRange> {
 		// assert myIndex1 <= length1;
 		// assert myIndex2 <= length2;
 		// assert myIndex3 <= length3;

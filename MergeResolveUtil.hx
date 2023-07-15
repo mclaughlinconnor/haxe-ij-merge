@@ -75,7 +75,7 @@ class SimpleHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var changes: List<DiffFragment> = ByWordRt.compareA(leftText, baseText, rightText, policy, CancellationChecker.EMPTY);
+		var changes: Array<DiffFragment> = ByWordRt.compareA(leftText, baseText, rightText, policy, CancellationChecker.EMPTY);
     // TODO: fairdiffiterator isn't implemented which makes this bad
 		for (fragment in changes) {
 			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSideEnum.LEFT), fragment.getStartOffset(ThreeSideEnum.BASE),
@@ -273,11 +273,11 @@ class GreedyHelper {
 		var text = side.select(leftText, rightText);
 		var empty:String = "";
 
-		var subList:Array<DiffFragment> = [];
+		var subArray:Array<DiffFragment> = [];
 		for (i in start...end) {
-			subList.push(fragments[i]);
+			subArray.push(fragments[i]);
 		}
 
-		return subList.fold((prefix, fragment) -> MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2)), empty);
+		return subArray.fold((prefix, fragment) -> MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2)), empty);
 	}
 }

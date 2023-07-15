@@ -38,19 +38,19 @@ class DiffIterableUtil {
 		return iterable;
 	}
 
-	public static function createB(ranges:List<Range>, length1:Int, length2:Int):DiffIterable {
+	public static function createB(ranges:Array<Range>, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffIterable = new RangesDiffIterable(ranges, length1, length2);
 		verify(iterable);
 		return iterable;
 	}
 
-	public static function createFragments(fragments:List<DiffFragment>, length1:Int, length2:Int):DiffIterable {
+	public static function createFragments(fragments:Array<DiffFragment>, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffIterable = new DiffFragmentsDiffIterable(fragments, length1, length2);
 		verify(iterable);
 		return iterable;
 	}
 
-	public static function createUnchanged(ranges:List<Range>, length1:Int, length2:Int):DiffIterable {
+	public static function createUnchanged(ranges:Array<Range>, length1:Int, length2:Int):DiffIterable {
 		var invert:DiffIterable = invert(create(ranges, length1, length2));
 		verify(invert);
 		return invert;
@@ -197,15 +197,15 @@ class DiffIterableUtil {
 	//
 
 	@:generic
-	public static function extractDataRanges<T>(objects1:List<T>, objects2:List<T>, iterable:DiffIterable):List<LineRangeData<T>> {
-		var result:List<LineRangeData<T>> = new List();
+	public static function extractDataRanges<T>(objects1:Array<T>, objects2:Array<T>, iterable:DiffIterable):Array<LineRangeData<T>> {
+		var result:Array<LineRangeData<T>> = new Array();
 
 		for (pair in iterateAll(iterable)) {
 			var range:Range = pair.first;
 			var equals:Bool = pair.second;
 
-			var data1:List<T> = new List();
-			var data2:List<T> = new List();
+			var data1:Array<T> = new Array();
+			var data2:Array<T> = new Array();
 
 			for (i in range.start1...range.end1) {
 				data1.add(objects1.get(i));
@@ -316,10 +316,10 @@ class ChangeBuilder extends ChangeBuilderBase {
 }
 
 class ExpandChangeBuilder extends ChangeBuilder {
-	private final myObjects1:List<Dynamic>;
-	private final myObjects2:List<Dynamic>;
+	private final myObjects1:Array<Dynamic>;
+	private final myObjects2:Array<Dynamic>;
 
-	public function new(objects1:List<Dynamic>, objects2:List<Dynamic>) {
+	public function new(objects1:Array<Dynamic>, objects2:Array<Dynamic>) {
 		super(objects1.length, objects2.length);
 		myObjects1 = objects1;
 		myObjects2 = objects2;
@@ -339,10 +339,10 @@ class ExpandChangeBuilder extends ChangeBuilder {
 @:generic
 class LineRangeData<T> {
 	public final equals:Bool;
-	public final objects1:List<T>;
-	public final objects2:List<T>;
+	public final objects1:Array<T>;
+	public final objects2:Array<T>;
 
-	public function new(objects1:List<T>, objects2:List<T>, equals:Bool) {
+	public function new(objects1:Array<T>, objects2:Array<T>, equals:Bool) {
 		this.equals = equals;
 		this.objects1 = objects1;
 		this.objects2 = objects2;

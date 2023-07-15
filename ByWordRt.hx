@@ -1,13 +1,13 @@
 class ByWordRt {
-	static function compareA(text1:String, text2:String, policy:ComparisonPolicy):List<DiffFragment> {
-		var words1:List<InlineChunk> = getInlineChunks(text1);
-		var words2:List<InlineChunk> = getInlineChunks(text2);
+	static function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
+		var words1:Array<InlineChunk> = getInlineChunks(text1);
+		var words2:Array<InlineChunk> = getInlineChunks(text2);
 
 		// TODO: check naming and how overloading works
 		return compareB(text1, words1, text2, words2, policy);
 	}
 
-	static function compareB(text1:String, words1:List<InlineChunk>, text2:String, words2:List<InlineChunk>, policy:ComparisonPolicy):List<DiffFragment> {
+	static function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>, policy:ComparisonPolicy):Array<DiffFragment> {
 		var wordChanges:FairDiffIterable = diff(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
@@ -17,10 +17,10 @@ class ByWordRt {
 		return convertIntoDiffFragments(iterable);
 	}
 
-	static function compareC(text1:String, text2:String, text3:String, policy:ComparisonPolicy):List<MergeWordFragment> {
-		var words1:List<InlineChunk> = getInlineChunks(text1);
-		var words2:List<InlineChunk> = getInlineChunks(text2);
-		var words3:List<InlineChunk> = getInlineChunks(text3);
+	static function compareC(text1:String, text2:String, text3:String, policy:ComparisonPolicy):Array<MergeWordFragment> {
+		var words1:Array<InlineChunk> = getInlineChunks(text1);
+		var words2:Array<InlineChunk> = getInlineChunks(text2);
+		var words3:Array<InlineChunk> = getInlineChunks(text3);
 
 		var wordChanges1:FairDiffIterable = diff(words2, words1);
 		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
@@ -30,13 +30,13 @@ class ByWordRt {
 		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
 		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
-		var wordConflicts:List<MergeRange> = ComparisonMergeUtil.buildSimple(iterable1, iterable2);
-		var result:List<MergeRange> = matchAdjustmentWhitespacesB(text1, text2, text3, wordConflicts, policy);
+		var wordConflicts:Array<MergeRange> = ComparisonMergeUtil.buildSimple(iterable1, iterable2);
+		var result:Array<MergeRange> = matchAdjustmentWhitespacesB(text1, text2, text3, wordConflicts, policy);
 
 		return convertIntoMergeWordFragments(result);
 	}
 
-	static function compareAndSplit(text1:String, text2:String, policy:ComparisonPolicy):List<LineBlock> {
+	static function compareAndSplit(text1:String, text2:String, policy:ComparisonPolicy):Array<LineBlock> {
 		// TODO: figure out, what do we exactly want from 'Split' logic
 		// -- it is used for trimming of ignored blocks. So we want whitespace-only leading/trailing lines to be separate block.
 		// -- old approach: split by matched '\n's
@@ -54,17 +54,17 @@ class ByWordRt {
 		// * match adjustment punctuation
 		// * match adjustment whitespaces ('\n' are matched here)
 
-		var words1:List<InlineChunk> = getInlineChunks(text1);
-		var words2:List<InlineChunk> = getInlineChunks(text2);
+		var words1:Array<InlineChunk> = getInlineChunks(text1);
+		var words2:Array<InlineChunk> = getInlineChunks(text2);
 
 		var wordChanges:FairDiffIterable = diff(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
-		var wordBlocks:List<WordBlock> = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges).run();
+		var wordBlocks:Array<WordBlock> = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges).run();
 
-		var subIterables:List<FairDiffIterable> = collectWordBlockSubIterables(wordChanges, wordBlocks);
+		var subIterables:Array<FairDiffIterable> = collectWordBlockSubIterables(wordChanges, wordBlocks);
 
-		var lineBlocks:List<LineBlock> = new ArrayList(wordBlocks.size());
+		var lineBlocks:Array<LineBlock> = new Array(wordBlocks.size());
 		for (i in 0..wordBlocks.size() - 1) {
 			var block:WordBlock = wordBlocks.get(i);
 			var offsets:Range = block.offsets;
@@ -73,8 +73,8 @@ class ByWordRt {
 			var subtext1:String = text1.subSequence(offsets.start1, offsets.end1);
 			var subtext2:String = text2.subSequence(offsets.start2, offsets.end2);
 
-			var subwords1:List<InlineChunk> = words1.subList(words.start1, words.end1);
-			var subwords2:List<InlineChunk> = words2.subList(words.start2, words.end2);
+			var subwords1:Array<InlineChunk> = words1.subArray(words.start1, words.end1);
+			var subwords2:Array<InlineChunk> = words2.subArray(words.start2, words.end2);
 
 			var subiterable:FairDiffIterable = subIterables.get(i);
 
@@ -82,7 +82,7 @@ class ByWordRt {
 				offsets.start2);
 			var iterable:DiffIterable = matchAdjustmentWhitespaces(subtext1, subtext2, delimitersIterable, policy);
 
-			var fragments:List<DiffFragment> = convertIntoDiffFragments(iterable);
+			var fragments:Array<DiffFragment> = convertIntoDiffFragments(iterable);
 
 			var newlines1:Int = countNewlines(subwords1);
 			var newlines2:Int = countNewlines(subwords2);
@@ -93,15 +93,15 @@ class ByWordRt {
 		return lineBlocks;
 	}
 
-	private static function collectWordBlockSubIterables(wordChanges:FairDiffIterable, wordBlocks:List<WordBlock>):List<FairDiffIterable> {
-		var changed:List<Range> = new ArrayList();
+	private static function collectWordBlockSubIterables(wordChanges:FairDiffIterable, wordBlocks:Array<WordBlock>):Array<FairDiffIterable> {
+		var changed:Array<Range> = new Array();
 
 		for (range in wordChanges.iterateChanges()) {
 			changed.add(range);
 		}
 		var index = 0;
 
-		var subIterables:List<FairDiffIterable> = new ArrayList(wordBlocks.size());
+		var subIterables:Array<FairDiffIterable> = new Array(wordBlocks.size());
 		for (block in wordBlocks) {
 			var words:Range = block.words;
 
@@ -122,17 +122,17 @@ class ByWordRt {
 	//
 	// Impl
 	//
-	private static function optimizeWordChunks(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
+	private static function optimizeWordChunks(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			iterable:FairDiffIterable):FairDiffIterable {
 		return new ChunkOptimizer.WordChunkOptimizer(words1, words2, text1, text2, iterable).build();
 	}
 
-	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
+	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			changes:FairDiffIterable):FairDiffIterable {
 		return matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0);
 	}
 
-	private static function matchAdjustmentDelimitersB(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>,
+	private static function matchAdjustmentDelimitersB(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			changes:FairDiffIterable, startShift1:Int, startShift2:Int):FairDiffIterable {
 		return new AdjustmentPunctuationMatcher(text1, text2, words1, words2, startShift1, startShift2, changes).build();
 	}
@@ -151,13 +151,13 @@ class ByWordRt {
 		}
 	}
 
-	private static function matchAdjustmentWhitespacesB(text1:String, text2:String, text3:String, conflicts:List<MergeRange>,
-			policy:ComparisonPolicy):List<MergeRange> {
+	private static function matchAdjustmentWhitespacesB(text1:String, text2:String, text3:String, conflicts:Array<MergeRange>,
+			policy:ComparisonPolicy):Array<MergeRange> {
 		switch (policy) {
 			case DEFAULT:
 				return new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
 			case TRIM_WHITESPACES:
-				List<MergeRange>defaultConflicts = new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
+				Array<MergeRange>defaultConflicts = new MergeDefaultCorrector(conflicts, text1, text2, text3).build();
 				return new MergeTrimSpacesCorrector(defaultConflicts, text1, text2, text3).build();
 			case IGNORE_WHITESPACES:
 				return new MergeIgnoreSpacesCorrector(conflicts, text1, text2, text3).build();
@@ -166,13 +166,13 @@ class ByWordRt {
 		}
 	}
 
-	static function convertIntoMergeWordFragments(conflicts:List<MergeRange>):List<MergeWordFragment> {
+	static function convertIntoMergeWordFragments(conflicts:Array<MergeRange>):Array<MergeWordFragment> {
 		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return conflicts.stream().map(ch -> new MergeWordFragmentImpl(ch)).collect(Collectors.toList());
+		return conflicts.stream().map(ch -> new MergeWordFragmentImpl(ch)).collect(Collectors.toArray());
 	}
 
-	static function convertIntoDiffFragments(changes:DiffIterable):List<DiffFragment> {
-		var fragments:List<DiffFragment> = new ArrayList();
+	static function convertIntoDiffFragments(changes:DiffIterable):Array<DiffFragment> {
+		var fragments:Array<DiffFragment> = new Array();
 		for (ch in changes.iterateChanges()) {
 			fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
 		}
@@ -188,7 +188,7 @@ class ByWordRt {
 		var text2:String = new MergingCharSequence(text21, text22);
 		var changes:FairDiffIterable = ByCharRt.comparePunctuation(text1, text2);
 
-		var ranges:Couple<List<Range>> = splitIterable2Side(changes, text21.length());
+		var ranges:Couple<Array<Range>> = splitIterable2Side(changes, text21.length());
 
 		var iterable1:FairDiffIterable = fair(createUnchanged(ranges.first, text1.length(), text21.length()));
 		var iterable2:FairDiffIterable = fair(createUnchanged(ranges.second, text1.length(), text22.length()));
@@ -196,11 +196,11 @@ class ByWordRt {
 		return Couple.of(iterable1, iterable2);
 	}
 
-	private static function splitIterable2Side(changes:FairDiffIterable, offset:Int):Couple<List<Range>> {
-		var ranges1:List<Range>;
-		ranges1 = new ArrayList();
-		var ranges2:List<Range>;
-		ranges2 = new ArrayList();
+	private static function splitIterable2Side(changes:FairDiffIterable, offset:Int):Couple<Array<Range>> {
+		var ranges1:Array<Range>;
+		ranges1 = new Array();
+		var ranges2:Array<Range>;
+		ranges2 = new Array();
 
 		for (ch in changes.iterateUnchanged()) {
 			if (ch.end2 <= offset) {
@@ -216,18 +216,18 @@ class ByWordRt {
 		return Couple.of(ranges1, ranges2);
 	}
 
-	static function isWordChunk(chunk:InlineChunk):Boolean {
+	static function isWordChunk(chunk:InlineChunk):Bool {
 		return Std.downcast(chunk, WordChunk);
 	}
 
 	//
 	// Whitespaces matching
 	//
-	private static function isLeadingTrailingSpace(text:String, start:Int):Boolean {
+	public static function isLeadingTrailingSpace(text:String, start:Int):Bool{
 		return isLeadingSpace(text, start) || isTrailingSpace(text, start);
 	}
 
-	private static function isLeadingSpace(text:String, start:Int):Boolean {
+	private static function isLeadingSpace(text:String, start:Int):Bool {
 		if (start < 0)
 			return false;
 		if (start == text.length())
@@ -246,7 +246,7 @@ class ByWordRt {
 		return true;
 	}
 
-	private static function isTrailingSpace(text:String, end:Int):Boolean {
+	private static function isTrailingSpace(text:String, end:Int):Bool{
 		if (end < 0)
 			return false;
 		if (end == text.length())
@@ -268,7 +268,7 @@ class ByWordRt {
 	//
 	// Misc
 	//
-	private static function countNewlines(words:List<InlineChunk>):Int {
+	private static function countNewlines(words:Array<InlineChunk>):Int {
 		var count = 0;
 		for (word in words) {
 			if (Std.downcast(word, NewlineChunk)) {
@@ -278,8 +278,8 @@ class ByWordRt {
 		return count;
 	}
 
-	static function getInlineChunks(text:String):List<InlineChunk> {
-		var chunks:List<InlineChunk> = new ArrayList();
+	static function getInlineChunks(text:String):Array<InlineChunk> {
+		var chunks:Array<InlineChunk> = new Array();
 
 		var len:Int = text.length();
 		var offset:Int = 0;
@@ -288,11 +288,11 @@ class ByWordRt {
 		var wordHash:Int = 0;
 
 		while (offset < len) {
-			var ch:Int = Character.codePointAt(text, offset);
-			var charCount:Int = Character.charCount(ch);
+			var ch:Int = text.charCodeAt(offset);
+			var characterCount:Int = charCount(ch);
 
-			var isAlpha:Boolean = isAlpha(ch);
-			var isWordPart:Boolean = isAlpha && !isContinuousScript(ch);
+			var isAlpha:Bool = isAlpha(ch);
+			var isWordPart:Bool = isAlpha && !isContinuousScript(ch);
 
 			if (isWordPart) {
 				if (wordStart == -1) {
@@ -307,13 +307,13 @@ class ByWordRt {
 				}
 
 				if (isAlpha) { // continuous script
-					chunks.add(new WordChunk(text, offset, offset + charCount, ch));
+					chunks.add(new WordChunk(text, offset, offset + characterCount, ch));
 				} else if (ch == '\n') {
 					chunks.add(new NewlineChunk(offset));
 				}
 			}
 
-			offset += charCount;
+			offset += characterCount;
 		}
 
 		if (wordStart != -1) {
@@ -333,7 +333,7 @@ class WordChunk implements InlineChunk {
 	private var myOffset2:Int;
 	private var myHash:Int;
 
-	public function WordChunk(text:String, offset1:Int, offset2:Int, hash:Int) {
+	public function new(text:String, offset1:Int, offset2:Int, hash:Int) {
 		myText = text;
 		myOffset1 = offset1;
 		myOffset2 = offset2;
@@ -341,7 +341,7 @@ class WordChunk implements InlineChunk {
 	}
 
 	public function getContent():String {
-		return myText.subSequence(myOffset1, myOffset2);
+		return myText.substring(myOffset1, myOffset2);
 	}
 
 	public function getOffset1():Int {
@@ -352,16 +352,10 @@ class WordChunk implements InlineChunk {
 		return myOffset2;
 	}
 
-	public function equals(o:Object):Boolean {
-		if (this == o)
+	public function equals(word:WordChunk):Bool {
+		if (this == word) {
 			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-
-		var word:WordChunk = cast(o, WordChunk);
-
-		if (myHash != word.myHash)
-			return false;
+    }
 
 		return ComparisonUtil.isEquals(getContent(), word.getContent(), ComparisonPolicy.DEFAULT);
 	}
@@ -386,29 +380,24 @@ class NewlineChunk implements InlineChunk {
 		return myOffset + 1;
 	}
 
-	public function equals(o:Object):Boolean {
-		if (this == o)
+	public function equals(o:NewlineChunk):Bool {
+		if (this == o) {
 			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
+    }
 
 		return true;
-	}
-
-	public function hashCode():Int {
-		return getClass().hashCode();
 	}
 }
 
 class LineBlock {
-	public var fragments:List<DiffFragment>;
+	public var fragments:Array<DiffFragment>;
 
 	public var offsets:Range;
 
 	public var newlines1:Int;
 	public var newlines2:Int;
 
-	public function new(fragments:List<DiffFragment>, offsets:Range, newlines1:Int, newlines2:Int) {
+	public function new(fragments:Array<DiffFragment>, offsets:Range, newlines1:Int, newlines2:Int) {
 		this.fragments = fragments;
 		this.offsets = offsets;
 		this.newlines1 = newlines1;
@@ -421,14 +410,14 @@ class DefaultCorrector {
 	private var myText1:String;
 	private var myText2:String;
 
-	private var myChanges:List<Range>;
+	private var myChanges:Array<Range>;
 
 	public function new(iterable:DiffIterable, text1:String, text2:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 
-		myChanges = new List();
+		myChanges = new Array();
 	}
 
 	public function build():DiffIterable {
@@ -448,23 +437,23 @@ class DefaultCorrector {
 }
 
 class MergeDefaultCorrector {
-	private var myIterable:List<MergeRange>;
+	private var myIterable:Array<MergeRange>;
 	private var myText1:String;
 	private var myText2:String;
 	private var myText3:String;
 
-	private var myChanges:List<MergeRange>;
+	private var myChanges:Array<MergeRange>;
 
-	public function new(iterable:List<MergeRange>, text1:String, text2:String, text3:String) {
+	public function new(iterable:Array<MergeRange>, text1:String, text2:String, text3:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 		myText3 = text3;
 
-		myChanges = new ArrayList();
+		myChanges = new Array();
 	}
 
-	public function build():List<MergeRange> {
+	public function build():Array<MergeRange> {
 		for (range in myIterable) {
 			var endCut:Int = expandWhitespacesBackward(myText1, myText2, myText3, range.start1, range.start2, range.start3, range.end1, range.end2,
 				range.end3);
@@ -497,14 +486,14 @@ class IgnoreSpacesCorrector {
 	private var myText1:String;
 	private var myText2:String;
 
-	private var myChanges:List<Range>;
+	private var myChanges:Array<Range>;
 
 	public function new(iterable:DiffIterable, text1:String, text2:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 
-		myChanges = new ArrayList();
+		myChanges = new Array();
 	}
 
 	public function build():DiffIterable {
@@ -523,23 +512,23 @@ class IgnoreSpacesCorrector {
 }
 
 class MergeIgnoreSpacesCorrector {
-	private var myIterable:List<MergeRange>;
+	private var myIterable:Array<MergeRange>;
 	private var myText1:String;
 	private var myText2:String;
 	private var myText3:String;
 
-	private var myChanges:List<MergeRange>;
+	private var myChanges:Array<MergeRange>;
 
-	public function new(iterable:List<MergeRange>, text1:String, text2:String, text3:String) {
+	public function new(iterable:Array<MergeRange>, text1:String, text2:String, text3:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 		myText3 = text3;
 
-		myChanges = new ArrayList();
+		myChanges = new Array();
 	}
 
-	public function build():List<MergeRange> {
+	public function build():Array<MergeRange> {
 		for (range in myIterable) {
 			var expanded:MergeRange = expandWhitespaces(myText1, myText2, myText3, range);
 			var trimmed:MergeRange = trim(myText1, myText2, myText3, expanded);
@@ -559,14 +548,14 @@ class TrimSpacesCorrector {
 	private var myText2:String;
 
 	// TODO: is dynamic?
-	private var myChanges:List<Range>;
+	private var myChanges:Array<Range>;
 
 	public function new(iterable:DiffIterable, text1:String, text2:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 
-		myChanges = new ArrayList();
+		myChanges = new Array();
 	}
 
 	public function build():DiffIterable {
@@ -576,16 +565,16 @@ class TrimSpacesCorrector {
 			var end1:Int = range.end1;
 			var end2:Int = range.end2;
 
-			if (isLeadingTrailingSpace(myText1, start1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText1, start1)) {
 				start1 = trimStart(myText1, start1, end1);
 			}
-			if (isLeadingTrailingSpace(myText1, end1 - 1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText1, end1 - 1)) {
 				end1 = trimEnd(myText1, start1, end1);
 			}
-			if (isLeadingTrailingSpace(myText2, start2)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText2, start2)) {
 				start2 = trimStart(myText2, start2, end2);
 			}
-			if (isLeadingTrailingSpace(myText2, end2 - 1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText2, end2 - 1)) {
 				end2 = trimEnd(myText2, start2, end2);
 			}
 
@@ -601,23 +590,23 @@ class TrimSpacesCorrector {
 }
 
 class MergeTrimSpacesCorrector {
-	private var myIterable:List<MergeRange>;
+	private var myIterable:Array<MergeRange>;
 	private var myText1:String;
 	private var myText2:String;
 	private var myText3:String;
 
-	private var myChanges:List<MergeRange>;
+	private var myChanges:Array<MergeRange>;
 
-	public function new(iterable:List<MergeRange>, text1:String, text2:String, text3:String) {
+	public function new(iterable:Array<MergeRange>, text1:String, text2:String, text3:String) {
 		myIterable = iterable;
 		myText1 = text1;
 		myText2 = text2;
 		myText3 = text3;
 
-		myChanges = new ArrayList();
+		myChanges = new Array();
 	}
 
-	public function build():List<MergeRange> {
+	public function build():Array<MergeRange> {
 		for (range in myIterable) {
 			var start1:Int = range.start1;
 			var start2:Int = range.start2;
@@ -626,22 +615,22 @@ class MergeTrimSpacesCorrector {
 			var end2:Int = range.end2;
 			var end3:Int = range.end3;
 
-			if (isLeadingTrailingSpace(myText1, start1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText1, start1)) {
 				start1 = trimStart(myText1, start1, end1);
 			}
-			if (isLeadingTrailingSpace(myText1, end1 - 1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText1, end1 - 1)) {
 				end1 = trimEnd(myText1, start1, end1);
 			}
-			if (isLeadingTrailingSpace(myText2, start2)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText2, start2)) {
 				start2 = trimStart(myText2, start2, end2);
 			}
-			if (isLeadingTrailingSpace(myText2, end2 - 1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText2, end2 - 1)) {
 				end2 = trimEnd(myText2, start2, end2);
 			}
-			if (isLeadingTrailingSpace(myText3, start3)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText3, start3)) {
 				start3 = trimStart(myText3, start3, end3);
 			}
-			if (isLeadingTrailingSpace(myText3, end3 - 1)) {
+			if (ByWordRt.isLeadingTrailingSpace(myText3, end3 - 1)) {
 				end3 = trimEnd(myText3, start3, end3);
 			}
 
@@ -675,8 +664,8 @@ interface InlineChunk {
 class AdjustmentPunctuationMatcher {
 	private var myText1:String;
 	private var myText2:String;
-	private var myWords1:List<InlineChunk>;
-	private var myWords2:List<InlineChunk>;
+	private var myWords1:Array<InlineChunk>;
+	private var myWords2:Array<InlineChunk>;
 	private var myChanges:FairDiffIterable;
 	private var myStartShift1:Int;
 	private var myStartShift2:Int;
@@ -684,7 +673,7 @@ class AdjustmentPunctuationMatcher {
 	private var myLen2:Int;
 	private var myBuilder:ChangeBuilder;
 
-	public function new(text1:String, text2:String, words1:List<InlineChunk>, words2:List<InlineChunk>, startShift1:Int, startShift2:Int,
+	public function new(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>, startShift1:Int, startShift2:Int,
 			changes:FairDiffIterable) {
 		myText1 = text1;
 		myText2 = text2;
@@ -864,4 +853,12 @@ class AdjustmentPunctuationMatcher {
 	private function getEndOffset2(index:Int):Int {
 		return myWords2.get(index).getOffset2() - myStartShift2;
 	}
+}
+
+function charCount(ch: Int): Int {
+  if (ch >= 0x010000) {
+    return 2;
+  }
+
+  return 1;
 }
