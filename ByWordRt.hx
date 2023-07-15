@@ -7,7 +7,8 @@ class ByWordRt {
 		return compareB(text1, words1, text2, words2, policy);
 	}
 
-	static public function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>, policy:ComparisonPolicy):Array<DiffFragment> {
+	static public function compareB(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>,
+			policy:ComparisonPolicy):Array<DiffFragment> {
 		var wordChanges:FairDiffIterable = DiffIterableUtil.diffB(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
@@ -64,19 +65,19 @@ class ByWordRt {
 
 		var subIterables:Array<FairDiffIterable> = collectWordBlockSubIterables(wordChanges, wordBlocks);
 
-		var lineBlocks:Array<LineBlock> = new Array(wordBlocks.length);
-		for (i in 0..wordBlocks.length) {
+		var lineBlocks:Array<LineBlock> = new Array();
+		for (i in 0...wordBlocks.length) {
 			var block:WordBlock = wordBlocks.get(i);
 			var offsets:Range = block.offsets;
 			var words:Range = block.words;
 
-			var subtext1:String = text1.subSequence(offsets.start1, offsets.end1);
-			var subtext2:String = text2.subSequence(offsets.start2, offsets.end2);
+			var subtext1:String = text1.substring(offsets.start1, offsets.end1);
+			var subtext2:String = text2.substring(offsets.start2, offsets.end2);
 
-			var subwords1:Array<InlineChunk> = words1.subArray(words.start1, words.end1);
-			var subwords2:Array<InlineChunk> = words2.subArray(words.start2, words.end2);
+			var subwords1:Array<InlineChunk> = words1.slice(words.start1, words.end1);
+			var subwords2:Array<InlineChunk> = words2.slice(words.start2, words.end2);
 
-			var subiterable:FairDiffIterable = subIterables.get(i);
+			var subiterable:FairDiffIterable = subIterables[i];
 
 			var delimitersIterable:FairDiffIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable, offsets.start1,
 				offsets.start2);
@@ -87,7 +88,7 @@ class ByWordRt {
 			var newlines1:Int = countNewlines(subwords1);
 			var newlines2:Int = countNewlines(subwords2);
 
-			lineBlocks.add(new LineBlock(fragments, offsets, newlines1, newlines2));
+			lineBlocks.push(new LineBlock(fragments, offsets, newlines1, newlines2));
 		}
 
 		return lineBlocks;
@@ -97,16 +98,16 @@ class ByWordRt {
 		var changed:Array<Range> = new Array();
 
 		for (range in wordChanges.iterateChanges()) {
-			changed.add(range);
+			changed.push(range);
 		}
 		var index = 0;
 
-		var subIterables:Array<FairDiffIterable> = new Array(wordBlocks.length);
+		var subIterables:Array<FairDiffIterable> = new Array();
 		for (block in wordBlocks) {
 			var words:Range = block.words;
 
 			while (index < changed.length) {
-				var range:Range = changed.get(index);
+				var range:Range = changed[index];
 
 				if (range.end1 < words.start1 || range.end2 < words.start2) {
 					index++;
@@ -114,7 +115,7 @@ class ByWordRt {
 				}
 				break;
 			}
-			subIterables.add(DiffIterableUtil.fair(new SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)));
+			subIterables.push(DiffIterableUtil.fair(new SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)));
 		}
 		return subIterables;
 	}
@@ -129,7 +130,7 @@ class ByWordRt {
 
 	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			changes:FairDiffIterable):FairDiffIterable {
-		return ByWordRt.matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0);
+		return ByWordRt.matchAdjustmentDelimitersB(text1, text2, words1, words2, changes, 0, 0);
 	}
 
 	private static function matchAdjustmentDelimitersB(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
@@ -147,7 +148,7 @@ class ByWordRt {
 			case IGNORE_WHITESPACES:
 				return new IgnoreSpacesCorrector(iterable, text1, text2).build();
 			default:
-				throw new IllegalArgumentException(policy.name());
+				throw new IllegalArgumentException('');
 		}
 	}
 
@@ -188,10 +189,10 @@ class ByWordRt {
 		var text2:String = new MergingCharSequence(text21, text22);
 		var changes:FairDiffIterable = ByCharRt.comparePunctuation(text1, text2);
 
-		var ranges:Couple<Array<Range>> = splitIterable2Side(changes, text21.length());
+		var ranges:Couple<Array<Range>> = splitIterable2Side(changes, text21.length);
 
-		var iterable1:FairDiffIterable = ByWordRt.fair(createUnchanged(ranges.first, text1.length(), text21.length()));
-		var iterable2:FairDiffIterable = ByWordRt.fair(createUnchanged(ranges.second, text1.length(), text22.length()));
+		var iterable1:FairDiffIterable = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.first, text1.length, text21.length));
+		var iterable2:FairDiffIterable = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.second, text1.length, text22.length));
 
 		return Couple.of(iterable1, iterable2);
 	}
@@ -204,20 +205,20 @@ class ByWordRt {
 
 		for (ch in changes.iterateUnchanged()) {
 			if (ch.end2 <= offset) {
-				ranges1.add(new Range(ch.start1, ch.end1, ch.start2, ch.end2));
+				ranges1.push(new Range(ch.start1, ch.end1, ch.start2, ch.end2));
 			} else if (ch.start2 >= offset) {
-				ranges2.add(new Range(ch.start1, ch.end1, ch.start2 - offset, ch.end2 - offset));
+				ranges2.push(new Range(ch.start1, ch.end1, ch.start2 - offset, ch.end2 - offset));
 			} else {
 				var len2:Int = offset - ch.start2;
-				ranges1.add(new Range(ch.start1, ch.start1 + len2, ch.start2, offset));
-				ranges2.add(new Range(ch.start1 + len2, ch.end1, 0, ch.end2 - offset));
+				ranges1.push(new Range(ch.start1, ch.start1 + len2, ch.start2, offset));
+				ranges2.push(new Range(ch.start1 + len2, ch.end1, 0, ch.end2 - offset));
 			}
 		}
 		return Couple.of(ranges1, ranges2);
 	}
 
 	static function isWordChunk(chunk:InlineChunk):Bool {
-		return Std.downcast(chunk, WordChunk);
+		return Std.downcast(chunk, WordChunk) != null;
 	}
 
 	//
@@ -249,11 +250,11 @@ class ByWordRt {
 	private static function isTrailingSpace(text:String, end:Int):Bool {
 		if (end < 0)
 			return false;
-		if (end == text.length())
+		if (end == text.length)
 			return false;
 		if (!isWhiteSpace(text.charAt(end)))
 			return false;
-		while (end < text.length()) {
+		while (end < text.length) {
 			var c = text.charAt(end);
 
 			if (c == '\n')
@@ -422,17 +423,17 @@ class DefaultCorrector {
 
 	public function build():DiffIterable {
 		for (range in myIterable.iterateChanges()) {
-			var endCut:Int = expandWhitespacesBackwardA(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
-			var startCut:Int = expandWhitespacesForwardA(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
+			var endCut:Int = expandWhitespacesBackward(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
+			var startCut:Int = expandWhitespacesForward(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
 
 			var expand:Range = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
 
 			if (!expand.isEmpty()) {
-				myChanges.add(expand);
+				myChanges.push(expand);
 			}
 		}
 
-		return DefaultCorrector(myChanges, myText1.length, myText2.length);
+		return DiffIterableUtil.createA(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -473,7 +474,7 @@ class MergeDefaultCorrector {
 				- endCut);
 
 			if (!expand.isEmpty()) {
-				myChanges.add(expand);
+				myChanges.push(expand);
 			}
 		}
 
@@ -503,7 +504,7 @@ class IgnoreSpacesCorrector {
 			var trimmed:Range = trim(myText1, myText2, expanded);
 
 			if (!trimmed.isEmpty() && !isEqualsIgnoreWhitespaces(myText1, myText2, trimmed)) {
-				myChanges.add(trimmed);
+				myChanges.push(trimmed);
 			}
 		}
 
@@ -581,11 +582,11 @@ class TrimSpacesCorrector {
 			var trimmed:Range = new Range(start1, end1, start2, end2);
 
 			if (!trimmed.isEmpty() && !isEquals(myText1, myText2, trimmed)) {
-				myChanges.add(trimmed);
+				myChanges.push(trimmed);
 			}
 		}
 
-		return create(myChanges, myText1.length(), myText2.length());
+		return create(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -637,7 +638,7 @@ class MergeTrimSpacesCorrector {
 			var trimmed:MergeRange = new MergeRange(start1, end1, start2, end2, start3, end3);
 
 			if (!trimmed.isEmpty() && !isEquals(myText1, myText2, myText3, trimmed)) {
-				myChanges.add(trimmed);
+				myChanges.push(trimmed);
 			}
 		}
 
@@ -684,15 +685,15 @@ class AdjustmentPunctuationMatcher {
 
 		myChanges = changes;
 
-		myLen1 = text1.length();
-		myLen2 = text2.length();
+		myLen1 = text1.length;
+		myLen2 = text2.length;
 
 		myBuilder = new ChangeBuilder(myLen1, myLen2);
 	}
 
 	public function build():FairDiffIterable {
 		execute();
-		return fair(myBuilder.finish());
+		return DiffIterableUtil.fair(myBuilder.finish());
 	}
 
 	var lastStart1:Int;
@@ -707,7 +708,7 @@ class AdjustmentPunctuationMatcher {
 
 		for (ch in myChanges.iterateUnchanged()) {
 			var count = ch.end1 - ch.start1;
-			for (i in 0..count) {
+			for (i in 0...count) {
 				var index1:Int = ch.start1 + i;
 				var index2:Int = ch.start2 + i;
 
@@ -787,8 +788,8 @@ class AdjustmentPunctuationMatcher {
 		if (start1 == end1 && start2 == end2)
 			return;
 
-		var sequence1:String = myText1.subSequence(start1, end1);
-		var sequence2:String = myText2.subSequence(start2, end2);
+		var sequence1:String = myText1.substring(start1, end1);
+		var sequence2:String = myText2.substring(start2, end2);
 
 		var changes:DiffIterable = ByCharRt.comparePunctuation(sequence1, sequence2);
 
@@ -808,9 +809,9 @@ class AdjustmentPunctuationMatcher {
 	}
 
 	private function matchComplexRangeLeft(start1:Int, end1:Int, start12:Int, end12:Int, start22:Int, end22:Int):Void {
-		var sequence1:String = myText1.subSequence(start1, end1);
-		var sequence21:String = myText2.subSequence(start12, end12);
-		var sequence22:String = myText2.subSequence(start22, end22);
+		var sequence1:String = myText1.substring(start1, end1);
+		var sequence21:String = myText2.substring(start12, end12);
+		var sequence22:String = myText2.substring(start22, end22);
 
 		var changes:Couple<FairDiffIterable> = comparePunctuation2Side(sequence1, sequence21, sequence22);
 
@@ -823,9 +824,9 @@ class AdjustmentPunctuationMatcher {
 	}
 
 	private function matchComplexRangeRight(start2:Int, end2:Int, start11:Int, end11:Int, start21:Int, end21:Int):Void {
-		var sequence11:String = myText1.subSequence(start11, end11);
-		var sequence12:String = myText1.subSequence(start21, end21);
-		var sequence2:String = myText2.subSequence(start2, end2);
+		var sequence11:String = myText1.substring(start11, end11);
+		var sequence12:String = myText1.substring(start21, end21);
+		var sequence2:String = myText2.substring(start2, end2);
 
 		var changes:Couple<FairDiffIterable> = comparePunctuation2Side(sequence2, sequence11, sequence12);
 
@@ -839,19 +840,19 @@ class AdjustmentPunctuationMatcher {
 	}
 
 	private function getStartOffset1(index:Int):Int {
-		return myWords1.get(index).getOffset1() - myStartShift1;
+		return myWords1[index].getOffset1() - myStartShift1;
 	}
 
 	private function getStartOffset2(index:Int):Int {
-		return myWords2.get(index).getOffset1() - myStartShift2;
+		return myWords2[index].getOffset1() - myStartShift2;
 	}
 
 	private function getEndOffset1(index:Int):Int {
-		return myWords1.get(index).getOffset2() - myStartShift1;
+		return myWords1[index].getOffset2() - myStartShift1;
 	}
 
 	private function getEndOffset2(index:Int):Int {
-		return myWords2.get(index).getOffset2() - myStartShift2;
+		return myWords2[index].getOffset2() - myStartShift2;
 	}
 }
 
