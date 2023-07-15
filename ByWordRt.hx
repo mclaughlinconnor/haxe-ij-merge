@@ -65,7 +65,7 @@ class ByWordRt {
 		var subIterables:Array<FairDiffIterable> = collectWordBlockSubIterables(wordChanges, wordBlocks);
 
 		var lineBlocks:Array<LineBlock> = new Array(wordBlocks.size());
-		for (i in 0..wordBlocks.size() - 1) {
+		for (i in 0..wordBlocks.size()) {
 			var block:WordBlock = wordBlocks.get(i);
 			var offsets:Range = block.offsets;
 			var words:Range = block.words;
@@ -707,7 +707,7 @@ class AdjustmentPunctuationMatcher {
 
 		for (ch in myChanges.iterateUnchanged()) {
 			var count = ch.end1 - ch.start1;
-			for (i in 0..count - 1) {
+			for (i in 0..count) {
 				var index1:Int = ch.start1 + i;
 				var index2:Int = ch.start2 + i;
 
