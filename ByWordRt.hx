@@ -64,8 +64,8 @@ class ByWordRt {
 
 		var subIterables:Array<FairDiffIterable> = collectWordBlockSubIterables(wordChanges, wordBlocks);
 
-		var lineBlocks:Array<LineBlock> = new Array(wordBlocks.size());
-		for (i in 0..wordBlocks.size()) {
+		var lineBlocks:Array<LineBlock> = new Array(wordBlocks.length);
+		for (i in 0..wordBlocks.length) {
 			var block:WordBlock = wordBlocks.get(i);
 			var offsets:Range = block.offsets;
 			var words:Range = block.words;
@@ -101,11 +101,11 @@ class ByWordRt {
 		}
 		var index = 0;
 
-		var subIterables:Array<FairDiffIterable> = new Array(wordBlocks.size());
+		var subIterables:Array<FairDiffIterable> = new Array(wordBlocks.length);
 		for (block in wordBlocks) {
 			var words:Range = block.words;
 
-			while (index < changed.size()) {
+			while (index < changed.length) {
 				var range:Range = changed.get(index);
 
 				if (range.end1 < words.start1 || range.end2 < words.start2) {
@@ -724,7 +724,7 @@ class AdjustmentPunctuationMatcher {
 			}
 		}
 
-		matchBackward(myWords1.size(), myWords2.size());
+		matchBackward(myWords1.length, myWords2.length);
 	}
 
 	private function clearLastRange():Void {
@@ -737,8 +737,8 @@ class AdjustmentPunctuationMatcher {
 	private function matchBackwardA(index1:Int, index2:Int):Void {
 		var start1:Int = index1 == 0 ? 0 : getEndOffset1(index1 - 1);
 		var start2:Int = index2 == 0 ? 0 : getEndOffset2(index2 - 1);
-		var end1:Int = index1 == myWords1.size() ? myLen1 : getStartOffset1(index1);
-		var end2:Int = index2 == myWords2.size() ? myLen2 : getStartOffset2(index2);
+		var end1:Int = index1 == myWords1.length ? myLen1 : getStartOffset1(index1);
+		var end2:Int = index2 == myWords2.length ? myLen2 : getStartOffset2(index2);
 
 		matchBackward(start1, start2, end1, end2);
 		clearLastRange();
@@ -747,8 +747,8 @@ class AdjustmentPunctuationMatcher {
 	private function matchForwardA(index1:Int, index2:Int):Void {
 		var start1:Int = index1 == -1 ? 0 : getEndOffset1(index1);
 		var start2:Int = index2 == -1 ? 0 : getEndOffset2(index2);
-		var end1:Int = index1 + 1 == myWords1.size() ? myLen1 : getStartOffset1(index1 + 1);
-		var end2:Int = index2 + 1 == myWords2.size() ? myLen2 : getStartOffset2(index2 + 1);
+		var end1:Int = index1 + 1 == myWords1.length ? myLen1 : getStartOffset1(index1 + 1);
+		var end2:Int = index2 + 1 == myWords2.length ? myLen2 : getStartOffset2(index2 + 1);
 
 		matchForward(start1, start2, end1, end2);
 	}

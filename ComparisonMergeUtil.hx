@@ -138,7 +138,7 @@ class IgnoringChangeBuilder extends ChangeBuilder {
 	}
 
 	private function processChange(start1:Int, start2:Int, start3:Int, end1:Int, end2:Int, end3:Int):Void {
-		var lastChange:MergeRange = myChanges.isEmpty() ? null : myChanges.get(myChanges.size() - 1);
+		var lastChange:MergeRange = myChanges.isEmpty() ? null : myChanges.get(myChanges.length - 1);
 		var unchangedStart1:Int = lastChange != null ? lastChange.end1 : 0;
 		var unchangedStart2:Int = lastChange != null ? lastChange.end2 : 0;
 		var unchangedStart3:Int = lastChange != null ? lastChange.end3 : 0;
