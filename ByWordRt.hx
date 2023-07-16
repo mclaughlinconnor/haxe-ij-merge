@@ -1,3 +1,4 @@
+import ChunkOptimiser.ChunkOptimizer;
 class ByWordRt {
 	static public function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
