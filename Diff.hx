@@ -6,7 +6,7 @@ class Diff {
 	}
 
 	static public function splitLines(s:String):Array<String> {
-		return s.length == 0 ? [""] : LineTokenizer.tokenize(s, false, false);
+		return s.length == 0 ? [""] : LineTokenizer.tokenizeB(s, false, false);
 	}
 
 	@:generic
@@ -145,8 +145,8 @@ class Diff {
 	}
 
 	static public function translateLineA(before:String, after:String, line:Int, approximate:Bool):Int {
-		var strings1:Array<String> = LineTokenizer.tokenize(before, false);
-		var strings2:Array<String> = LineTokenizer.tokenize(after, false);
+		var strings1:Array<String> = LineTokenizer.tokenizeA(before, false);
+		var strings2:Array<String> = LineTokenizer.tokenizeA(after, false);
 		if (approximate) {
 			strings1 = trim(strings1);
 			strings2 = trim(strings2);
