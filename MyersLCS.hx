@@ -1,5 +1,7 @@
+import thx.BitSet;
 import HxStepIterator.StepIterator;
 
+// using thx.Strings;
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /**
@@ -45,8 +47,13 @@ class MyersLCS {
 			myChanges2 = changes2;
 		}
 
-		myChanges1.set(myStart1, myStart1 + myCount1);
-		myChanges2.set(myStart2, myStart2 + myCount2);
+		for (i in myStart1...myStart1 + myCount1) {
+			myChanges1.setAt(i, true);
+		}
+
+		for (i in myStart2...myStart2 + myCount2) {
+			myChanges2.setAt(i, true);
+		}
 
 		final totalSequenceLength:Int = myCount1 + myCount2;
 		VForward = [for (_ in 0...totalSequenceLength + 1) 0];
@@ -197,8 +204,13 @@ class MyersLCS {
 	}
 
 	private function addUnchanged(start1:Int, start2:Int, count:Int):Void {
-		myChanges1.set(myStart1 + start1, myStart1 + start1 + count, false);
-		myChanges2.set(myStart2 + start2, myStart2 + start2 + count, false);
+		for (i in myStart1 + start1...myStart1 + start1 + count) {
+			myChanges1.setAt(i, false);
+		}
+
+		for (i in myStart2 + start2...myStart2 + start2 + count) {
+			myChanges2.setAt(i, false);
+		}
 	}
 
 	private function commonSubsequenceLengthForward(oldIndex:Int, newIndex:Int, maxLength:Int):Int {
@@ -228,6 +240,6 @@ class MyersLCS {
 	}
 
 	public function getChanges():Array<BitSet> {
-		return [new BitSet(myChanges1, myChanges2)];
+		return [myChanges1, myChanges2];
 	}
 }

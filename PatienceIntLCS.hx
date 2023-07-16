@@ -1,3 +1,5 @@
+import thx.BitSet;
+
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 class PatienceIntLCS {
 	private final myFirst:Array<Int>;
@@ -148,12 +150,16 @@ class PatienceIntLCS {
 	}
 
 	private function addChange(start1:Int, count1:Int, start2:Int, count2:Int):Void {
-		myChanges1.set(start1, start1 + count1);
-		myChanges2.set(start2, start2 + count2);
+		for (i in myStart1...myStart1 + count1) {
+			myChanges1.setAt(i, true);
+		}
+		for (i in myStart2...myStart2 + count2) {
+			myChanges2.setAt(i, true);
+		}
 	}
 
 	public function getChanges():Array<BitSet> {
-		return [new BitSet(myChanges1, myChanges2)];
+		return [myChanges1, myChanges2];
 	}
 
 	private function checkReduction(count1:Int, count2:Int):Void {
