@@ -1,3 +1,5 @@
+import haxe.ds.IntMap;
+
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 class UniqueLCS {
 	private final myFirst:Array<Int>;
@@ -30,7 +32,7 @@ class UniqueLCS {
 	public function execute():Array<Array<Int>> {
 		// map: key -> (offset1 + 1)
 		// match: offset1 -> (offset2 + 1)
-		var map:Int2IntMap = new Int2IntOpenHashMap(myCount1 + myCount2);
+		var map:IntMap<Int> = new IntMap();
 		var match:Array<Int> = new Array();
 
 		for (i in 0...myCount1) {
@@ -41,9 +43,9 @@ class UniqueLCS {
 				continue;
 			}
 			if (val == 0) {
-				map.put(myFirst[index], i + 1);
+				map.set(myFirst[index], i + 1);
 			} else {
-				map.put(myFirst[index], -1);
+				map.set(myFirst[index], -1);
 			}
 		}
 
@@ -60,7 +62,7 @@ class UniqueLCS {
 				count++;
 			} else {
 				match[val - 1] = 0;
-				map.put(mySecond[index], -1);
+				map.set(mySecond[index], -1);
 				count--;
 			}
 		}
