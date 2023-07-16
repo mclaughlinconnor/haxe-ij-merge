@@ -85,6 +85,7 @@ class DiffIterableUtil {
 	 * Iterate both changed and unchanged ranges one-by-one.
 	 */
 	public static function iterateAll(iterable:DiffIterable):Iterable<Pair<Range, /* isUnchanged */ Bool>> {
+		// TODO: implement
 		// return () -> new Iterator<Pair<Range, Bool>>() {
 		//
 		//
