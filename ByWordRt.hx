@@ -1,4 +1,6 @@
 import ChunkOptimiser.ChunkOptimizer;
+import LineFragmentSplitter.WordBlock;
+
 class ByWordRt {
 	static public function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
@@ -68,7 +70,7 @@ class ByWordRt {
 
 		var lineBlocks:Array<LineBlock> = new Array();
 		for (i in 0...wordBlocks.length) {
-			var block:WordBlock = wordBlocks.get(i);
+			var block:WordBlock = wordBlocks[i];
 			var offsets:Range = block.offsets;
 			var words:Range = block.words;
 
