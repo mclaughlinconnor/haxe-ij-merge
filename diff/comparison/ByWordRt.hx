@@ -1,8 +1,15 @@
 package diff.comparison;
 
-import diff.comparison.iterables.FairDiffIterable;
+import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
+import diff.comparison.iterables.FairDiffIterable;
+import diff.comparison.LineFragmentSplitter;
 import diff.fragments.DiffFragment;
+import diff.fragments.MergeWordFragment;
+import diff.util.MergeRange;
+import diff.util.Range;
+import diff.util.Range;
+import ds.Couple;
 import exceptions.IllegalArgumentException;
 
 class ByWordRt {
