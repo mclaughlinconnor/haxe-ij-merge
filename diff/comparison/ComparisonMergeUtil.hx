@@ -101,7 +101,7 @@ class ChangeBuilder {
 		if (start1 == end1 && start2 == end2 && start3 == end3) {
 			return;
 		}
-		myChanges.add(new MergeRange(start1, end1, start2, end2, start3, end3));
+		myChanges.push(new MergeRange(start1, end1, start2, end2, start3, end3));
 	}
 
 	public function markEqual(start1:Int, start2:Int, start3:Int, end1:Int, end2:Int, end3:Int):Void {
