@@ -3,6 +3,7 @@ package diff.comparison;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
 import diff.fragments.DiffFragment;
+import exceptions.IllegalArgumentException;
 
 class ByWordRt {
 	static public function compareA(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
