@@ -1,4 +1,4 @@
-package policies;
+package config;
 
 import diff.comparison.ComparisonPolicy;
 
