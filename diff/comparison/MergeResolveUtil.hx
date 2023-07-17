@@ -5,6 +5,7 @@ import diff.util.Side;
 import diff.util.MergeRange;
 import diff.util.ThreeSide.ThreeSideEnum;
 import diff.fragments.DiffFragment;
+
 using Lambda;
 
 import haxe.Exception;
@@ -115,9 +116,9 @@ class SimpleHelper {
 			append(range, ThreeSideEnum.BASE);
 		} else {
 			var type = getConflictType(range, policy);
-			if (type.isChange(SideEnum.LEFT)) {
+			if (type.isChangeA(SideEnum.LEFT)) {
 				append(range, ThreeSideEnum.LEFT);
-			} else if (type.isChange(SideEnum.RIGHT)) {
+			} else if (type.isChangeA(SideEnum.RIGHT)) {
 				append(range, ThreeSideEnum.RIGHT);
 			} else {
 				append(range, ThreeSideEnum.BASE);
@@ -127,9 +128,9 @@ class SimpleHelper {
 
 	private function appendConflict(range:MergeRange, policy:ComparisonPolicy):Bool {
 		var type = getConflictType(range, policy);
-		if (type.type == Type.CONFLICT)
+		if (type.getType() == MergeConflictTypeEnum.CONFLICT)
 			return false;
-		if (type.isChange(SideEnum.LEFT)) {
+		if (type.isChangeA(SideEnum.LEFT)) {
 			append(range, ThreeSideEnum.LEFT);
 		} else {
 			append(range, ThreeSideEnum.RIGHT);

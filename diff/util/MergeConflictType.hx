@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
+import diff.util.Side.SideEnum;
 import diff.util.ThreeSide.ThreeSideEnum;
 import exceptions.IllegalArgumentException;
 
@@ -12,19 +13,19 @@ enum MergeConflictTypeEnum {
 }
 
 class MergeConflictType {
-	private final myType:Type;
+	private final myType:MergeConflictTypeEnum;
 	private final myLeftChange:Bool;
 	private final myRightChange:Bool;
 	private final myCanBeResolved:Bool;
 
-	public function new(type:Type, leftChange:Bool, rightChange:Bool, ?canBeResolved:Bool = true) {
+	public function new(type:MergeConflictTypeEnum, leftChange:Bool, rightChange:Bool, ?canBeResolved:Bool = true) {
 		myType = type;
 		myLeftChange = leftChange;
 		myRightChange = rightChange;
 		myCanBeResolved = canBeResolved;
 	}
 
-	public function getType():Type {
+	public function getType():MergeConflictTypeEnum {
 		return myType;
 	}
 
@@ -32,8 +33,10 @@ class MergeConflictType {
 		return myCanBeResolved;
 	}
 
-	public function isChangeA(side:Side):Bool {
-		return side.isLeft() ? myLeftChange : myRightChange;
+	public function isChangeA(side:SideEnum):Bool {
+		// Wrong?
+		// return side.isLeft() ? myLeftChange : myRightChange;
+		return side == SideEnum.LEFT ? myLeftChange : myRightChange;
 	}
 
 	public function isChangeB(side:ThreeSideEnum):Bool {
