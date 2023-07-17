@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.util.Side;
+import diff.comparison.ByLineRt.Line;
+import diff.comparison.ByWordRt;
 import diff.comparison.iterables.FairDiffIterable;
+import diff.util.Range;
 
 @:generic
 abstract class ChunkOptimizer<T> {
@@ -222,7 +226,7 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 	 * search for an empty line boundary in unchanged lines
 	 * ie: we want insertion/deletion to go right before/after of an empty line
 	 */
-	private function getUnchangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Integer {
+	private function getUnchangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Int {
 		var touchLines:Array<Line> = touchSide.selectA(myData1, myData2);
 		var touchStart:Int = touchSide.selectA(range2.start1, range2.start2);
 
@@ -236,7 +240,7 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 	 * search for an empty line boundary in changed lines
 	 * ie: we want insertion/deletion to start/end with an empty line
 	 */
-	private function getChangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Integer {
+	private function getChangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Int {
 		var nonTouchSide:Side = touchSide.other();
 		var nonTouchLines:Array<Line> = nonTouchSide.select(myData1, myData2);
 		var changeStart:Int = nonTouchSide.select(range1.end1, range1.end2);
