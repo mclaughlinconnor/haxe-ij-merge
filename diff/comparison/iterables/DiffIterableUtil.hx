@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import diff.util.Range;
 import util.diff.Diff;
 
 class DiffIterableUtil {
@@ -11,7 +12,7 @@ class DiffIterableUtil {
 	 */
 	public static function diffA(data1:Array<Int>, data2:Array<Int>):FairDiffIterable {
 		try {
-			var change:Diff.Change = Diff.buildChanges(data1, data2);
+			var change:Change = Diff.buildChanges(data1, data2);
 			return DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
 			throw new DiffTooBigException('');
@@ -23,20 +24,23 @@ class DiffIterableUtil {
 	 */
 	@:generic
 	public static function diffB<T>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+    var fairIter; FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside
-			var change:Diff.Change = Diff.buildChanges(data1, data2);
-			return DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
+			var change:Change = Diff.buildChanges(data1, data2);
+			fairIter = DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
 			throw new DiffTooBigException('');
 		}
+
+    return fairIter;
 	}
 
 	//
 	// Iterable
 	//
 
-	public static function createA(change:Diff.Change, length1:Int, length2:Int):DiffIterable {
+	public static function createA(change:Change, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffChangeDiffIterable = new DiffChangeDiffIterable(change, length1, length2);
 		verify(iterable);
 		return iterable;
@@ -296,15 +300,15 @@ abstract class ChangeBuilderBase {
 }
 
 class ChangeBuilder extends ChangeBuilderBase {
-	private var myFirstChange:Diff.Change;
-	private var myLastChange:Diff.Change;
+	private var myFirstChange:Change;
+	private var myLastChange:Change;
 
 	public function new(length1:Int, length2:Int) {
 		super(length1, length2);
 	}
 
 	private function addChange(start1:Int, start2:Int, end1:Int, end2:Int):Void {
-		var change:Diff.Change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
+		var change:Change = new Change(start1, start2, end1 - start1, end2 - start2, null);
 
 		if (myLastChange != null) {
 			myLastChange.link = change;
