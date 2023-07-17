@@ -478,14 +478,8 @@ class MergeDefaultCorrector {
 				- endCut, range.end3
 				- endCut);
 
-			var expand:MergeRange = new MergeRange(range.start1
-				+ startCut, range.end1
-				- endCut, range.start2
-				+ startCut, range.end2
-				- endCut,
-				range.start3
-				+ startCut, range.end3
-				- endCut);
+			var expand:MergeRange = new MergeRange(Std.int(range.start1 + startCut), Std.int(range.end1 - endCut), Std.int(range.start2 + startCut),
+				Std.int(range.end2 - endCut), Std.int(range.start3 + startCut), Std.int(range.end3 - endCut));
 
 			if (!expand.isEmpty()) {
 				myChanges.push(expand);
