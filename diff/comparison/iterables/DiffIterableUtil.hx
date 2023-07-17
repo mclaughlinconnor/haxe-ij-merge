@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import ds.Pair;
 import diff.comparison.DiffTooBigException;
 import diff.fragments.DiffFragment;
 import diff.util.Range;
