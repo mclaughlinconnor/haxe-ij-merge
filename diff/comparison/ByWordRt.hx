@@ -4,6 +4,7 @@ import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.comparison.LineFragmentSplitter;
+import diff.comparison.ChunkOptimiser;
 import diff.fragments.DiffFragment;
 import diff.fragments.MergeWordFragment;
 import diff.util.MergeRange;
@@ -139,7 +140,7 @@ class ByWordRt {
 	//
 	private static function optimizeWordChunks(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
 			iterable:FairDiffIterable):FairDiffIterable {
-		return new ChunkOptimizer.WordChunkOptimizer(words1, words2, text1, text2, iterable).build();
+		return new WordChunkOptimizer(words1, words2, text1, text2, iterable).build();
 	}
 
 	private static function matchAdjustmentDelimitersA(text1:String, text2:String, words1:Array<InlineChunk>, words2:Array<InlineChunk>,
@@ -440,7 +441,8 @@ class DefaultCorrector {
 			var endCut:Int = expandWhitespacesBackward(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
 			var startCut:Int = expandWhitespacesForward(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
 
-			var expand:Range = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
+			var expand:Range = new Range(Std.int(range.start1 + startCut), Std.int(range.end1 - endCut), Std.int(range.start2 + startCut),
+				Std.int(range.end2 - endCut));
 
 			if (!expand.isEmpty()) {
 				myChanges.push(expand);
@@ -712,7 +714,7 @@ class AdjustmentPunctuationMatcher {
 	private function execute():Void {
 		clearLastRange();
 
-		matchForward(-1, -1);
+		matchForwardA(-1, -1);
 
 		for (ch in myChanges.iterateUnchanged()) {
 			var count = ch.end1 - ch.start1;
@@ -725,15 +727,15 @@ class AdjustmentPunctuationMatcher {
 				var end1:Int = getEndOffset1(index1);
 				var end2:Int = getEndOffset2(index2);
 
-				matchBackward(index1, index2);
+				matchBackwardA(index1, index2);
 
-				myBuilder.markEqual(start1, start2, end1, end2);
+				myBuilder.markEqualC(start1, start2, end1, end2);
 
-				matchForward(index1, index2);
+				matchForwardA(index1, index2);
 			}
 		}
 
-		matchBackward(myWords1.length, myWords2.length);
+		matchBackwardA(myWords1.length, myWords2.length);
 	}
 
 	private function clearLastRange():Void {
@@ -749,7 +751,7 @@ class AdjustmentPunctuationMatcher {
 		var end1:Int = index1 == myWords1.length ? myLen1 : getStartOffset1(index1);
 		var end2:Int = index2 == myWords2.length ? myLen2 : getStartOffset2(index2);
 
-		matchBackward(start1, start2, end1, end2);
+		matchBackwardB(start1, start2, end1, end2);
 		clearLastRange();
 	}
 
@@ -759,7 +761,7 @@ class AdjustmentPunctuationMatcher {
 		var end1:Int = index1 + 1 == myWords1.length ? myLen1 : getStartOffset1(index1 + 1);
 		var end2:Int = index2 + 1 == myWords2.length ? myLen2 : getStartOffset2(index2 + 1);
 
-		matchForward(start1, start2, end1, end2);
+		matchForwardB(start1, start2, end1, end2);
 	}
 
 	private function matchForwardB(start1:Int, start2:Int, end1:Int, end2:Int):Void {
