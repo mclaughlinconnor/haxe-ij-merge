@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import diff.util.MergeConflictType;
 import diff.util.Side;
 import diff.util.MergeRange;
 import diff.util.ThreeSide.ThreeSideEnum;
