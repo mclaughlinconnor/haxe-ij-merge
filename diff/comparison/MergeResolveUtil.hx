@@ -152,7 +152,7 @@ class SimpleHelper {
 		return MergeRangeUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy);
 	}
 
-	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Boolean {
+	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Bool {
 		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.LEFT)
 			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.RIGHT);
 	}
