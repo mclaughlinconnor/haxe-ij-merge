@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.comparison.iterables.FairDiffIterable;
+import diff.util.Side;
 import config.DiffConfig;
 import diff.util.Side.SideEnum;
 import iterators.PeakableIteratorWrapper.PeekableIteratorWrapper;
@@ -42,8 +44,8 @@ class FairMergeBuilder {
 	}
 
 	public function execute(fragments1:FairDiffIterable, fragments2:FairDiffIterable):Array<MergeRange> {
-		var unchanged1:PeekableIterator<Range> = new PeekableIteratorWrapper(fragments1.unchanged());
-		var unchanged2:PeekableIterator<Range> = new PeekableIteratorWrapper(fragments2.unchanged());
+		var unchanged1:PeekableIteratoWrapper<Range> = new PeekableIteratorWrapper(fragments1.iterateUnchanged());
+		var unchanged2:PeekableIteratorWrapper<Range> = new PeekableIteratorWrapper(fragments2.iterateUnchanged());
 
 		while (unchanged1.hasNext() && unchanged2.hasNext()) {
 			var sideEnum:SideEnum = add(unchanged1.peek(), unchanged2.peek());
