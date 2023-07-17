@@ -4,7 +4,6 @@ package diff.comparison;
 import util.diff.Diff.ChangeBuilder;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.fragments.MergeLineFragment;
-import diff.fragments.MergeLineFragmentImpl;
 import diff.util.MergeRange;
 import diff.util.Range;
 import diff.comparison.ComparisonPolicy.DEFAULT;
@@ -196,7 +195,7 @@ class ByLineRt {
 
 	static public function convertIntoMergeLineFragments(conflicts:Array<MergeRange>):Array<MergeLineFragment> {
 		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return conflicts.stream().map(ch -> new MergeLineFragmentImpl(ch)).collect(Collectors.toList());
+		return conflicts.map(ch -> new MergeLineFragment(ch)).collect(Collectors.toList());
 	}
 }
 
