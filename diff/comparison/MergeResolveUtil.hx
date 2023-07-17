@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import diff.util.Side;
 import diff.util.MergeRange;
 import diff.util.ThreeSide.ThreeSideEnum;
 import diff.fragments.DiffFragment;
@@ -123,7 +124,7 @@ class SimpleHelper {
 		}
 	}
 
-	private function appendConflict(range:MergeRange, policy:ComparisonPolicy):Boolean {
+	private function appendConflict(range:MergeRange, policy:ComparisonPolicy):Bool {
 		var type = getConflictType(range, policy);
 		if (type.type == Type.CONFLICT)
 			return false;
