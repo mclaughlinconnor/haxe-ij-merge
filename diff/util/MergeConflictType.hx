@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
-import diff.util.Side.SideEnum;
+import diff.util.Side;
 import diff.util.ThreeSide.ThreeSideEnum;
 import exceptions.IllegalArgumentException;
 
@@ -33,10 +33,10 @@ class MergeConflictType {
 		return myCanBeResolved;
 	}
 
-	public function isChangeA(side:SideEnum):Bool {
+	public function isChangeA(side:Side):Bool {
 		// Wrong?
-		// return side.isLeft() ? myLeftChange : myRightChange;
-		return side == SideEnum.LEFT ? myLeftChange : myRightChange;
+		return side.isLeft() ? myLeftChange : myRightChange;
+		// return side == SideEnum.LEFT ? myLeftChange : myRightChange;
 	}
 
 	public function isChangeB(side:ThreeSideEnum):Bool {

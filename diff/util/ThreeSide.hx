@@ -17,6 +17,20 @@ class ThreeSide {
 		myIndex = index;
 	}
 
+	public static function fromEnum(from:ThreeSideEnum):ThreeSide {
+		var index:Int;
+		switch (from) {
+			case ThreeSideEnum.LEFT:
+				index = 0;
+			case ThreeSideEnum.BASE:
+				index = 1;
+			case ThreeSideEnum.RIGHT:
+				index = 2;
+		}
+
+		return new ThreeSide(index);
+	}
+
 	public static function fromIndex(index:Int):ThreeSideEnum {
 		if (index == 0)
 			return LEFT;

@@ -17,11 +17,22 @@ class Side {
 		myIndex = index;
 	}
 
-	public static function fromIndex(index:Int):SideEnum {
+	public static function fromEnum(from:SideEnum):Side {
+		switch (from) {
+			case SideEnum.LEFT:
+				return new Side(0);
+			case SideEnum.RIGHT:
+				return new Side(1);
+			default:
+				throw new IndexOutOfBoundsException("from: " + from);
+		}
+	}
+
+	public static function fromIndex(index:Int):Side {
 		if (index == 0)
-			return SideEnum.LEFT;
+			return new Side(index);
 		if (index == 1)
-			return SideEnum.RIGHT;
+			return new Side(index);
 		throw new IndexOutOfBoundsException("index: " + index);
 	}
 

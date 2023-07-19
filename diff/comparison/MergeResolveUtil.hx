@@ -1,5 +1,7 @@
 package diff.comparison;
 
+import diff.util.ThreeSide;
+import diff.fragments.MergeWordFragment;
 import diff.util.MergeConflictType;
 import diff.util.Side;
 import diff.util.MergeRange;
@@ -81,14 +83,14 @@ class SimpleHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var changes:Array<DiffFragment> = ByWordRt.compareA(leftText, baseText, rightText, policy, CancellationChecker.EMPTY);
+		var changes:Array<MergeWordFragment> = ByWordRt.compareC(leftText, baseText, rightText, policy);
 		// TODO: fairdiffiterator isn't implemented which makes this bad
 		for (fragment in changes) {
-			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSideEnum.LEFT), fragment.getStartOffset(ThreeSideEnum.BASE),
-				fragment.getStartOffset(ThreeSideEnum.RIGHT));
+			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSide.fromEnum(ThreeSideEnum.LEFT)),
+				fragment.getStartOffset(ThreeSide.fromEnum(ThreeSideEnum.BASE)), fragment.getStartOffset(ThreeSide.fromEnum(ThreeSideEnum.RIGHT)));
 			appendBase(baseRange);
-			var conflictRange = nextMergeRange(fragment.getEndOffset(ThreeSideEnum.LEFT), fragment.getEndOffset(ThreeSideEnum.BASE),
-				fragment.getEndOffset(ThreeSideEnum.RIGHT));
+			var conflictRange = nextMergeRange(fragment.getEndOffset(ThreeSide.fromEnum(ThreeSideEnum.LEFT)),
+				fragment.getEndOffset(ThreeSide.fromEnum(ThreeSideEnum.BASE)), fragment.getEndOffset(ThreeSide.fromEnum(ThreeSideEnum.RIGHT)));
 			if (!appendConflict(conflictRange, policy)) {
 				return null;
 			}
@@ -116,9 +118,9 @@ class SimpleHelper {
 			append(range, ThreeSideEnum.BASE);
 		} else {
 			var type = getConflictType(range, policy);
-			if (type.isChangeA(SideEnum.LEFT)) {
+			if (type.isChangeA(Side.fromEnum(SideEnum.LEFT))) {
 				append(range, ThreeSideEnum.LEFT);
-			} else if (type.isChangeA(SideEnum.RIGHT)) {
+			} else if (type.isChangeA(Side.fromEnum(SideEnum.RIGHT))) {
 				append(range, ThreeSideEnum.RIGHT);
 			} else {
 				append(range, ThreeSideEnum.BASE);
@@ -130,7 +132,7 @@ class SimpleHelper {
 		var type = getConflictType(range, policy);
 		if (type.getType() == MergeConflictTypeEnum.CONFLICT)
 			return false;
-		if (type.isChangeA(SideEnum.LEFT)) {
+		if (type.isChangeA(Side.fromEnum(SideEnum.LEFT))) {
 			append(range, ThreeSideEnum.LEFT);
 		} else {
 			append(range, ThreeSideEnum.RIGHT);
@@ -154,8 +156,10 @@ class SimpleHelper {
 	}
 
 	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Bool {
-		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.LEFT)
-			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSideEnum.BASE, ThreeSideEnum.RIGHT);
+		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
+			ThreeSide.fromEnum(ThreeSideEnum.LEFT))
+			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
+				ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 	}
 }
 
@@ -243,8 +247,8 @@ class GreedyHelper {
 				throw "Assert index1 != end1 || index2 != end2";
 			}
 
-			var inserted1 = getInsertedContent(fragments1, index1, end1, LEFT);
-			var inserted2 = getInsertedContent(fragments2, index2, end2, RIGHT);
+			var inserted1 = getInsertedContent(fragments1, index1, end1, Side.fromEnum(SideEnum.LEFT));
+			var inserted2 = getInsertedContent(fragments2, index2, end2, Side.fromEnum(SideEnum.RIGHT));
 			index1 = end1;
 			index2 = end2;
 
