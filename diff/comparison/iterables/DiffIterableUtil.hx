@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import util.diff.FilesTooBigForDiffException;
 import ds.Pair;
 import diff.comparison.DiffTooBigException;
 import diff.fragments.DiffFragment;
@@ -14,12 +15,15 @@ class DiffIterableUtil {
 	 * Compare two integer arrays
 	 */
 	public static function diffA(data1:Array<Int>, data2:Array<Int>):FairDiffIterable {
+		var fair:FairDiffIterable;
 		try {
-			var change:Change = Diff.buildChanges(data1, data2);
-			return DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
+			var change:Change = Diff.buildChangesC(data1, data2);
+			fair = DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
 			throw new DiffTooBigException('');
 		}
+
+		return fair;
 	}
 
 	/*
@@ -27,7 +31,8 @@ class DiffIterableUtil {
 	 */
 	@:generic
 	public static function diffB<T>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
-    var fairIter; FairDiffIterable;
+		var fairIter;
+		FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside
 			var change:Change = Diff.buildChangesB(data1, data2);
@@ -36,7 +41,7 @@ class DiffIterableUtil {
 			throw new DiffTooBigException('');
 		}
 
-    return fairIter;
+		return fairIter;
 	}
 
 	//
@@ -45,31 +50,31 @@ class DiffIterableUtil {
 
 	public static function createA(change:Change, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffChangeDiffIterable = new DiffChangeDiffIterable(change, length1, length2);
-		verify(iterable);
+		verifyA(iterable);
 		return iterable;
 	}
 
 	public static function createB(ranges:Array<Range>, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffIterable = new RangesDiffIterable(ranges, length1, length2);
-		verify(iterable);
+		verifyA(iterable);
 		return iterable;
 	}
 
 	public static function createFragments(fragments:Array<DiffFragment>, length1:Int, length2:Int):DiffIterable {
 		var iterable:DiffIterable = new DiffFragmentsDiffIterable(fragments, length1, length2);
-		verify(iterable);
+		verifyA(iterable);
 		return iterable;
 	}
 
 	public static function createUnchanged(ranges:Array<Range>, length1:Int, length2:Int):DiffIterable {
-		var invert:DiffIterable = invert(create(ranges, length1, length2));
-		verify(invert);
+		var invert:DiffIterable = invert(createB(ranges, length1, length2));
+		verifyA(invert);
 		return invert;
 	}
 
 	public static function invert(iterable:DiffIterable):DiffIterable {
 		var wrapper:DiffIterable = new InvertedDiffIterableWrapper(iterable);
-		verify(wrapper);
+		verifyA(wrapper);
 		return wrapper;
 	}
 
@@ -95,43 +100,8 @@ class DiffIterableUtil {
 	/**
 	 * Iterate both changed and unchanged ranges one-by-one.
 	 */
-	public static function iterateAll(iterable:DiffIterable):Iterable<Pair<Range, /* isUnchanged */ Bool>> {
-		// TODO: implement
-		// return () -> new Iterator<Pair<Range, Bool>>() {
-		//
-		//
-		//   public Bool hasNext() {
-		//     return lastChanged != null || lastUnchanged != null;
-		//   }
-		//
-		//   public Pair<Range, Bool> next() {
-		//     Bool equals;
-		//     if (lastChanged == null) {
-		//       equals = true;
-		//     }
-		//     else if (lastUnchanged == null) {
-		//       equals = false;
-		//     }
-		//     else {
-		//       equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
-		//     }
-		//
-		//     if (equals) {
-		//       Range range = lastUnchanged;
-		//       lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-		//       return Pair.create(range, true);
-		//     }
-		//     else {
-		//       Range range = lastChanged;
-		//       lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-		//       return Pair.create(range, false);
-		//     }
-		//   }
-		//
-		//   public Void remove() {
-		//     throw new UnsupportedOperationException();
-		//   }
-		// };
+	public static function iterateAll(iterable:DiffIterable):Iterator<Pair<Range, /* isUnchanged */ Bool>> {
+		return new IterateAllIterator(iterable);
 	}
 
 	public static function getRangeDelta(range:Range):Int {
@@ -156,8 +126,8 @@ class DiffIterableUtil {
 		if (!isVerifyEnabled())
 			return;
 
-		verify(iterable.iterateChanges());
-		verify(iterable.iterateUnchanged());
+		verifyB(iterable.iterateChanges());
+		verifyB(iterable.iterateUnchanged());
 
 		verifyFullCover(iterable);
 	}
@@ -175,7 +145,7 @@ class DiffIterableUtil {
 		if (!isVerifyEnabled())
 			return;
 
-		verify(iterable);
+		verifyA(iterable);
 
 		for (range in iterable.iterateUnchanged()) {
 			// assert range.end1 - range.start1 == range.end2 - range.start2;
@@ -220,14 +190,14 @@ class DiffIterableUtil {
 			var data2:Array<T> = new Array();
 
 			for (i in range.start1...range.end1) {
-				data1.add(objects1.get(i));
+				data1.push(objects1[i]);
 			}
 
 			for (i in range.start2...range.end2) {
-				data2.add(objects2.get(i));
+				data2.push(objects2[i]);
 			}
 
-			result.add(new LineRangeData(data1, data2, equals));
+			result.push(new LineRangeData(data1, data2, equals));
 		}
 
 		return result;
@@ -359,4 +329,49 @@ class LineRangeData<T> {
 		this.objects1 = objects1;
 		this.objects2 = objects2;
 	}
+}
+
+class IterateAllIterator {
+	private final myChanges:Iterator<Range>;
+	private final myUnchanged:Iterator<Range>;
+
+	private var lastChanged:Null<Range>;
+	private var lastUnchanged:Null<Range>;
+
+	public function new(iterable:DiffIterable) {
+		this.myChanges = iterable.changes();
+		this.myUnchanged = iterable.unchanged();
+
+		this.lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+		this.lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+	}
+
+	public function hasNext():Bool {
+		return lastChanged != null || lastUnchanged != null;
+	}
+
+	public function next():Pair<Range, Bool> {
+		var equals:Bool;
+		if (lastChanged == null) {
+			equals = true;
+		} else if (lastUnchanged == null) {
+			equals = false;
+		} else {
+			equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
+		}
+
+		if (equals) {
+			var range:Range = lastUnchanged;
+			lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+			return Pair.create(range, true);
+		} else {
+			var range:Range = lastChanged;
+			lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+			return Pair.create(range, false);
+		}
+	}
+
+	public function remove():Void {
+		throw new UnsupportedOperationException('');
+	};
 }
