@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.util.Range;
 import diff.util.MergeRange;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.util.Side;
@@ -13,18 +14,17 @@ interface SideEquality {
 }
 
 class ComparisonMergeUtil {
-	public static function buildSimple(fragments1:FairDiffIterable, fragments2:FairDiffIterable, indicator:CancellationChecker):Array<MergeRange> {
+	public static function buildSimple(fragments1:FairDiffIterable, fragments2:FairDiffIterable):Array<MergeRange> {
 		// assert fragments1.getLength1() == fragments2.getLength1();
 		return new FairMergeBuilder().execute(fragments1, fragments2);
 	}
 
-	public static function buildMerge(fragments1:FairDiffIterable, fragments2:FairDiffIterable, trueEquality:SideEquality,
-			indicator:CancellationChecker):Array<MergeRange> {
+	public static function buildMerge(fragments1:FairDiffIterable, fragments2:FairDiffIterable, trueEquality:SideEquality):Array<MergeRange> {
 		// assert fragments1.getLength1() == fragments2.getLength1();
 		return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
 	}
 
-	public static function tryResolveConflict(leftText:CharSequence, baseText:CharSequence, rightText:CharSequence):CharSequence {
+	public static function tryResolveConflict(leftText:String, baseText:String, rightText:String):String {
 		if (DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE) {
 			return MergeResolveUtil.tryGreedyResolve(leftText, baseText, rightText);
 		} else {
@@ -45,7 +45,7 @@ class FairMergeBuilder {
 	}
 
 	public function execute(fragments1:FairDiffIterable, fragments2:FairDiffIterable):Array<MergeRange> {
-		var unchanged1:PeekableIteratoWrapper<Range> = new PeekableIteratorWrapper(fragments1.iterateUnchanged());
+		var unchanged1:PeekableIteratorWrapper<Range> = new PeekableIteratorWrapper(fragments1.iterateUnchanged());
 		var unchanged2:PeekableIteratorWrapper<Range> = new PeekableIteratorWrapper(fragments2.iterateUnchanged());
 
 		while (unchanged1.hasNext() && unchanged2.hasNext()) {
