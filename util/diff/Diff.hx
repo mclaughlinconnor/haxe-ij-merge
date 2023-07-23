@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+import config.DiffConfig;
 import ds.Ref;
 import thx.BitSet;
 import tokenizers.LineTokenizer;
@@ -51,8 +52,8 @@ class Diff {
 		}
 
 		var copyArray:Bool = startShift != 0 || endCut != 0;
-		var Ints1:Array<Int> = copyArray ? array1.slice(startShift, array1.length - endCut) : array1;
-		var Ints2:Array<Int> = copyArray ? array2.slice(startShift, array2.length - endCut) : array2;
+		var Ints1:Array<Int> = copyArray ? array1.slice(startShift, Std.int(array1.length - endCut)) : array1;
+		var Ints2:Array<Int> = copyArray ? array2.slice(startShift, Std.int(array2.length - endCut)) : array2;
 		return doBuildChanges(Ints1, Ints2, new ChangeBuilder(startShift));
 	}
 
@@ -100,7 +101,7 @@ class Diff {
 	}
 
 	@:generic
-	static private function getStartShiftA<T>(o1:Array<T>, o2:Array<T>):Int {
+	static public function getStartShiftA<T>(o1:Array<T>, o2:Array<T>):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length));
 		var idx:Int = 0;
 
@@ -113,7 +114,7 @@ class Diff {
 	}
 
 	@:generic
-	static private function getEndCutA<T>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
+	static public function getEndCutA<T>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length) - startShift);
 		var idx:Int = 0;
 
@@ -127,7 +128,7 @@ class Diff {
 	}
 
 	@:generic
-	static private function getStartShiftB<T>(o1:Array<T>, o2:Array<T>):Int {
+	static public function getStartShiftB<T>(o1:Array<T>, o2:Array<T>):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length));
 		var idx:Int = 0;
 		for (i in 0...size) {
@@ -139,7 +140,7 @@ class Diff {
 	}
 
 	@:generic
-	static private function getEndCutB<T>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
+	static public function getEndCutB<T>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length) - startShift);
 		var idx:Int = 0;
 		for (i in 0...size) {
@@ -157,12 +158,12 @@ class Diff {
 			strings1 = trim(strings1);
 			strings2 = trim(strings2);
 		}
-		var change:Change = buildChangesB(strings1, strings2);
+		var change:Change = buildChangesB(strings2, strings2);
 
 		return translateLineC(change, line, approximate);
 	}
 
-	static private function trim(lines:Array<String>):Array<String> {
+	static public function trim(lines:Array<String>):Array<String> {
 		var result:Array<String> = [for (i in 0...lines.length) ""];
 
 		for (i in 0...lines.length) {
