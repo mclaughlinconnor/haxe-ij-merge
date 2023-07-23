@@ -1,12 +1,13 @@
 package diff.comparison;
 
-import diff.util.ThreeSide;
+import diff.fragments.DiffFragment;
 import diff.fragments.MergeWordFragment;
 import diff.util.MergeConflictType;
-import diff.util.Side;
 import diff.util.MergeRange;
+import diff.util.MergeRangeUtil;
+import diff.util.Side;
 import diff.util.ThreeSide.ThreeSideEnum;
-import diff.fragments.DiffFragment;
+import diff.util.ThreeSide;
 
 using Lambda;
 
