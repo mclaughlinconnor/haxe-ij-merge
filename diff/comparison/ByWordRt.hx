@@ -1,5 +1,7 @@
 package diff.comparison;
 
+import diff.comparison.TrimUtil.isAlpha;
+import diff.comparison.TrimUtil.isContinuousScript;
 import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
 import diff.comparison.iterables.FairDiffIterable;
@@ -307,8 +309,8 @@ class ByWordRt {
 			var ch:Int = text.charCodeAt(offset);
 			var characterCount:Int = charCount(ch);
 
-			var isAlpha:Bool = isAlpha(ch);
-			var isWordPart:Bool = isAlpha && !isContinuousScript(ch);
+			var isAlphaResult:Bool = isAlpha(ch);
+			var isWordPart:Bool = isAlphaResult && !isContinuousScript(ch);
 
 			if (isWordPart) {
 				if (wordStart == -1) {
@@ -322,7 +324,7 @@ class ByWordRt {
 					wordStart = -1;
 				}
 
-				if (isAlpha) { // continuous script
+				if (isAlphaResult) { // continuous script
 					chunks.push(new WordChunk(text, offset, offset + characterCount, ch));
 				} else if (ch == '\n'.code) {
 					chunks.push(new NewlineChunk(offset));

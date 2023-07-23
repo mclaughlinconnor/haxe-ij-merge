@@ -308,7 +308,7 @@ class ExpandChangeBuilder extends ChangeBuilder {
 	}
 
 	override private function addChange(start1:Int, start2:Int, end1:Int, end2:Int):Void {
-		var range:Range = TrimUtil.expand(myObjects1, myObjects2, start1, start2, end1, end2);
+		var range:Range = TrimUtil.expandC(myObjects1, myObjects2, start1, start2, end1, end2);
 		if (!range.isEmpty()) {
 			super.addChange(range.start1, range.start2, range.end1, range.end2);
 		}
