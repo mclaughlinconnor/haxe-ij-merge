@@ -1,11 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
-import diff.util.Side;
 import diff.comparison.ByLineRt.Line;
 import diff.comparison.ByWordRt;
+import diff.comparison.TrimUtil.expandBackwardA;
+import diff.comparison.TrimUtil.expandForwardA;
+import diff.comparison.TrimUtil.isWhiteSpace;
+import diff.comparison.iterables.DiffIterableUtil;
+import diff.comparison.iterables.DiffIterableUtil.createUnchanged;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.util.Range;
+import diff.util.Side;
 
 @:generic
 abstract class ChunkOptimizer<T> {
@@ -47,8 +52,8 @@ abstract class ChunkOptimizer<T> {
 		var count1:Int = range1.end1 - range1.start1;
 		var count2:Int = range2.end1 - range2.start1;
 
-		var equalForward:Int = expandForward(myData1, myData2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
-		var equalBackward:Int = expandBackward(myData1, myData2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
+		var equalForward:Int = expandForwardA(myData1, myData2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
+		var equalBackward:Int = expandBackwardA(myData1, myData2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
 
 		// nothing to do
 		if (equalForward == 0 && equalBackward == 0)
@@ -56,8 +61,8 @@ abstract class ChunkOptimizer<T> {
 
 		// merge chunks left [A]B[B] -> [AB]B
 		if (equalForward == count2) {
-			myRanges.remove(myRanges.length - 1);
-			myRanges.remove(myRanges.length - 1);
+			myRanges.splice(myRanges.length - 1, 1);
+			myRanges.splice(myRanges.length - 1, 1);
 			myRanges.push(new Range(range1.start1, range1.end1 + count2, range1.start2, range1.end2 + count2));
 			processLastRanges();
 			return;
@@ -65,19 +70,19 @@ abstract class ChunkOptimizer<T> {
 
 		// merge chunks right [A]A[B] -> A[AB]
 		if (equalBackward == count1) {
-			myRanges.remove(myRanges.length - 1);
-			myRanges.remove(myRanges.length - 1);
+			myRanges.splice(myRanges.length - 1, 1);
+			myRanges.splice(myRanges.length - 1, 1);
 			myRanges.push(new Range(range2.start1 - count1, range2.end1, range2.start2 - count1, range2.end2));
 			processLastRanges();
 			return;
 		}
 
-		var touchSide:Side = Side.fromLeft(range1.end1 == range2.start1);
+		var touchSide:Side = Side.fromEnum(Side.fromLeft(range1.end1 == range2.start1));
 
 		var shift:Int = getShift(touchSide, equalForward, equalBackward, range1, range2);
 		if (shift != 0) {
-			myRanges.remove(myRanges.length - 1);
-			myRanges.remove(myRanges.length - 1);
+			myRanges.splice(myRanges.length - 1, 1);
+			myRanges.splice(myRanges.length - 1, 1);
 			myRanges.push(new Range(range1.start1, range1.end1 + shift, range1.start2, range1.end2 + shift));
 			myRanges.push(new Range(range2.start1 + shift, range2.end1, range2.start2 + shift, range2.end2));
 		}
@@ -119,7 +124,7 @@ class WordChunkOptimizer extends ChunkOptimizer<InlineChunk> {
 		var touchStart:Int = touchSide.selectA(range2.start1, range2.start2);
 
 		// check if chunks are already separated by whitespaces
-		if (isSeparatedWithWhitespace(touchText, touchWords[touchStart - 1], touchWords.get(touchStart)))
+		if (isSeparatedWithWhitespace(touchText, touchWords[touchStart - 1], touchWords[touchStart]))
 			return 0;
 
 		// shift chunks left [X]A Y[A ZA] -> [XA] YA [ZA]
@@ -156,7 +161,7 @@ class WordChunkOptimizer extends ChunkOptimizer<InlineChunk> {
 	}
 
 	static private function isSeparatedWithWhitespace(text:String, word1:InlineChunk, word2:InlineChunk):Bool {
-		if (Std.downcast(word1, NewlineChunk) != null || std.downcast(word2, NewlineChunk) != null) {
+		if (Std.downcast(word1, NewlineChunk) != null || Std.downcast(word2, NewlineChunk) != null) {
 			return true;
 		}
 		var offset1:Int = word1.getOffset2();
@@ -180,12 +185,12 @@ class WordChunkOptimizer extends ChunkOptimizer<InlineChunk> {
  *      bad: "ABooYZ AB[uuYZ AB]zzYZ" - "ABooYZ AB[]zzYZ"
  */
 class LineChunkOptimizer extends ChunkOptimizer<Line> {
-	public function new(lines1:Array<Line>, lines2:Array<Line>, changes:FairDiffIterable) {
+	public function new(lines1:Array<Line>, lines2:Array<Line>, changes:FairDiffIterable): Void {
 		super(lines1, lines2, changes);
 	}
 
-	private function getShiftA(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Int {
-		var shift:Integer;
+	private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Int {
+		var shift:Int;
 		var threshold:Int = ComparisonUtil.getUnimportantLineCharCount();
 
 		shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
@@ -233,7 +238,7 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 		var shiftForward:Int = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, threshold);
 		var shiftBackward:Int = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, threshold);
 
-		return getShift(shiftForward, shiftBackward);
+		return getShiftB(shiftForward, shiftBackward);
 	}
 
 	/**
@@ -241,15 +246,15 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 	 * ie: we want insertion/deletion to start/end with an empty line
 	 */
 	private function getChangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Int {
-		var nonTouchSide:Side = touchSide.other();
-		var nonTouchLines:Array<Line> = nonTouchSide.select(myData1, myData2);
-		var changeStart:Int = nonTouchSide.select(range1.end1, range1.end2);
-		var changeEnd:Int = nonTouchSide.select(range2.start1, range2.start2);
+		var nonTouchSide:Side = Side.fromEnum(touchSide.other());
+		var nonTouchLines:Array<Line> = nonTouchSide.selectA(myData1, myData2);
+		var changeStart:Int = nonTouchSide.selectA(range1.end1, range1.end2);
+		var changeEnd:Int = nonTouchSide.selectA(range2.start1, range2.start2);
 
 		var shiftForward:Int = findNextUnimportantLine(nonTouchLines, changeStart, equalForward + 1, threshold);
 		var shiftBackward:Int = findPrevUnimportantLine(nonTouchLines, changeEnd - 1, equalBackward + 1, threshold);
 
-		return getShift(shiftForward, shiftBackward);
+		return getShiftB(shiftForward, shiftBackward);
 	}
 
 	static private function findNextUnimportantLine(lines:Array<Line>, offset:Int, count:Int, threshold:Int):Int {

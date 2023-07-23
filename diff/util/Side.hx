@@ -52,8 +52,9 @@ class Side {
 		return myIndex == 0;
 	}
 
-	public function other(other:Null<Bool>):SideEnum {
-		return isLeft() ? RIGHT : LEFT;
+	public function other(?other:Null<Bool>):SideEnum {
+    final cond = other == null ? isLeft() : other;
+		return cond ? RIGHT : LEFT;
 	}
 
 	//

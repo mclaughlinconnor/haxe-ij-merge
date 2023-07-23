@@ -38,6 +38,10 @@ class TrimUtil {
 		return !isPunctuationB(c);
 	}
 
+	static public function isWhiteSpace(s:String):Bool {
+		return isWhiteSpaceCodePoint(s.charCodeAt(0));
+	}
+
 	static public function isWhiteSpaceCodePoint(c:Int):Bool {
 		return c < 128 && StringTools.isSpace(String.fromCharCode(c), 0);
 	}

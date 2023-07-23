@@ -6,7 +6,7 @@ import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.comparison.LineFragmentSplitter;
-import diff.comparison.ChunkOptimiser;
+import diff.comparison.ChunkOptimizer;
 import diff.fragments.DiffFragment;
 import diff.fragments.MergeWordFragment;
 import diff.util.MergeRange;
