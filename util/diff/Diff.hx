@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
-import thx.BitSet;
 import ds.Ref;
+import thx.BitSet;
 import tokenizers.LineTokenizer;
+import util.diff.Reindexer;
 
 class Diff {
 	static public function buildChangesA(before:String, after:String):Change {
