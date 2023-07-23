@@ -6,8 +6,10 @@ import diff.comparison.ComparisonPolicy;
 import diff.comparison.ComparisonUtil;
 import diff.fragments.MergeLineFragment;
 import diff.fragments.MergeWordFragment;
-import diff.tools.util.text.LineOffsets;
-import diff.util.DiffRangeUtil.getLinesContent;
+import ds.BiPredicate;
+import ds.Predicate;
+// import diff.tools.util.text.LineOffsets;
+// import diff.util.DiffRangeUtil.getLinesContent;
 
 class MergeRangeUtil {
 	static public function getMergeType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>,
