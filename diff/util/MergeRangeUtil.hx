@@ -1,19 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
+import ds.LineOffsets;
 import diff.comparison.ComparisonMergeUtil;
 import diff.comparison.ComparisonPolicy;
 import diff.comparison.ComparisonUtil;
 import diff.fragments.MergeLineFragment;
 import diff.fragments.MergeWordFragment;
 import ds.BiPredicate;
+import ds.BooleanSupplier;
 import ds.Predicate;
 // import diff.tools.util.text.LineOffsets;
 // import diff.util.DiffRangeUtil.getLinesContent;
 
 class MergeRangeUtil {
 	static public function getMergeType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>,
-			trueEquality:Null<BiPredicate<ThreeSide, ThreeSide>>, conflictResolver:BoolSupplier) {
+			trueEquality:Null<BiPredicate<ThreeSide, ThreeSide>>, conflictResolver:BooleanSupplier) {
 		var isLeftEmpty:Bool = emptiness.test(ThreeSide.LEFT);
 		var isBaseEmpty:Bool = emptiness.test(ThreeSide.BASE);
 		var isRightEmpty:Bool = emptiness.test(ThreeSide.RIGHT);
