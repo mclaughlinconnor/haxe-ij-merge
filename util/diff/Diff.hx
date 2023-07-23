@@ -2,6 +2,7 @@
 package util.diff;
 
 import thx.BitSet;
+import ds.Ref;
 import tokenizers.LineTokenizer;
 
 class Diff {
