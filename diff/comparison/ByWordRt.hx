@@ -1,7 +1,6 @@
 package diff.comparison;
 
-import diff.comparison.TrimUtil.isAlpha;
-import diff.comparison.TrimUtil.isContinuousScript;
+import diff.comparison.TrimUtil.*;
 import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
 import diff.comparison.iterables.FairDiffIterable;
@@ -512,15 +511,15 @@ class IgnoreSpacesCorrector {
 	public function build():DiffIterable {
 		for (range in myIterable.iterateChanges()) {
 			// match spaces if we can, ignore them if we can't
-			var expanded:Range = expandWhitespaces(myText1, myText2, range);
-			var trimmed:Range = trim(myText1, myText2, expanded);
+			var expanded:Range = expandWhitespacesC(myText1, myText2, range);
+			var trimmed:Range = trimE(myText1, myText2, expanded);
 
-			if (!trimmed.isEmpty() && !isEqualsIgnoreWhitespaces(myText1, myText2, trimmed)) {
+			if (!trimmed.isEmpty() && !isEqualsIgnoreWhitespacesA(myText1, myText2, trimmed)) {
 				myChanges.push(trimmed);
 			}
 		}
 
-		return create(myChanges, myText1.length, myText2.length);
+		return DiffIterableUtil.createB(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -543,11 +542,11 @@ class MergeIgnoreSpacesCorrector {
 
 	public function build():Array<MergeRange> {
 		for (range in myIterable) {
-			var expanded:MergeRange = expandWhitespaces(myText1, myText2, myText3, range);
-			var trimmed:MergeRange = trim(myText1, myText2, myText3, expanded);
+			var expanded:MergeRange = expandWhitespacesD(myText1, myText2, myText3, range);
+			var trimmed:MergeRange = trimF(myText1, myText2, myText3, expanded);
 
-			if (!trimmed.isEmpty() && !isEqualsIgnoreWhitespaces(myText1, myText2, myText3, trimmed)) {
-				myChanges.add(trimmed);
+			if (!trimmed.isEmpty() && !isEqualsIgnoreWhitespacesB(myText1, myText2, myText3, trimmed)) {
+				myChanges.push(trimmed);
 			}
 		}
 
@@ -593,12 +592,12 @@ class TrimSpacesCorrector {
 
 			var trimmed:Range = new Range(start1, end1, start2, end2);
 
-			if (!trimmed.isEmpty() && !isEquals(myText1, myText2, trimmed)) {
+			if (!trimmed.isEmpty() && !isEqualsA(myText1, myText2, trimmed)) {
 				myChanges.push(trimmed);
 			}
 		}
 
-		return create(myChanges, myText1.length, myText2.length);
+		return DiffIterableUtil.createB(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -649,7 +648,7 @@ class MergeTrimSpacesCorrector {
 
 			var trimmed:MergeRange = new MergeRange(start1, end1, start2, end2, start3, end3);
 
-			if (!trimmed.isEmpty() && !isEquals(myText1, myText2, myText3, trimmed)) {
+			if (!trimmed.isEmpty() && !isEqualsB(myText1, myText2, myText3, trimmed)) {
 				myChanges.push(trimmed);
 			}
 		}
