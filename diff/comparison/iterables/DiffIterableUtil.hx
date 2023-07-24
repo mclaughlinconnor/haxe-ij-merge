@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import exceptions.UnsupportedOperationException;
 import util.diff.FilesTooBigForDiffException;
 import ds.Pair;
 import diff.comparison.DiffTooBigException;
@@ -9,7 +10,7 @@ import diff.util.Range;
 import util.diff.Diff;
 
 class DiffIterableUtil {
-	private static final SHOULD_VERIFY_ITERABLE = false;
+	private static var SHOULD_VERIFY_ITERABLE = false;
 
 	/*
 	 * Compare two integer arrays
@@ -308,7 +309,7 @@ class ExpandChangeBuilder extends ChangeBuilder {
 	}
 
 	override private function addChange(start1:Int, start2:Int, end1:Int, end2:Int):Void {
-		var range:Range = TrimUtil.expandC(myObjects1, myObjects2, start1, start2, end1, end2);
+		var range:Range = TrimUtil.expandA(myObjects1, myObjects2, start1, start2, end1, end2);
 		if (!range.isEmpty()) {
 			super.addChange(range.start1, range.start2, range.end1, range.end2);
 		}
