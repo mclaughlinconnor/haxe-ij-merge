@@ -439,8 +439,8 @@ class DefaultCorrector {
 
 	public function build():DiffIterable {
 		for (range in myIterable.iterateChanges()) {
-			var endCut:Int = expandWhitespacesBackward(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
-			var startCut:Int = expandWhitespacesForward(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
+			var endCut:Int = expandWhitespacesBackwardA(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
+			var startCut:Int = expandWhitespacesForwardA(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
 
 			var expand:Range = new Range(Std.int(range.start1 + startCut), Std.int(range.end1 - endCut), Std.int(range.start2 + startCut),
 				Std.int(range.end2 - endCut));
@@ -450,7 +450,7 @@ class DefaultCorrector {
 			}
 		}
 
-		return DiffIterableUtil.createA(myChanges, myText1.length, myText2.length);
+		return DiffIterableUtil.createB(myChanges, myText1.length, myText2.length);
 	}
 }
 
@@ -805,7 +805,7 @@ class AdjustmentPunctuationMatcher {
 		var changes:DiffIterable = ByCharRt.comparePunctuation(sequence1, sequence2);
 
 		for (ch in changes.iterateUnchanged()) {
-			myBuilder.markEqual(start1 + ch.start1, start2 + ch.start2, start1 + ch.end1, start2 + ch.end2);
+			myBuilder.markEqualC(start1 + ch.start1, start2 + ch.start2, start1 + ch.end1, start2 + ch.end2);
 		}
 	}
 
