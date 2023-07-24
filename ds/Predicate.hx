@@ -70,7 +70,7 @@ class Predicate<T> {
 	 * @throws NullPointerException if other is null
 	 */
 	public function and(other:Predicate<T>):Predicate<T> {
-		return (t) -> test(t) && other.test(t);
+		return new Predicate((t) -> test(t) && other.test(t));
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Predicate<T> {
 	 * predicate
 	 */
 	public function negate():Predicate<T> {
-		return (t) -> !test(t);
+		return new Predicate((t) -> !test(t));
 	}
 
 	/**
@@ -101,21 +101,7 @@ class Predicate<T> {
 	 * @throws NullPointerException if other is null
 	 */
 	public function or(other:Predicate<T>):Predicate<T> {
-		return (t) -> test(t) || other.test(t);
-	}
-
-	/**
-	 * Returns a predicate that tests if two arguments are equal according
-	 * to {@link Objects#equals(Object, Object)}.
-	 *
-	 * @param <T> the type of arguments to the predicate
-	 * @param targetRef the object reference with which to compare for equality,
-	 *               which may be {@code null}
-	 * @return a predicate that tests if two arguments are equal according
-	 * to {@link Objects#equals(Object, Object)}
-	 */
-	public function isEqual<T>(targetRef:Dynamic):Predicate<T> {
-		return (null == targetRef) ?() -> object == null : object -> targetRef.equals(object);
+		return new Predicate((t) -> test(t) || other.test(t));
 	}
 
 	/**

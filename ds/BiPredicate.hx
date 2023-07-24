@@ -74,7 +74,7 @@ class BiPredicate<T, U> {
 	 * @throws NullPointerException if other is null
 	 */
 	public function and(other:BiPredicate<T, U>):BiPredicate<T, U> {
-		return (t:T, u:U) -> test(t, u) && other.test(t, u);
+		return new BiPredicate((t:T, u:U) -> test(t, u) && other.test(t, u));
 	}
 
 	/**
@@ -85,7 +85,7 @@ class BiPredicate<T, U> {
 	 * predicate
 	 */
 	public function negate():BiPredicate<T, U> {
-		return (t:T, u:U) -> !test(t, u);
+		return new BiPredicate((t:T, u:U) -> !test(t, u));
 	}
 
 	/**
@@ -105,6 +105,6 @@ class BiPredicate<T, U> {
 	 * @throws NullPointerException if other is null
 	 */
 	public function or(other:BiPredicate<T, U>):BiPredicate<T, U> {
-		return (t:T, u:U) -> test(t, u) || other.test(t, u);
+		return new BiPredicate((t:T, u:U) -> test(t, u) || other.test(t, u));
 	}
 }
