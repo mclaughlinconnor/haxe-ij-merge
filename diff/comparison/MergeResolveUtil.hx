@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import ds.MergingCharSequence;
 import diff.fragments.DiffFragment;
 import diff.fragments.MergeWordFragment;
 import diff.util.MergeConflictType;
@@ -77,10 +78,14 @@ class SimpleHelper {
 	private var rightText:String = "";
 	private var baseText:String = "";
 
+	private var texts:Array<String>;
+
 	public function new(leftText:String, baseText:String, rightText:String) {
 		this.leftText = leftText;
 		this.rightText = rightText;
 		this.baseText = baseText;
+
+		this.texts = [leftText, baseText, rightText];
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
@@ -153,13 +158,13 @@ class SimpleHelper {
 	}
 
 	private function getConflictType(range:MergeRange, policy:ComparisonPolicy):MergeConflictType {
-		return MergeRangeUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy);
+		return MergeRangeUtil.getWordMergeType(MergeWordFragment.newFromRange(range), this.texts, policy);
 	}
 
 	private function isUnchangedRange(range:MergeRange, policy:ComparisonPolicy):Bool {
-		return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
+		return MergeRangeUtil.compareWordMergeContents(MergeWordFragment.newFromRange(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
 			ThreeSide.fromEnum(ThreeSideEnum.LEFT))
-			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
+			&& MergeRangeUtil.compareWordMergeContents(MergeWordFragment.newFromRange(range), texts, policy, ThreeSide.fromEnum(ThreeSideEnum.BASE),
 				ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 	}
 }
@@ -300,6 +305,7 @@ class GreedyHelper {
 			subArray.push(fragments[i]);
 		}
 
-		return subArray.fold((prefix, fragment) -> MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2)), empty);
+		return subArray.fold((fragment, prefix) -> new MergingCharSequence(prefix, text.substring(fragment.getStartOffset2(), fragment.getEndOffset2())),
+			empty);
 	}
 }

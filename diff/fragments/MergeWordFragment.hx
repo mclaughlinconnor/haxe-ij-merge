@@ -22,8 +22,8 @@ class MergeWordFragment {
 		myEndOffset3 = endOffset3;
 	}
 
-	public function newFromRange(range:MergeRange) {
-		new MergeWordFragment(range.start1, range.end1, range.start2, range.end2, range.start3, range.end3);
+	public static function newFromRange(range:MergeRange): MergeWordFragment {
+		return new MergeWordFragment(range.start1, range.end1, range.start2, range.end2, range.start3, range.end3);
 	}
 
 	public function getStartOffset(side:ThreeSide):Int {
