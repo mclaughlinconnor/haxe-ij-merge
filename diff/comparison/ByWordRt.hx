@@ -187,7 +187,7 @@ class ByWordRt {
 
 	static function convertIntoMergeWordFragments(conflicts:Array<MergeRange>):Array<MergeWordFragment> {
 		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return conflicts.map(ch -> new MergeWordFragmentImpl(ch));
+		return conflicts.map(ch -> MergeWordFragment.newFromRange(ch));
 	}
 
 	static function convertIntoDiffFragments(changes:DiffIterable):Array<DiffFragment> {
