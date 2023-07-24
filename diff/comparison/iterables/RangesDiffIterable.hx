@@ -21,7 +21,7 @@ class RangesChangeIterable implements ChangeIterable {
 	private final myIterator:Iterator<Range>;
 	private var myLast:Range;
 
-	private function new(ranges:Array<Range>) {
+	public function new(ranges:Array<Range>) {
 		myIterator = ranges.iterator();
 
 		next();
