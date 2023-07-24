@@ -48,7 +48,9 @@ class BiPredicate<T, U> {
 	 * @return {@code true} if the input arguments match the predicate,
 	 * otherwise {@code false}
 	 */
-	function test(t:T, u:U):Bool;
+	function test(t:T, u:U):Bool {
+		return true;
+	}
 
 	/**
 	 * Returns a composed predicate that represents a short-circuiting logical

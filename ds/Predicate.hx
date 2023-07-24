@@ -35,7 +35,7 @@ package ds;
  *
  * @since 1.8
  */
- @:generic
+@:generic
 class Predicate<T> {
 	/**
 	 * Evaluates this predicate on the given argument.
@@ -44,7 +44,9 @@ class Predicate<T> {
 	 * @return {@code true} if the input argument matches the predicate,
 	 * otherwise {@code false}
 	 */
-	public function test(t:T):Bool;
+	public function test(t:T):Bool {
+		return true;
+	}
 
 	/**
 	 * Returns a composed predicate that represents a short-circuiting logical
@@ -107,7 +109,7 @@ class Predicate<T> {
 	 * @return a predicate that tests if two arguments are equal according
 	 * to {@link Objects#equals(Object, Object)}
 	 */
-	static function isEqual<T>(targetRef:Dynamic):Predicate<T> {
+	public function isEqual<T>(targetRef:Dynamic):Predicate<T> {
 		return (null == targetRef) ?() -> object == null : object -> targetRef.equals(object);
 	}
 
@@ -126,7 +128,7 @@ class Predicate<T> {
 	 *
 	 * @since 11
 	 */
-	static function not<T>(target:Predicate<T>):Predicate<T> {
+	public function not<T>(target:Predicate<T>):Predicate<T> {
 		return target.negate();
 	}
 }
