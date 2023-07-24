@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import ds.MergingCharSequence;
 import diff.comparison.TrimUtil.*;
 import diff.comparison.iterables.DiffIterable;
 import diff.comparison.iterables.DiffIterableUtil;
