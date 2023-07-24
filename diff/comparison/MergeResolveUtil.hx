@@ -192,11 +192,11 @@ class GreedyHelper {
 			}
 			var fragmentIndex1:Int = fragIdx1;
 
-			var fragIdx2:Null<Int> = fragments1[index1]?.getStartOffset1();
+			var fragIdx2:Null<Int> = fragments2[index2]?.getStartOffset1();
 			if (fragIdx2 == null) {
 				fragIdx2 = -1;
 			}
-			var fragmentIndex2:Int = fragments2[index2];
+			var fragmentIndex2:Int = fragIdx2;
 
 			var changeStart1 = -1;
 			var changeStart2 = -1;
@@ -214,7 +214,7 @@ class GreedyHelper {
 
 			// skip till the next block of changes
 			if (changeStart1 != -1 && changeStart2 != -1) {
-				appendBase(Math.min(changeStart1, changeStart2));
+				appendBase(Std.int(Math.min(changeStart1, changeStart2)));
 			} else if (changeStart1 != -1) {
 				appendBase(changeStart1);
 			} else {
@@ -227,16 +227,16 @@ class GreedyHelper {
 			var end2 = index2;
 
 			while (true) {
-				var next1 = fragments1.getOrNull(end1);
-				var next2 = fragments2.getOrNull(end2);
+				var next1 = fragments1[end1];
+				var next2 = fragments2[end2];
 
-				if (next1 != null && next1.startOffset1 <= baseOffsetEnd) {
-					baseOffsetEnd = Std.int(Math.max(baseOffsetEnd, next1.endOffset1));
+				if (next1 != null && next1.getStartOffset1() <= baseOffsetEnd) {
+					baseOffsetEnd = Std.int(Math.max(baseOffsetEnd, next1.getEndOffset1()));
 					end1++;
 					continue;
 				}
-				if (next2 != null && next2.startOffset1 <= baseOffsetEnd) {
-					baseOffsetEnd = Std.int(Math.max(baseOffsetEnd, next2.endOffset1));
+				if (next2 != null && next2.getStartOffset1() <= baseOffsetEnd) {
+					baseOffsetEnd = Std.int(Math.max(baseOffsetEnd, next2.getEndOffset1()));
 					end2++;
 					continue;
 				}
@@ -292,7 +292,7 @@ class GreedyHelper {
 	}
 
 	private function getInsertedContent(fragments:Array<DiffFragment>, start:Int, end:Int, side:Side):String {
-		var text = side.select(leftText, rightText);
+		var text = side.selectA(leftText, rightText);
 		var empty:String = "";
 
 		var subArray:Array<DiffFragment> = [];
