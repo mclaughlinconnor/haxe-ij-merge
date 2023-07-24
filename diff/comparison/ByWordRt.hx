@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import exceptions.IllegalStateException;
 import ds.MergingCharSequence;
 import diff.comparison.TrimUtil.*;
 import diff.comparison.iterables.DiffIterable;
@@ -816,7 +817,7 @@ class AdjustmentPunctuationMatcher {
 		} else if (start12 == start22 && end12 == end22) {
 			matchComplexRangeRight(start12, end12, start11, end11, start21, end21);
 		} else {
-			throw new IllegalStateException();
+			throw new IllegalStateException('');
 		}
 	}
 
