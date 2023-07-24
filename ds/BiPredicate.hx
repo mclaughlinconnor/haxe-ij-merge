@@ -40,6 +40,11 @@ package ds;
  */
 @:generic
 class BiPredicate<T, U> {
+  private final func: (param1: T, param2: U) -> Bool;
+
+  public function new(func: (param1: T, param2: U) -> Bool) {
+    this.func = func;
+  }
 	/**
 	 * Evaluates this predicate on the given arguments.
 	 *
@@ -48,8 +53,8 @@ class BiPredicate<T, U> {
 	 * @return {@code true} if the input arguments match the predicate,
 	 * otherwise {@code false}
 	 */
-	function test(t:T, u:U):Bool {
-		return true;
+	public function test(t:T, u:U):Bool {
+		return this.func(t, u);
 	}
 
 	/**

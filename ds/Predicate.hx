@@ -37,6 +37,11 @@ package ds;
  */
 @:generic
 class Predicate<T> {
+  private final func: (param: T) -> Bool;
+
+  public function new(func: (param: T) -> Bool) {
+    this.func = func;
+  }
 	/**
 	 * Evaluates this predicate on the given argument.
 	 *
@@ -45,7 +50,7 @@ class Predicate<T> {
 	 * otherwise {@code false}
 	 */
 	public function test(t:T):Bool {
-		return true;
+		return this.func(t);
 	}
 
 	/**

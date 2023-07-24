@@ -38,11 +38,19 @@ package ds;
  * @see Supplier
  * @since 1.8
  */
-interface BooleanSupplier {
+class BooleanSupplier {
+	public final func:() -> Bool;
+
+	public function new(func:() -> Bool) {
+		this.func = func;
+	}
+
 	/**
 	 * Gets a result.
 	 *
 	 * @return a result
 	 */
-	public function getAsBoolean():Bool;
+	public function getAsBoolean():Bool {
+		return this.func();
+	};
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
+import diff.util.MergeConflictType;
+import diff.util.ThreeSide;
 import ds.LineOffsets;
 import diff.comparison.ComparisonMergeUtil;
 import diff.comparison.ComparisonPolicy;
@@ -16,52 +18,52 @@ import ds.Predicate;
 class MergeRangeUtil {
 	static public function getMergeType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>,
 			trueEquality:Null<BiPredicate<ThreeSide, ThreeSide>>, conflictResolver:BooleanSupplier) {
-		var isLeftEmpty:Bool = emptiness.test(ThreeSide.LEFT);
-		var isBaseEmpty:Bool = emptiness.test(ThreeSide.BASE);
-		var isRightEmpty:Bool = emptiness.test(ThreeSide.RIGHT);
+		var isLeftEmpty:Bool = emptiness.test(ThreeSide.fromEnum(ThreeSideEnum.LEFT));
+		var isBaseEmpty:Bool = emptiness.test(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+		var isRightEmpty:Bool = emptiness.test(ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 		// assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
 
 		if (isBaseEmpty) {
 			if (isLeftEmpty) { // --=
-				return new MergeConflictType(MergeConflictType.Type.INSERTED, false, true);
+				return new MergeConflictType(MergeConflictTypeEnum.INSERTED, false, true);
 			} else if (isRightEmpty) { // =--
-				return new MergeConflictType(MergeConflictType.Type.INSERTED, true, false);
+				return new MergeConflictType(MergeConflictTypeEnum.INSERTED, true, false);
 			} else { // =-=
-				var equalModifications:Bool = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
+				var equalModifications:Bool = equality.test(ThreeSide.fromEnum(ThreeSideEnum.LEFT), ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 				if (equalModifications) {
-					return new MergeConflictType(MergeConflictType.Type.INSERTED, true, true);
+					return new MergeConflictType(MergeConflictTypeEnum.INSERTED, true, true);
 				} else {
-					return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, false);
+					return new MergeConflictType(MergeConflictTypeEnum.CONFLICT, true, true, false);
 				}
 			}
 		} else {
 			if (isLeftEmpty && isRightEmpty) { // -=-
-				return new MergeConflictType(MergeConflictType.Type.DELETED, true, true);
+				return new MergeConflictType(MergeConflictTypeEnum.DELETED, true, true);
 			} else { // -==, ==-, ===
-				var unchangedLeft:Bool = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
-				var unchangedRight:Bool = equality.test(ThreeSide.BASE, ThreeSide.RIGHT);
+				var unchangedLeft:Bool = equality.test(ThreeSide.fromEnum(ThreeSideEnum.BASE), ThreeSide.fromEnum(ThreeSideEnum.LEFT));
+				var unchangedRight:Bool = equality.test(ThreeSide.fromEnum(ThreeSideEnum.BASE), ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 
 				if (unchangedLeft && unchangedRight) {
 					// assert trueEquality != null;
-					var trueUnchangedLeft:Bool = trueEquality.test(ThreeSide.BASE, ThreeSide.LEFT);
-					var trueUnchangedRight:Bool = trueEquality.test(ThreeSide.BASE, ThreeSide.RIGHT);
+					var trueUnchangedLeft:Bool = trueEquality.test(ThreeSide.fromEnum(ThreeSideEnum.BASE), ThreeSide.fromEnum(ThreeSideEnum.LEFT));
+					var trueUnchangedRight:Bool = trueEquality.test(ThreeSide.fromEnum(ThreeSideEnum.BASE), ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 					// assert !trueUnchangedLeft || !trueUnchangedRight;
-					return new MergeConflictType(MergeConflictType.Type.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
+					return new MergeConflictType(MergeConflictTypeEnum.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
 				}
 
 				if (unchangedLeft) {
-					return new MergeConflictType(isRightEmpty ? MergeConflictType.Type.DELETED : MergeConflictType.Type.MODIFIED, false, true);
+					return new MergeConflictType(isRightEmpty ? MergeConflictTypeEnum.DELETED : MergeConflictTypeEnum.MODIFIED, false, true);
 				}
 				if (unchangedRight) {
-					return new MergeConflictType(isLeftEmpty ? MergeConflictType.Type.DELETED : MergeConflictType.Type.MODIFIED, true, false);
+					return new MergeConflictType(isLeftEmpty ? MergeConflictTypeEnum.DELETED : MergeConflictTypeEnum.MODIFIED, true, false);
 				}
 
-				var equalModifications:Bool = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
+				var equalModifications:Bool = equality.test(ThreeSide.fromEnum(ThreeSideEnum.LEFT), ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
 				if (equalModifications) {
-					return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
+					return new MergeConflictType(MergeConflictTypeEnum.MODIFIED, true, true);
 				} else {
-					var canBeResolved:Bool = !isLeftEmpty && !isRightEmpty && conflictResolver.getAsBool();
-					return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, canBeResolved);
+					var canBeResolved:Bool = !isLeftEmpty && !isRightEmpty && conflictResolver.getAsBoolean();
+					return new MergeConflictType(MergeConflictTypeEnum.CONFLICT, true, true, canBeResolved);
 				}
 			}
 		}
@@ -123,8 +125,8 @@ class MergeRangeUtil {
 	}
 
 	static public function getWordMergeType(fragment:MergeWordFragment, texts:Array<String>, policy:ComparisonPolicy):MergeConflictType {
-		return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
-			(side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2), null, () -> false);
+		return getMergeType(new Predicate((side) -> isWordMergeIntervalEmpty(fragment, side)),
+			new BiPredicate((side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2)), null, new BooleanSupplier(() -> false));
 	}
 
 	static public function compareWordMergeContents(fragment:MergeWordFragment, texts:Array<String>, policy:ComparisonPolicy, side1:ThreeSide,
