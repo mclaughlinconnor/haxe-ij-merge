@@ -196,7 +196,7 @@ class GreedyHelper {
 			if (fragIdx2 == null) {
 				fragIdx2 = -1;
 			}
-			var fragmentIndex2:Int = fragments2.getOrNull(index2);
+			var fragmentIndex2:Int = fragments2[index2];
 
 			var changeStart1 = -1;
 			var changeStart2 = -1;
@@ -257,22 +257,22 @@ class GreedyHelper {
 			lastBaseOffset = baseOffsetEnd;
 
 			// merge and apply non-conflicted insertions
-			if (inserted1.isEmpty() && inserted2.isEmpty())
+			if (inserted1 == '' && inserted2 == '')
 				continue;
 
-			if (inserted2.isEmpty()) {
-				newContent.append(inserted1);
+			if (inserted2 == '') {
+				newContent.add(inserted1);
 				continue;
 			}
 
-			if (inserted1.isEmpty()) {
-				newContent.append(inserted2);
+			if (inserted1 == '') {
+				newContent.add(inserted2);
 				continue;
 			}
 
 			if (ComparisonUtil.isEqualTexts(inserted1, inserted2, policy)) {
 				var inserted = if (inserted1.length <= inserted2.length) inserted1 else inserted2;
-				newContent.append(inserted);
+				newContent.add(inserted);
 				continue;
 			}
 
@@ -284,9 +284,11 @@ class GreedyHelper {
 	}
 
 	private function appendBase(endOffset:Int) {
-		if (lastBaseOffset == endOffset)
-			return newContent.append(baseText.subSequence(lastBaseOffset, endOffset));
-		return lastBaseOffset = endOffset;
+		if (lastBaseOffset == endOffset) {
+			return;
+		}
+
+		newContent.add(baseText.substring(lastBaseOffset, endOffset));
 	}
 
 	private function getInsertedContent(fragments:Array<DiffFragment>, start:Int, end:Int, side:Side):String {
