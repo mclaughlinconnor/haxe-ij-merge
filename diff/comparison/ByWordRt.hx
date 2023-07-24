@@ -475,9 +475,9 @@ class MergeDefaultCorrector {
 
 	public function build():Array<MergeRange> {
 		for (range in myIterable) {
-			var endCut:Int = expandWhitespacesBackward(myText1, myText2, myText3, range.start1, range.start2, range.start3, range.end1, range.end2,
+			var endCut:Int = expandWhitespacesBackwardB(myText1, myText2, myText3, range.start1, range.start2, range.start3, range.end1, range.end2,
 				range.end3);
-			var startCut:Int = expandWhitespacesForward(myText1, myText2, myText3, range.start1, range.start2, range.start3, range.end1
+			var startCut:Int = expandWhitespacesForwardB(myText1, myText2, myText3, range.start1, range.start2, range.start3, range.end1
 				- endCut,
 				range.end2
 				- endCut, range.end3
