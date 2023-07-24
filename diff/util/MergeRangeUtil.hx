@@ -67,14 +67,14 @@ class MergeRangeUtil {
 		}
 	}
 
-	static public function getLineThreeWayDiffType(fragment:MergeLineFragment, sequences:List<String>, lineOffsets:List<LineOffsets>,
+	static public function getLineThreeWayDiffType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
 		return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
 			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2), null,
 			() -> canResolveLineConflict(fragment, sequences, lineOffsets));
 	}
 
-	static public function getLineMergeType(fragment:MergeLineFragment, sequences:List<String>, lineOffsets:List<LineOffsets>,
+	static public function getLineMergeType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
 		return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
 			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
@@ -82,13 +82,13 @@ class MergeRangeUtil {
 			() -> canResolveLineConflict(fragment, sequences, lineOffsets));
 	}
 
-	static private function canResolveLineConflict(fragment:MergeLineFragment, sequences:List<String>, lineOffsets:List<LineOffsets>):Bool {
-		var contents:List<String> = ThreeSide.map(side -> getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side),
+	static private function canResolveLineConflict(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>):Bool {
+		var contents:Array<String> = ThreeSide.map(side -> getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side),
 			fragment.getEndLine(side)));
 		return ComparisonMergeUtil.tryResolveConflict(contents.get(0), contents.get(1), contents.get(2)) != null;
 	}
 
-	static private function compareLineMergeContents(fragment:MergeLineFragment, sequences:List<String>, lineOffsets:List<LineOffsets>,
+	static private function compareLineMergeContents(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy, side1:ThreeSide, side2:ThreeSide):Bool {
 		var start1:Int = fragment.getStartLine(side1);
 		var end1:Int = fragment.getEndLine(side1);
@@ -122,23 +122,23 @@ class MergeRangeUtil {
 		return fragment.getStartLine(side) == fragment.getEndLine(side);
 	}
 
-	static public function getWordMergeType(fragment:MergeWordFragment, texts:List<String>, policy:ComparisonPolicy):MergeConflictType {
+	static public function getWordMergeType(fragment:MergeWordFragment, texts:Array<String>, policy:ComparisonPolicy):MergeConflictType {
 		return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
 			(side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2), null, () -> false);
 	}
 
-	static public function compareWordMergeContents(fragment:MergeWordFragment, texts:List<String>, policy:ComparisonPolicy, side1:ThreeSide,
+	static public function compareWordMergeContents(fragment:MergeWordFragment, texts:Array<String>, policy:ComparisonPolicy, side1:ThreeSide,
 			side2:ThreeSide):Bool {
 		var start1:Int = fragment.getStartOffset(side1);
 		var end1:Int = fragment.getEndOffset(side1);
 		var start2:Int = fragment.getStartOffset(side2);
 		var end2:Int = fragment.getEndOffset(side2);
 
-		var document1:String = side1.select(texts);
-		var document2:String = side2.select(texts);
+		var document1:String = side1.selectC(texts);
+		var document2:String = side2.selectC(texts);
 
-		var content1:String = document1.subSequence(start1, end1);
-		var content2:String = document2.subSequence(start2, end2);
+		var content1:String = document1.substring(start1, end1);
+		var content2:String = document2.substring(start2, end2);
 		return ComparisonUtil.isEqualTexts(content1, content2, policy);
 	}
 
@@ -146,7 +146,7 @@ class MergeRangeUtil {
 		return fragment.getStartOffset(side) == fragment.getEndOffset(side);
 	}
 
-	static public function getLineLeftToRightThreeSideDiffType(fragment:MergeLineFragment, sequences:List<String>, lineOffsets:List<LineOffsets>,
+	static public function getLineLeftToRightThreeSideDiffType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
 		return getLeftToRightDiffType((side) -> isLineMergeIntervalEmpty(fragment, side),
 			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
