@@ -202,7 +202,7 @@ class ByWordRt {
 	 *
 	 * Return two DiffIterable: (0, len1) - (0, len21) and (0, len1) - (0, len22)
 	 */
-	private static function comparePunctuation2Side(text1:String, text21:String, text22:String):Couple<FairDiffIterable> {
+	public static function comparePunctuation2Side(text1:String, text21:String, text22:String):Couple<FairDiffIterable> {
 		var text2:String = new MergingCharSequence(text21, text22);
 		var changes:FairDiffIterable = ByCharRt.comparePunctuation(text1, text2);
 
@@ -825,13 +825,13 @@ class AdjustmentPunctuationMatcher {
 		var sequence21:String = myText2.substring(start12, end12);
 		var sequence22:String = myText2.substring(start22, end22);
 
-		var changes:Couple<FairDiffIterable> = comparePunctuation2Side(sequence1, sequence21, sequence22);
+		var changes:Couple<FairDiffIterable> = ByWordRt.comparePunctuation2Side(sequence1, sequence21, sequence22);
 
 		for (ch in changes.first.iterateUnchanged()) {
-			myBuilder.markEqual(start1 + ch.start1, start12 + ch.start2, start1 + ch.end1, start12 + ch.end2);
+			myBuilder.markEqualC(start1 + ch.start1, start12 + ch.start2, start1 + ch.end1, start12 + ch.end2);
 		}
 		for (ch in changes.second.iterateUnchanged()) {
-			myBuilder.markEqual(start1 + ch.start1, start22 + ch.start2, start1 + ch.end1, start22 + ch.end2);
+			myBuilder.markEqualC(start1 + ch.start1, start22 + ch.start2, start1 + ch.end1, start22 + ch.end2);
 		}
 	}
 
@@ -840,14 +840,14 @@ class AdjustmentPunctuationMatcher {
 		var sequence12:String = myText1.substring(start21, end21);
 		var sequence2:String = myText2.substring(start2, end2);
 
-		var changes:Couple<FairDiffIterable> = comparePunctuation2Side(sequence2, sequence11, sequence12);
+		var changes:Couple<FairDiffIterable> = ByWordRt.comparePunctuation2Side(sequence2, sequence11, sequence12);
 
 		// Mirrored ch.*1 and ch.*2 as we use "compare2Side" that works with 2 right side, while we have 2 left here
 		for (ch in changes.first.iterateUnchanged()) {
-			myBuilder.markEqual(start11 + ch.start2, start2 + ch.start1, start11 + ch.end2, start2 + ch.end1);
+			myBuilder.markEqualC(start11 + ch.start2, start2 + ch.start1, start11 + ch.end2, start2 + ch.end1);
 		}
 		for (ch in changes.second.iterateUnchanged()) {
-			myBuilder.markEqual(start21 + ch.start2, start2 + ch.start1, start21 + ch.end2, start2 + ch.end1);
+			myBuilder.markEqualC(start21 + ch.start2, start2 + ch.start1, start21 + ch.end2, start2 + ch.end1);
 		}
 	}
 
