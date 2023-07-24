@@ -26,19 +26,19 @@ abstract class ChangeDiffIterableBase extends DiffIterable {
 		myLength2 = length2;
 	}
 
-	public override function getLength1():Int {
+	public function getLength1():Int {
 		return myLength1;
 	}
 
-	public override function getLength2():Int {
+	public function getLength2():Int {
 		return myLength2;
 	}
 
-	public override function changes():Iterator<Range> {
+	public function changes():Iterator<Range> {
 		return new ChangedIterator(createChangeIterable());
 	}
 
-	public override function unchanged():Iterator<Range> {
+	public function unchanged():Iterator<Range> {
 		return new UnchangedIterator(createChangeIterable(), myLength1, myLength2);
 	}
 
@@ -48,7 +48,7 @@ abstract class ChangeDiffIterableBase extends DiffIterable {
 class ChangedIterator {
 	private final myIterable:ChangeIterable;
 
-	private function new(iterable:ChangeIterable) {
+	public function new(iterable:ChangeIterable) {
 		myIterable = iterable;
 	}
 
@@ -71,7 +71,7 @@ class UnchangedIterator {
 	private var lastIndex1:Int = 0;
 	private var lastIndex2:Int = 0;
 
-	private function new(iterable:ChangeIterable, length1:Int, length2:Int) {
+	public function new(iterable:ChangeIterable, length1:Int, length2:Int) {
 		myIterable = iterable;
 		myLength1 = length1;
 		myLength2 = length2;
