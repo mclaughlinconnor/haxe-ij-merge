@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.comparison.iterables.DiffIterableUtil.ExpandChangeBuilder;
 import ds.Pair;
 import util.diff.Diff.ChangeBuilder;
 import diff.comparison.iterables.FairDiffIterable;
@@ -13,15 +14,15 @@ import diff.comparison.iterables.DiffIterableUtil.*;
 
 class ByLineRt {
 	static public function compareA(lines1:Array<String>, lines2:Array<String>, policy:ComparisonPolicy):FairDiffIterable {
-		return doCompare(getLines(lines1, policy), getLines(lines2, policy), policy);
+		return doCompareA(getLines(lines1, policy), getLines(lines2, policy), policy);
 	}
 
 	static public function compareB(lines1:Array<String>, lines2:Array<String>, lines3:Array<String>, policy:ComparisonPolicy,):Array<MergeRange> {
-		return doCompare(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, false);
+		return doCompareB(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, false);
 	}
 
 	static public function merge(lines1:Array<String>, lines2:Array<String>, lines3:Array<String>, policy:ComparisonPolicy):Array<MergeRange> {
-		return doCompare(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, true);
+		return doCompareB(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, true);
 	}
 
 	//
@@ -30,15 +31,15 @@ class ByLineRt {
 
 	static private function doCompareA(lines1:Array<Line>, lines2:Array<Line>, policy:ComparisonPolicy):FairDiffIterable {
 		if (policy == IGNORE_WHITESPACES) {
-			var changes:FairDiffIterable = compareSmart(lines1, lines2, indicator);
-			changes = optimizeLineChunks(lines1, lines2, changes, indicator);
+			var changes:FairDiffIterable = compareSmart(lines1, lines2);
+			changes = optimizeLineChunks(lines1, lines2, changes);
 			return expandRanges(lines1, lines2, changes);
 		} else {
 			var iwLines1:Array<Line> = convertMode(lines1, IGNORE_WHITESPACES);
 			var iwLines2:Array<Line> = convertMode(lines2, IGNORE_WHITESPACES);
 
-			var iwChanges:FairDiffIterable = compareSmart(iwLines1, iwLines2, indicator);
-			iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
+			var iwChanges:FairDiffIterable = compareSmart(iwLines1, iwLines2);
+			iwChanges = optimizeLineChunks(lines1, lines2, iwChanges);
 			return correctChangesSecondStep(lines1, lines2, iwChanges);
 		}
 	}
@@ -52,31 +53,30 @@ class ByLineRt {
 		var iwLines2:Array<Line> = convertMode(lines2, IGNORE_WHITESPACES);
 		var iwLines3:Array<Line> = convertMode(lines3, IGNORE_WHITESPACES);
 
-		var iwChanges1:FairDiffIterable = compareSmart(iwLines2, iwLines1, indicator);
-		iwChanges1 = optimizeLineChunks(lines2, lines1, iwChanges1, indicator);
+		var iwChanges1:FairDiffIterable = compareSmart(iwLines2, iwLines1);
+		iwChanges1 = optimizeLineChunks(lines2, lines1, iwChanges1);
 		var iterable1:FairDiffIterable = correctChangesSecondStep(lines2, lines1, iwChanges1);
 
-		var iwChanges2:FairDiffIterable = compareSmart(iwLines2, iwLines3, indicator);
-		iwChanges2 = optimizeLineChunks(lines2, lines3, iwChanges2, indicator);
+		var iwChanges2:FairDiffIterable = compareSmart(iwLines2, iwLines3);
+		iwChanges2 = optimizeLineChunks(lines2, lines3, iwChanges2);
 		var iterable2:FairDiffIterable = correctChangesSecondStep(lines2, lines3, iwChanges2);
 
 		if (keepIgnoredChanges && policy != DEFAULT) {
 			return ComparisonMergeUtil.buildMerge(iterable1, iterable2,
 				(index1, index2, index3) -> equalsDefaultPolicy(lines1, lines2, lines3, index1, index2, index3));
 		} else {
-			return ComparisonMergeUtil.buildSimple(iterable1, iterable2, indicator);
+			return ComparisonMergeUtil.buildSimple(iterable1, iterable2);
 		}
 	}
 
 	static private function equalsDefaultPolicy(lines1:Array<Line>, lines2:Array<Line>, lines3:Array<Line>, index1:Int, index2:Int, index3:Int):Bool {
-		var content1:String = lines1.get(index1).getContent();
-		var content2:String = lines2.get(index2).getContent();
-		var content3:String = lines3.get(index3).getContent();
+		var content1:String = lines1[index1].getContent();
+		var content2:String = lines2[index2].getContent();
+		var content3:String = lines3[index3].getContent();
 		return ComparisonUtil.isEquals(content2, content1, DEFAULT) && ComparisonUtil.isEquals(content2, content3, DEFAULT);
 	}
 
-	static private function correctChangesSecondStep(@NotNull lines1:Array<Line>, @NotNull lines2:Array<Line>,
-		@NotNull changes:FairDiffIterable):FairDiffIterable {
+	static private function correctChangesSecondStep(lines1:Array<Line>, lines2:Array<Line>, changes:FairDiffIterable):FairDiffIterable {
 		/*
 		 * We want to fix invalid matching here:
 		 *
@@ -106,13 +106,14 @@ class ByLineRt {
 		 */
 		final builder:ExpandChangeBuilder = new ExpandChangeBuilder(lines1, lines2);
 
-		new BuilderRunner(builder).run();
+    // TODO: nothing is returned here
+		new BuilderRunner(builder, changes).run();
 		return fair(builder.finish());
 	}
 
-	static private function getBestMatchingAlignment(subLines1:Array<Int>, subLines2:Array<Int>, lines1:Array<Line>, lines2:Array<Line>):Array<Int> {
+	static public function getBestMatchingAlignment(subLines1:Array<Int>, subLines2:Array<Int>, lines1:Array<Line>, lines2:Array<Line>):Array<Int> {
 		// assert subLines1.size() < subLines2.size();
-		final size:Int = subLines1.size();
+		final size:Int = subLines1.length;
 
 		final comb:Array<Int> = new Array();
 		final best:Array<Int> = new Array();
@@ -139,13 +140,13 @@ class ByLineRt {
 	static private function compareSmart(lines1:Array<Line>, lines2:Array<Line>):FairDiffIterable {
 		var threshold:Int = ComparisonUtil.getUnimportantLineCharCount();
 		if (threshold == 0) {
-			return diff(lines1, lines2, indicator);
+			return diffB(lines1, lines2);
 		}
 
 		var bigLines1:Pair<Array<Line>, Array<Int>> = getBigLines(lines1, threshold);
 		var bigLines2:Pair<Array<Line>, Array<Int>> = getBigLines(lines2, threshold);
 
-		var changes:FairDiffIterable = diff(bigLines1.first, bigLines2.first, indicator);
+		var changes:FairDiffIterable = diffB(bigLines1.first, bigLines2.first);
 		return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes, indicator).build();
 	}
 
@@ -153,12 +154,12 @@ class ByLineRt {
 		var bigLines:Array<Line> = new Array();
 		var indexes:Array<Int> = new Array();
 
-		for (i in 0...lines.size()) {
-			var line:Line = lines.get(i);
+		for (i in 0...lines.length) {
+			var line:Line = lines[i];
 
 			if (line.getNonSpaceChars() > threshold) {
-				bigLines.add(line);
-				indexes.add(i);
+				bigLines.push(line);
+				indexes.push(i);
 			}
 		}
 		return Pair.create(bigLines, indexes);
@@ -168,49 +169,51 @@ class ByLineRt {
 		var changes:Array<Range> = new Array();
 
 		for (ch in iterable.iterateChanges()) {
-			var expanded:Range = TrimUtil.expand(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
+			var expanded:Range = TrimUtil.expandA(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
 			if (!expanded.isEmpty()) {
-				changes.add(expanded);
+				changes.push(expanded);
 			}
 		}
 
-		return fair(create(changes, lines1.size(), lines2.size()));
+		return fair(createB(changes, lines1.length, lines2.length));
 	}
 
 	//
 	// Lines
 	//
 	static private function getLines(text:Array<String>, policy:ComparisonPolicy):Array<Line> {
-		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return text.stream().map(line -> new Line(line, policy)).collect(Collectors.toList());
+		return text.map(line -> new Line(line, policy));
 	}
 
 	static private function convertMode(original:Array<Line>, policy:ComparisonPolicy):Array<Line> {
 		var result:Array<Line> = new Array();
 		for (line in original) {
-			var newLine:Line = line.myPolicy != policy ? new Line(line.getContent(), policy) : line;
-			result.add(newLine);
+			var newLine:Line = line.getPolicy() != policy ? new Line(line.getContent(), policy) : line;
+			result.push(newLine);
 		}
 		return result;
 	}
 
 	static public function convertIntoMergeLineFragments(conflicts:Array<MergeRange>):Array<MergeLineFragment> {
-		// noinspection SSBasedInspection - Can't use ContainerUtil
-		return conflicts.map(ch -> new MergeLineFragment(ch)).collect(Collectors.toList());
+		return conflicts.map(ch -> new MergeLineFragment(ch));
 	}
 }
 
 class Line {
-	private final myText:String;
-	private final myPolicy:ComparisonPolicy;
-	private final myHash:Int;
-	private final myNonSpaceChars:Int;
+	private var myText:String;
+	private var myPolicy:ComparisonPolicy;
+	private var myHash:Int;
+	private var myNonSpaceChars:Int;
 
 	public function new(text:String, policy:ComparisonPolicy) {
 		myText = text;
 		myPolicy = policy;
-		myHash = ComparisonUtil.hashCode(text, policy);
 		myNonSpaceChars = countNonSpaceChars(text);
+	}
+
+
+	public function getPolicy():ComparisonPolicy {
+		return myPolicy;
 	}
 
 	public function getContent():String {
@@ -226,25 +229,18 @@ class Line {
 			return true;
 		}
 		// assert myPolicy == line.myPolicy;
-		if (hashCode() != line.hashCode()) {
-			return false;
-		}
-		return ComparisonUtil.isEquals(getContent(), line.getContent(), myPolicy);
-	}
-
-	public function hashCode():Int {
-		return myHash;
+		return ComparisonUtil.isEquals(getContent(), l.getContent(), myPolicy);
 	}
 
 	static private function countNonSpaceChars(text:String):Int {
 		var nonSpace:Int = 0;
 
-		var len:Int = text.length();
+		var len:Int = text.length;
 		var offset:Int = 0;
 
 		while (offset < len) {
 			var c:String = text.charAt(offset);
-			if (!isWhiteSpace(c)) {
+			if (!TrimUtil.isWhiteSpace(c)) {
 				nonSpace++;
 			}
 			offset++;
@@ -259,10 +255,18 @@ class BuilderRunner {
 	private var last1:Int = 0;
 	private var last2:Int = 0;
 
-	private var myBuilder:ChangeBuilder;
+	private var builder:diff.comparison.iterables.DiffIterableUtil.ChangeBuilder;
+	private var changes:FairDiffIterable;
 
-	public function new(builder:ChangeBuilder) {
+  private var lines1: Array<Line>;
+  private var lines2: Array<Line>;
+
+	public function new(builder:diff.comparison.iterables.DiffIterableUtil.ChangeBuilder, changes: FairDiffIterable, lines1: Array<Line> , lines2: Array<Line>) {
+    this.changes = changes;
 		this.builder = builder;
+
+    this.lines1 = lines1;
+    this.lines2 = lines2;
 	}
 
 	public function run():Void {
@@ -271,13 +275,13 @@ class BuilderRunner {
 			for (i in 0...count) {
 				var index1:Int = range.start1 + i;
 				var index2:Int = range.start2 + i;
-				var line1:Line = lines1.get(index1);
-				var line2:Line = lines2.get(index2);
+				var line1:Line = lines1[index1];
+				var line2:Line = lines2[index2];
 
 				if (!ComparisonUtil.isEquals(sample, line1.getContent(), IGNORE_WHITESPACES)) {
 					if (line1.equals(line2)) {
 						flush(index1, index2);
-						builder.markEqual(index1, index2);
+						builder.markEqualA(index1, index2);
 					} else {
 						flush(index1, index2);
 						sample = line1.getContent();
@@ -293,20 +297,20 @@ class BuilderRunner {
 			return;
 		}
 
-		var start1:Int = Math.max(last1, builder.getIndex1());
-		var start2:Int = Math.max(last2, builder.getIndex2());
+		var start1:Int = Std.int(Math.max(last1, builder.getIndex1()));
+		var start2:Int = Std.int(Math.max(last2, builder.getIndex2()));
 
 		var subLines1:Array<Int> = new Array();
 		var subLines2:Array<Int> = new Array();
 		for (i in start1...line1) {
-			if (ComparisonUtil.isEquals(sample, lines1.get(i).getContent(), IGNORE_WHITESPACES)) {
-				subLines1.add(i);
+			if (ComparisonUtil.isEquals(sample, lines1[i].getContent(), IGNORE_WHITESPACES)) {
+				subLines1.push(i);
 				last1 = i + 1;
 			}
 		}
 		for (i in start2...line2) {
-			if (ComparisonUtil.isEquals(sample, lines2.get(i).getContent(), IGNORE_WHITESPACES)) {
-				subLines2.add(i);
+			if (ComparisonUtil.isEquals(sample, lines2[i].getContent(), IGNORE_WHITESPACES)) {
+				subLines2.push(i);
 				last2 = i + 1;
 			}
 		}
@@ -318,38 +322,38 @@ class BuilderRunner {
 	}
 
 	private function alignExactMatching(subLines1:Array<Int>, subLines2:Array<Int>):Void {
-		var n:Int = Math.max(subLines1.size(), subLines2.size());
+		var n:Int = Std.int(Math.max(subLines1.length, subLines2.length));
 		var skipAligning:Bool = n > 10 || // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
-			subLines1.size() == subLines2.size(); // nothing to do
+			subLines1.length == subLines2.length; // nothing to do
 
 		if (skipAligning) {
-			var count:Int = Math.min(subLines1.size(), subLines2.size());
+			var count:Int = Std.int(Math.min(subLines1.length, subLines2.length));
 			for (i in 0...count) {
-				var index1:Int = subLines1.getInt(i);
-				var index2:Int = subLines2.getInt(i);
-				if (lines1.get(index1).equals(lines2.get(index2))) {
-					builder.markEqual(index1, index2);
+				var index1:Int = subLines1[i];
+				var index2:Int = subLines2[i];
+				if (lines1[index1].equals(lines2[index2])) {
+					builder.markEqualA(index1, index2);
 				}
 			}
 			return;
 		}
 
-		if (subLines1.size() < subLines2.size()) {
-			var matching:Array<Int> = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
-			for (i in 0...subLines1.size()) {
-				var index1:Int = subLines1.getInt(i);
-				var index2:Int = subLines2.getInt(matching[i]);
-				if (lines1.get(index1).equals(lines2.get(index2))) {
-					builder.markEqual(index1, index2);
+		if (subLines1.length < subLines2.length) {
+			var matching:Array<Int> = ByLineRt.getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
+			for (i in 0...subLines1.length) {
+				var index1:Int = subLines1[i];
+				var index2:Int = subLines2[matching[i]];
+				if (lines1[index1].equals(lines2[index2])) {
+					builder.markEqualA(index1, index2);
 				}
 			}
 		} else {
-			var matching:Array<Int> = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1);
-			for (i in 0...subLines2.size()) {
-				var index1:Int = subLines1.getInt(matching[i]);
-				var index2:Int = subLines2.getInt(i);
-				if (lines1.get(index1).equals(lines2.get(index2))) {
-					builder.markEqual(index1, index2);
+			var matching:Array<Int> = ByLineRt.getBestMatchingAlignment(subLines2, subLines1, lines2, lines1);
+			for (i in 0...subLines2.length) {
+				var index1:Int = subLines1[matching[i]];
+				var index2:Int = subLines2[i];
+				if (lines1[index1].equals(lines2[index2])) {
+					builder.markEqualA(index1, index2);
 				}
 			}
 		}
@@ -359,8 +363,10 @@ class BuilderRunner {
 class AlignmentRunner {
 	private var bestWeight:Int = 0;
 
+	public function new() {}
+
 	public function run():Void {
-		combinations(0, subLines2.size() - 1, 0);
+		combinations(0, subLines2.length - 1, 0);
 	}
 
 	private function combinations(start:Int, n:Int, k:Int):Void {
