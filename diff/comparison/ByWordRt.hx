@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import diff.comparison.iterables.SubiterableDiffIterable;
 import exceptions.IllegalStateException;
 import ds.MergingCharSequence;
 import diff.comparison.TrimUtil.*;
@@ -11,7 +12,6 @@ import diff.comparison.ChunkOptimizer;
 import diff.fragments.DiffFragment;
 import diff.fragments.MergeWordFragment;
 import diff.util.MergeRange;
-import diff.util.Range;
 import diff.util.Range;
 import ds.Couple;
 import exceptions.IllegalArgumentException;
