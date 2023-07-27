@@ -7,13 +7,13 @@ import diff.comparison.ComparisonUtil;
 import diff.fragments.MergeLineFragment;
 import diff.fragments.MergeWordFragment;
 import diff.tools.util.text.LineOffsets;
+import diff.util.DiffRangeUtil.getLinesContent;
 import diff.util.MergeConflictType;
 import diff.util.ThreeSide;
 import ds.BiPredicate;
 import ds.BooleanSupplier;
 import ds.Predicate;
 
-// import diff.util.DiffRangeUtil.getLinesContent;
 class MergeRangeUtil {
 	static public function getMergeType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>,
 			trueEquality:Null<BiPredicate<ThreeSide, ThreeSide>>, conflictResolver:BooleanSupplier) {
