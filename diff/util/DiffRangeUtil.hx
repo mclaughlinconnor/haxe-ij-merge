@@ -2,6 +2,7 @@
 package diff.util;
 
 import diff.tools.util.text.LineOffsets;
+import exceptions.IndexOutOfBoundsException;
 import ds.TextRange;
 
 class DiffRangeUtil {
@@ -16,7 +17,7 @@ class DiffRangeUtil {
 			return new TextRange(lineStartOffset, lineStartOffset);
 		} else {
 			var startOffset:Int = lineOffsets.getLineStart(line1);
-			var endOffset:Int = lineOffsets.getLineEnd(line2 - 1);
+			var endOffset:Int = lineOffsets.getLineEndA(line2 - 1);
 			if (includeNewline && endOffset < lineOffsets.getTextLength()) {
 				endOffset++;
 			}
@@ -29,14 +30,14 @@ class DiffRangeUtil {
 		final endLine = el == null ? 0 : el;
 
 		if (startLine < 0 || startLine > endLine || endLine > lineOffsets.getLineCount()) {
-			throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'", startLine, endLine, lineOffsets.getLineCount()));
+			throw new IndexOutOfBoundsException('Wrong line range: [$startLine, $endLine; lineCount: "$lineOffsets.getLineCount()"');
 		}
 
 		var result:Array<String> = new Array();
 		for (i in startLine...endLine) {
 			var start:Int = lineOffsets.getLineStart(i);
-			var end:Int = lineOffsets.getLineEnd(i);
-			result.add(text.subSequence(start, end).toString());
+			var end:Int = lineOffsets.getLineEndA(i);
+			result.push(text.substring(start, end).toString());
 		}
 		return result;
 	}
