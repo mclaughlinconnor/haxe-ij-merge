@@ -47,7 +47,7 @@ class Enumerator<T:{}> {
 		}
 
 		var number:Int = myNumbers.get(object);
-		if (number == 0) {
+		if (number == null) {
 			number = myNextNumber++;
 			myNumbers.set(object, number);
 			return -number;
