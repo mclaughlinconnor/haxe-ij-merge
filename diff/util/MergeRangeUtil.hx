@@ -12,9 +12,9 @@ import diff.fragments.MergeWordFragment;
 import ds.BiPredicate;
 import ds.BooleanSupplier;
 import ds.Predicate;
+
 // import diff.tools.util.text.LineOffsets;
 // import diff.util.DiffRangeUtil.getLinesContent;
-
 class MergeRangeUtil {
 	static public function getMergeType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>,
 			trueEquality:Null<BiPredicate<ThreeSide, ThreeSide>>, conflictResolver:BooleanSupplier) {
@@ -71,23 +71,24 @@ class MergeRangeUtil {
 
 	static public function getLineThreeWayDiffType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
-		return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
-			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2), null,
-			() -> canResolveLineConflict(fragment, sequences, lineOffsets));
+		return getMergeType(new Predicate((side) -> isLineMergeIntervalEmpty(fragment, side)),
+			new BiPredicate((side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2)), null,
+			new BooleanSupplier(() -> canResolveLineConflict(fragment, sequences, lineOffsets)));
 	}
 
 	static public function getLineMergeType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
-		return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
-			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
-			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2),
-			() -> canResolveLineConflict(fragment, sequences, lineOffsets));
+		return getMergeType(new Predicate((side) -> isLineMergeIntervalEmpty(fragment, side)),
+			new BiPredicate((side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2)),
+			new BiPredicate((side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2)),
+			new BooleanSupplier(() -> canResolveLineConflict(fragment, sequences, lineOffsets)));
 	}
 
 	static private function canResolveLineConflict(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>):Bool {
-		var contents:Array<String> = ThreeSide.map(side -> getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side),
-			fragment.getEndLine(side)));
-		return ComparisonMergeUtil.tryResolveConflict(contents.get(0), contents.get(1), contents.get(2)) != null;
+		var contents:Array<String> = [ThreeSideEnum.LEFT, ThreeSideEnum.BASE, ThreeSideEnum.RIGHT].map(side -> getLinesContent(ThreeSide.fromEnum(side)
+			.selectC(sequences), ThreeSide.fromEnum(side).selectC(lineOffsets), fragment.getStartLine(ThreeSide.fromEnum(side)),
+			fragment.getEndLine(ThreeSide.fromEnum(side))));
+		return ComparisonMergeUtil.tryResolveConflict(contents[0], contents[1], contents[2]) != null;
 	}
 
 	static private function compareLineMergeContents(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
@@ -101,10 +102,10 @@ class MergeRangeUtil {
 			return false;
 		}
 
-		var sequence1:String = side1.select(sequences);
-		var sequence2:String = side2.select(sequences);
-		var offsets1:LineOffsets = side1.select(lineOffsets);
-		var offsets2:LineOffsets = side2.select(lineOffsets);
+		var sequence1:String = side1.selectC(sequences);
+		var sequence2:String = side2.selectC(sequences);
+		var offsets1:LineOffsets = side1.selectC(lineOffsets);
+		var offsets2:LineOffsets = side2.selectC(lineOffsets);
 
 		for (i in 0...end1 - start1) {
 			var line1:Int = start1 + i;
@@ -150,41 +151,42 @@ class MergeRangeUtil {
 
 	static public function getLineLeftToRightThreeSideDiffType(fragment:MergeLineFragment, sequences:Array<String>, lineOffsets:Array<LineOffsets>,
 			policy:ComparisonPolicy):MergeConflictType {
-		return getLeftToRightDiffType((side) -> isLineMergeIntervalEmpty(fragment, side),
-			(side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
+		return getLeftToRightDiffType(new Predicate((side) -> isLineMergeIntervalEmpty(fragment, ThreeSide.fromEnum(side))),
+			new BiPredicate((side1,
+					side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, ThreeSide.fromEnum(side1), ThreeSide.fromEnum(side2))));
 	}
 
-	static private function getLeftToRightDiffType(emptiness:Predicate<ThreeSide>, equality:BiPredicate<ThreeSide, ThreeSide>):MergeConflictType {
-		var isLeftEmpty:Bool = emptiness.test(ThreeSide.LEFT);
-		var isBaseEmpty:Bool = emptiness.test(ThreeSide.BASE);
-		var isRightEmpty:Bool = emptiness.test(ThreeSide.RIGHT);
+	static private function getLeftToRightDiffType(emptiness:Predicate<ThreeSideEnum>, equality:BiPredicate<ThreeSideEnum, ThreeSideEnum>):MergeConflictType {
+		var isLeftEmpty:Bool = emptiness.test(ThreeSideEnum.LEFT);
+		var isBaseEmpty:Bool = emptiness.test(ThreeSideEnum.BASE);
+		var isRightEmpty:Bool = emptiness.test(ThreeSideEnum.RIGHT);
 
 		// assert! isLeftEmpty || !isBaseEmpty || !isRightEmpty;
 
 		if (isBaseEmpty) {
 			if (isLeftEmpty) { // --=
-				return new MergeConflictType(MergeConflictType.Type.INSERTED, false, true);
+				return new MergeConflictType(MergeConflictTypeEnum.INSERTED, false, true);
 			} else if (isRightEmpty) { // =--
-				return new MergeConflictType(MergeConflictType.Type.DELETED, true, false);
+				return new MergeConflictType(MergeConflictTypeEnum.DELETED, true, false);
 			} else { // =-=
-				return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
+				return new MergeConflictType(MergeConflictTypeEnum.MODIFIED, true, true);
 			}
 		} else {
 			if (isLeftEmpty && isRightEmpty) { // -=-
-				return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
+				return new MergeConflictType(MergeConflictTypeEnum.MODIFIED, true, true);
 			} else { // -==, ==-, ===
-				var unchangedLeft:Bool = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
-				var unchangedRight:Bool = equality.test(ThreeSide.BASE, ThreeSide.RIGHT);
+				var unchangedLeft:Bool = equality.test(ThreeSideEnum.BASE, ThreeSideEnum.LEFT);
+				var unchangedRight:Bool = equality.test(ThreeSideEnum.BASE, ThreeSideEnum.RIGHT);
 				// assert! unchangedLeft || !unchangedRight;
 
 				if (unchangedLeft) {
-					return new MergeConflictType(isRightEmpty ? MergeConflictType.Type.DELETED : MergeConflictType.Type.MODIFIED, false, true);
+					return new MergeConflictType(isRightEmpty ? MergeConflictTypeEnum.DELETED : MergeConflictTypeEnum.MODIFIED, false, true);
 				}
 				if (unchangedRight) {
-					return new MergeConflictType(isLeftEmpty ? MergeConflictType.Type.INSERTED : MergeConflictType.Type.MODIFIED, true, false);
+					return new MergeConflictType(isLeftEmpty ? MergeConflictTypeEnum.INSERTED : MergeConflictTypeEnum.MODIFIED, true, false);
 				}
 
-				return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
+				return new MergeConflictType(MergeConflictTypeEnum.MODIFIED, true, true);
 			}
 		}
 	}
