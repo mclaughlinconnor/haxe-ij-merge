@@ -31,7 +31,7 @@ class DiffIterableUtil {
 	 * Compare two arrays, basing on equals() and hashCode() of it's elements
 	 */
 	@:generic
-	public static function diffB<T>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+	public static function diffB<T:{}>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
 		var fairIter;
 		FairDiffIterable;
 		try {

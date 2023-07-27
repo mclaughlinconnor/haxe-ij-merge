@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+import ds.Enumerator;
 import config.DiffConfig;
 import ds.Ref;
 import thx.BitSet;
@@ -17,7 +18,7 @@ class Diff {
 	}
 
 	@:generic
-	public static function buildChangesB<T>(objects1:Array<T>, objects2:Array<T>):Change {
+	public static function buildChangesB<T:{}>(objects1:Array<T>, objects2:Array<T>):Change {
 		// Old variant of enumerator worked incorrectly with null values.
 		// This check is to ensure that the corrected version does not Introduce bugs.
 		// for (anObjects1 in objects1) {
@@ -37,8 +38,8 @@ class Diff {
 
 		var trimmedLength:Int = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
 		var enumerator:Enumerator<T> = new Enumerator(trimmedLength);
-		var Ints1:Array<Int> = enumerator.enumerate(objects1, startShift, endCut);
-		var Ints2:Array<Int> = enumerator.enumerate(objects2, startShift, endCut);
+		var Ints1:Array<Int> = enumerator.enumerateB(objects1, startShift, endCut);
+		var Ints2:Array<Int> = enumerator.enumerateB(objects2, startShift, endCut);
 		return doBuildChanges(Ints1, Ints2, new ChangeBuilder(startShift));
 	}
 
