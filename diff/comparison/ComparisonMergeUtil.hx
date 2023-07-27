@@ -9,8 +9,14 @@ import config.DiffConfig;
 import diff.util.Side.SideEnum;
 import iterators.PeakableIteratorWrapper.PeekableIteratorWrapper;
 
-interface SideEquality {
-	function equals(leftIndex:Int, baseIndex:Int, rightIndex:Int):Bool;
+// typedef SideEquality = (leftIndex: Int, baseIndex: Int, rightIndex: Int) -> Bool;
+
+class SideEquality {
+	public var equals:(leftIndex:Int, baseIndex:Int, rightIndex:Int) -> Bool;
+
+  public function new(func: (leftIndex: Int, baseIndex: Int, rightIndex: Int) -> Bool) {
+    this.equals = func;
+  }
 }
 
 class ComparisonMergeUtil {
@@ -143,8 +149,8 @@ class IgnoringChangeBuilder extends ChangeBuilder {
 		myTrueEquality = trueEquality;
 	}
 
-	private function processChange(start1:Int, start2:Int, start3:Int, end1:Int, end2:Int, end3:Int):Void {
-		var lastChange:MergeRange = myChanges.isEmpty() ? null : myChanges.get(myChanges.length - 1);
+	private override function processChange(start1:Int, start2:Int, start3:Int, end1:Int, end2:Int, end3:Int):Void {
+		var lastChange:MergeRange = myChanges.length == 0 ? null : myChanges[myChanges.length - 1];
 		var unchangedStart1:Int = lastChange != null ? lastChange.end1 : 0;
 		var unchangedStart2:Int = lastChange != null ? lastChange.end2 : 0;
 		var unchangedStart3:Int = lastChange != null ? lastChange.end3 : 0;
@@ -159,7 +165,7 @@ class IgnoringChangeBuilder extends ChangeBuilder {
 		// assert end3 - start3 == count;
 
 		var firstIgnoredCount:Int = -1;
-		for (i in 0..count) {
+		for (i in 0...count) {
 			var isIgnored:Bool = !myTrueEquality.equals(start1 + i, start2 + i, start3 + i);
 			var previousAreIgnored:Bool = firstIgnoredCount != -1;
 
