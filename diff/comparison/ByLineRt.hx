@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.comparison.ComparisonMergeUtil.SideEquality;
 import diff.comparison.iterables.DiffIterableUtil.ExpandChangeBuilder;
 import ds.Pair;
 import util.diff.Diff.ChangeBuilder;
@@ -63,7 +64,7 @@ class ByLineRt {
 
 		if (keepIgnoredChanges && policy != DEFAULT) {
 			return ComparisonMergeUtil.buildMerge(iterable1, iterable2,
-				(index1, index2, index3) -> equalsDefaultPolicy(lines1, lines2, lines3, index1, index2, index3));
+				new SideEquality((index1, index2, index3) -> equalsDefaultPolicy(lines1, lines2, lines3, index1, index2, index3)));
 		} else {
 			return ComparisonMergeUtil.buildSimple(iterable1, iterable2);
 		}
@@ -106,8 +107,8 @@ class ByLineRt {
 		 */
 		final builder:ExpandChangeBuilder = new ExpandChangeBuilder(lines1, lines2);
 
-    // TODO: nothing is returned here
-		new BuilderRunner(builder, changes).run();
+		// TODO: nothing is returned here
+		new BuilderRunner(builder, changes, lines1, lines2).run();
 		return fair(builder.finish());
 	}
 
@@ -124,7 +125,7 @@ class ByLineRt {
 		// find a combination with maximum weight (maximum number of equal lines)
 		// TODO: something funky going on here
 		// the value isn't being passed in and isn't being returned anywhere
-		new AlignmentRunner().run();
+		new AlignmentRunner(subLines1, subLines2, lines1, lines2, size, comb, best).run();
 		return best;
 	}
 
@@ -147,7 +148,7 @@ class ByLineRt {
 		var bigLines2:Pair<Array<Line>, Array<Int>> = getBigLines(lines2, threshold);
 
 		var changes:FairDiffIterable = diffB(bigLines1.first, bigLines2.first);
-		return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes, indicator).build();
+		return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes).build();
 	}
 
 	static private function getBigLines(lines:Array<Line>, threshold:Int):Pair<Array<Line>, Array<Int>> {
@@ -211,7 +212,6 @@ class Line {
 		myNonSpaceChars = countNonSpaceChars(text);
 	}
 
-
 	public function getPolicy():ComparisonPolicy {
 		return myPolicy;
 	}
@@ -258,15 +258,15 @@ class BuilderRunner {
 	private var builder:diff.comparison.iterables.DiffIterableUtil.ChangeBuilder;
 	private var changes:FairDiffIterable;
 
-  private var lines1: Array<Line>;
-  private var lines2: Array<Line>;
+	private var lines1:Array<Line>;
+	private var lines2:Array<Line>;
 
-	public function new(builder:diff.comparison.iterables.DiffIterableUtil.ChangeBuilder, changes: FairDiffIterable, lines1: Array<Line> , lines2: Array<Line>) {
-    this.changes = changes;
+	public function new(builder:diff.comparison.iterables.DiffIterableUtil.ChangeBuilder, changes:FairDiffIterable, lines1:Array<Line>, lines2:Array<Line>) {
+		this.changes = changes;
 		this.builder = builder;
 
-    this.lines1 = lines1;
-    this.lines2 = lines2;
+		this.lines1 = lines1;
+		this.lines2 = lines2;
 	}
 
 	public function run():Void {
@@ -363,37 +363,62 @@ class BuilderRunner {
 class AlignmentRunner {
 	private var bestWeight:Int = 0;
 
-	public function new() {}
+	private var subLines1:Array<Int>;
+	private var subLines2:Array<Int>;
+	private var lines1:Array<Line>;
+	private var lines2:Array<Line>;
+
+	private var size:Int;
+	private var comb:Array<Int>;
+	private var best:Array<Int>;
+
+	public function new(subLines1:Array<Int>, subLines2:Array<Int>, lines1:Array<Line>, lines2:Array<Line>, size:Int, comb:Array<Int>, best:Array<Int>) {
+		this.subLines1 = subLines1;
+		this.subLines2 = subLines2;
+		this.lines1 = lines1;
+		this.lines2 = lines2;
+
+		this.size = size;
+		this.comb = comb;
+		this.best = best;
+	}
 
 	public function run():Void {
 		combinations(0, subLines2.length - 1, 0);
 	}
 
 	private function combinations(start:Int, n:Int, k:Int):Void {
-		if (k == size) {
+		if (k == this.size) {
 			processCombination();
 			return;
 		}
 
 		for (i in start...n + 1) {
-			comb[k] = i;
+			this.comb[k] = i;
 			combinations(i + 1, n, k + 1);
 		}
 	}
 
 	private function processCombination():Void {
 		var weight:Int = 0;
-		for (i in 0...size) {
-			var index1:Int = subLines1.getInt(i);
-			var index2:Int = subLines2.getInt(comb[i]);
-			if (lines1.get(index1).equals(lines2.get(index2))) {
+		for (i in 0...this.size) {
+			var index1:Int = this.subLines1[i];
+			var index2:Int = this.subLines2[comb[i]];
+			if (lines1[index1].equals(lines2[index2])) {
 				weight++;
 			}
 		}
 
 		if (weight > bestWeight) {
 			bestWeight = weight;
-			System.arraycopy(comb, 0, best, 0, comb.length);
+
+      // TODO: wow is this awful. Just copy the implementation of blit to here
+
+      var c = haxe.ds.Vector.fromArrayCopy(comb);
+      var b = haxe.ds.Vector.fromArrayCopy(best);
+			haxe.ds.Vector.blit(c, 0, b, 0, c.length);
+      comb = c.toArray();
+      best = b.toArray();
 		}
 	}
 }

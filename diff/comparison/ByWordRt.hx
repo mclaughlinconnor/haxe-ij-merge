@@ -97,9 +97,9 @@ class ByWordRt {
 
 			var subiterable:FairDiffIterable = subIterables[i];
 
-			var delimitersIterable:FairDiffIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable, offsets.start1,
+			var delimitersIterable:FairDiffIterable = matchAdjustmentDelimitersB(subtext1, subtext2, subwords1, subwords2, subiterable, offsets.start1,
 				offsets.start2);
-			var iterable:DiffIterable = matchAdjustmentWhitespaces(subtext1, subtext2, delimitersIterable, policy);
+			var iterable:DiffIterable = matchAdjustmentWhitespacesA(subtext1, subtext2, delimitersIterable, policy);
 
 			var fragments:Array<DiffFragment> = convertIntoDiffFragments(iterable);
 

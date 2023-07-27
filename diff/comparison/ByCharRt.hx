@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import diff.comparison.iterables.DiffIterableUtil;
+import diff.comparison.ByWordRt.charCount;
 import diff.comparison.TrimUtil.isPunctuationA;
 import diff.comparison.TrimUtil.isWhiteSpaceCodePoint;
 import diff.comparison.iterables.DiffIterable;
@@ -8,7 +10,6 @@ import diff.comparison.iterables.DiffIterableUtil.*;
 import diff.comparison.iterables.DiffIterableUtil.ChangeBuilder;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.util.Range;
-import ds.Pair;
 
 class ByCharRt {
 	static public function compare(text1:String, text2:String):FairDiffIterable {
@@ -28,7 +29,7 @@ class ByCharRt {
 			var end2:Int = offset2 + countChars(codePoints2, range.start2, range.end2);
 
 			if (equals) {
-				builder.markEqual(offset1, offset2, end1, end2);
+				builder.markEqualC(offset1, offset2, end1, end2);
 			}
 
 			offset1 = end1;
@@ -109,7 +110,7 @@ class ByCharRt {
 	 *
 	 * matched characters: matched non-space characters + all adjustment whitespaces
 	 */
-	static private function matchAdjustmentSpacesIW(codePoints1:CodePointsOffsets, codePoints2:CodePointsOffsets, text1:String, text2:String):DiffIterable {
+	static private function matchAdjustmentSpacesIW(codePoints1:CodePointsOffsets, codePoints2:CodePointsOffsets, text1:String, text2:String, changes:FairDiffIterable):DiffIterable {
 		final ranges:Array<Range> = new Array();
 
 		for (ch in changes.iterateChanges()) {
@@ -133,7 +134,7 @@ class ByCharRt {
 
 			ranges.push(new Range(startOffset1, endOffset1, startOffset2, endOffset2));
 		}
-		return create(ranges, text1.length, text2.length);
+		return DiffIterableUtil.createB(ranges, text1.length, text2.length);
 	}
 
 	/*
@@ -160,8 +161,8 @@ class ByCharRt {
 		var offset:Int = 0;
 
 		while (offset < len) {
-			var ch:Int = Character.codePointAt(text, offset);
-			var charCount:Int = Character.charCount(ch);
+			var ch:Int = text.charCodeAt(offset);
+			var charCount:Int = charCount(ch);
 
 			list.push(ch);
 			offset += charCount;
@@ -177,8 +178,8 @@ class ByCharRt {
 		var offset:Int = 0;
 
 		while (offset < len) {
-			var ch:Int = Character.codePointAt(text, offset);
-			var charCount:Int = Character.charCount(ch);
+			var ch:Int = text.charCodeAt(offset);
+			var charCount:Int = charCount(ch);
 
 			if (!isWhiteSpaceCodePoint(ch)) {
 				codePoints.push(ch);
@@ -190,8 +191,6 @@ class ByCharRt {
 
 		return new CodePointsOffsets(codePoints, offsets);
 	}
-
-	var ret:Array<Array<Int>> = [[for (_ in 0...length) 0], [for (_ in 0...length) 0]];
 
 	static private function getPunctuationChars(text:String):CodePointsOffsets {
 		var codePoints:Array<Int> = [for (_ in 0...text.length) 0];
@@ -211,7 +210,7 @@ class ByCharRt {
 	static private function countChars(codePoints:Array<Int>, start:Int, end:Int):Int {
 		var count:Int = 0;
 		for (i in start...end) {
-			count += Character.charCount(codePoints[i]);
+			count += charCount(codePoints[i]);
 		}
 		return count;
 	}
@@ -231,6 +230,6 @@ class CodePointsOffsets {
 	}
 
 	public function charOffsetAfter(index:Int):Int {
-		return offsets[index] + Character.charCount(codePoints[index]);
+		return offsets[index] + charCount(codePoints[index]);
 	}
 }
