@@ -1,0 +1,5 @@
+--main Main
+--class-path src
+--js demo/js/main.js
+--library thx.core
+-D no-deprecation-warnings

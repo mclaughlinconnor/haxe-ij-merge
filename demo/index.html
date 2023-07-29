@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Haxe Application</title>
+</head>
+<style>
+  label {
+    display: block;
+  }
+
+  label span {
+    display: block;
+  }
+
+  textarea {
+    margin-bottom: 1em;
+  }
+</style>
+<body>
+    <script src="js/main.js"></script>
+    <script>
+      function ijMerge(left, middle, right) {
+        return API.merge(left, middle, right);
+      }
+
+      function ijGreedyMerge(left, middle, right) {
+        return API.greedyMerge(left, middle, right);
+      }
+
+      function getIjText() {
+        const left = document.getElementById('ij_left').value;
+        const middle = document.getElementById('ij_middle').value;
+        const right = document.getElementById('ij_right').value;
+
+        return [left, middle, right];
+      }
+
+      function doIjMerge() {
+        const [left, middle, right] = getIjText();
+
+        document.getElementById('ij_output').value = ijMerge(left, middle, right);
+      }
+
+      function doIjGreedyMerge() {
+        const [left, middle, right] = getIjText();
+
+        document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
+      }
+    </script>
+
+    <label>
+      <span>Left</span>
+      <textarea id='ij_left' rows="4" cols="50"></textarea>
+    </label>
+    <label>
+      <span>Middle</span>
+      <textarea id='ij_middle' rows="4" cols="50"></textarea>
+    </label>
+    <label>
+      <span>Right</span>
+      <textarea id='ij_right' rows="4" cols="50"></textarea>
+    </label>
+
+    <label>
+      <span>Output</span>
+      <textarea id='ij_output' rows="4" cols="50"></textarea>
+    </label>
+
+    <button onclick="doIjMerge()">Do IJ Merge</button>
+    <button onclick="doIjMerge()">Do IJ Greedy Merge</button>
+</body>
+</html>
