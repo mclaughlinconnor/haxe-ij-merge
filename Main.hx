@@ -6,12 +6,17 @@ import diff.comparison.MergeResolveUtil;
 
 class Main {
 	static public function main():Void {
-		// Single line comment
-		trace("Hello World");
-
-    var merge = MergeResolveUtil.tryResolve('Hello', 'hello', 'hello world');
-    if (merge != null) {
-      trace(merge);
-    }
+		trace("Loaded haxe-ij-merge");
 	}
+}
+
+@:expose
+class API {
+  static public function merge(left, middle, right): String {
+    return MergeResolveUtil.tryResolve(left, middle, right);
+  }
+
+  static public function greedyMerge(left, middle, right): String {
+    return MergeResolveUtil.tryResolve(left, middle, right);
+  }
 }
