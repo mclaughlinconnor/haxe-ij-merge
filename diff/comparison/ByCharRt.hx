@@ -171,8 +171,8 @@ class ByCharRt {
 	}
 
 	static private function getNonSpaceCodePoints(text:String):CodePointsOffsets {
-		var codePoints:Array<Int> = [for (_ in 0...text.length) 0];
-		var offsets:Array<Int> = [for (_ in 0...text.length) 0];
+		var codePoints:Array<Int> = []; // formerly sized text.length
+		var offsets:Array<Int> = [];
 
 		var len:Int = text.length;
 		var offset:Int = 0;
@@ -193,8 +193,8 @@ class ByCharRt {
 	}
 
 	static private function getPunctuationChars(text:String):CodePointsOffsets {
-		var codePoints:Array<Int> = [for (_ in 0...text.length) 0];
-		var offsets:Array<Int> = [for (_ in 0...text.length) 0];
+		var codePoints:Array<Int> = []; // formerly sized text.length
+		var offsets:Array<Int> = [];
 
 		for (i in 0...text.length) {
 			var c:String = text.charAt(i);

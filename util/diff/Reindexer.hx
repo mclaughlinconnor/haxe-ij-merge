@@ -20,8 +20,8 @@ class Reindexer {
 	private function discard(needed:Array<Int>, toDiscard:Array<Int>, arrayIndex:Int):Array<Int> {
 		myOriginalLengths[arrayIndex] = toDiscard.length;
 		var sorted1:Array<Int> = createSorted(needed);
-		var discarded:Array<Int> = [for (_ in 0...toDiscard.length) 0];
-		var oldIndices:Array<Int> = [for (_ in 0...toDiscard.length) 0];
+		var discarded:Array<Int> = [];
+		var oldIndices:Array<Int> = [];
 		for (i in 0...toDiscard.length) {
 			var index:Int = toDiscard[i];
 			if (binarySearch(sorted1, index) >= 0) {
