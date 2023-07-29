@@ -16,6 +16,7 @@ class PeekableIteratorWrapper<T> implements PeekableIterator<T> {
 
 	public function new(values:Iterable<T>):Void {
 		this.myIterator = values.iterator();
+		this.advance();
 	}
 
 	public function hasNext():Bool {
