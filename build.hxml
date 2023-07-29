@@ -1,4 +1,5 @@
 --main Main
+--class-path src
 --interp
 --library thx.core
 -D no-deprecation-warnings
