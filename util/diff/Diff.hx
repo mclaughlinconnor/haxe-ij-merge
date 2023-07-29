@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+import util.Equals.EqualsType;
 import ds.Enumerator;
 import config.DiffConfig;
 import ds.Ref;
@@ -18,6 +19,33 @@ class Diff {
 	}
 
 	@:generic
+	public static function buildChangesX<T:EqualsType<Dynamic>>(objects1:Array<T>, objects2:Array<T>):Change {
+		// Old variant of enumerator worked incorrectly with null values.
+		// This check is to ensure that the corrected version does not Introduce bugs.
+		// for (anObjects1 in objects1) {
+		// 	assert anObjects1 != null;
+		// }
+		// for (anObjects2 in objects2) {
+		// 	assert anObjects2 != null;
+		// }
+
+		// Trim off unchanged start and end ones
+		final startShift:Int = getStartShiftX(objects1, objects2);
+		final endCut:Int = getEndCutX(objects1, objects2, startShift);
+
+		var changeRef:Ref<Change> = doBuildChangesFast(objects1.length, objects2.length, startShift, endCut);
+		if (changeRef != null) {
+			return changeRef.get();
+		}
+
+		var trimmedLength:Int = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
+		var enumerator:Enumerator<T> = new Enumerator(trimmedLength);
+		var Ints1:Array<Int> = enumerator.enumerateB(objects1, startShift, endCut);
+		var Ints2:Array<Int> = enumerator.enumerateB(objects2, startShift, endCut);
+		return doBuildChanges(Ints1, Ints2, new ChangeBuilder(startShift));
+	}
+
+	@:generic
 	public static function buildChangesB<T:{}>(objects1:Array<T>, objects2:Array<T>):Change {
 		// Old variant of enumerator worked incorrectly with null values.
 		// This check is to ensure that the corrected version does not Introduce bugs.
@@ -28,6 +56,7 @@ class Diff {
 		// 	assert anObjects2 != null;
 		// }
 
+		// Trim off unchanged start and end ones
 		final startShift:Int = getStartShiftA(objects1, objects2);
 		final endCut:Int = getEndCutA(objects1, objects2, startShift);
 
@@ -61,11 +90,11 @@ class Diff {
 	private static function doBuildChangesFast(length1:Int, length2:Int, startShift:Int, endCut:Int):Ref<Change> {
 		var trimmedLength1:Int = length1 - startShift - endCut;
 		var trimmedLength2:Int = length2 - startShift - endCut;
+
 		if (trimmedLength1 != 0 && trimmedLength2 != 0) {
 			return null;
 		}
-		var change:Change = trimmedLength1 != 0
-			|| trimmedLength2 != 0 ? new Change(startShift, startShift, trimmedLength1, trimmedLength2, null) : null;
+		var change:Change = (trimmedLength1 != 0 || trimmedLength2 != 0) ? new Change(startShift, startShift, trimmedLength1, trimmedLength2, null) : null;
 
 		return new Ref(change);
 	}
@@ -117,14 +146,36 @@ class Diff {
 	@:generic
 	static public function getEndCutA<T>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length) - startShift);
+		var x = 2;
 		var idx:Int = 0;
 
 		for (i in 0...size) {
-			if (o1[o1.length - i - 1] != o2[o2.length - i - 1]) {
+			var one:T = o1[o1.length - i - 1];
+			var two:T = o2[o2.length - i - 1];
+
+			if (one == two) {
 				break;
 			}
 			++idx;
 		}
+		return idx;
+	}
+
+	static public function getEndCutX<T:EqualsType<Dynamic>>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
+		final size:Int = Std.int(Math.min(o1.length, o2.length) - startShift);
+		var x = 2;
+		var idx:Int = 0;
+
+		for (i in 0...size) {
+			var one = o1[o1.length - i - 1];
+			var two = o2[o2.length - i - 1];
+
+			if (!one.equals(two)) {
+				break;
+			}
+			++idx;
+		}
+
 		return idx;
 	}
 
@@ -135,6 +186,22 @@ class Diff {
 		for (i in 0...size) {
 			if (o1[i] != o2[i])
 				break;
+			++idx;
+		}
+		return idx;
+	}
+
+	@:generic
+	static public function getStartShiftX<T:EqualsType<Dynamic>>(o1:Array<T>, o2:Array<T>):Int {
+		final size:Int = Std.int(Math.min(o1.length, o2.length));
+		var idx:Int = 0;
+
+		for (i in 0...size) {
+			var one = o1[i];
+			var two = o2[i];
+			if (!one.equals(two)) {
+				break;
+			}
 			++idx;
 		}
 		return idx;
@@ -212,17 +279,17 @@ class Diff {
 		while (ch != null) {
 			if (sb.length != 0) {
 				sb.add("====================");
-        sb.add("\n");
+				sb.add("\n");
 			}
 			for (i in ch.line0...ch.line0 + ch.deleted) {
 				sb.add('-');
-        sb.add(lines1[i]);
-        sb.add('\n');
+				sb.add(lines1[i]);
+				sb.add('\n');
 			}
 			for (i in ch.line1...ch.line1 + ch.inserted) {
 				sb.add('+');
-        sb.add(lines2[i]);
-        sb.add('\n');
+				sb.add(lines2[i]);
+				sb.add('\n');
 			}
 			ch = ch.link;
 		}
@@ -263,7 +330,7 @@ class Change {
 		this.inserted = inserted;
 		this.deleted = deleted;
 		link = old;
-		// System.err.prIntln(line0+","+line1+","+inserted+","+deleted);
+		// System.err.println(line0+","+line1+","+inserted+","+deleted);
 	}
 
 	public function toString():String {

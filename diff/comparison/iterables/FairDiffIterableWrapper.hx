@@ -4,7 +4,7 @@ package diff.comparison.iterables;
 import diff.util.Range;
 
 class FairDiffIterableWrapper extends FairDiffIterable {
-	private final myIterable:DiffIterable;
+	public final myIterable:DiffIterable;
 
 	public function new(iterable:DiffIterable) {
 		myIterable = iterable;

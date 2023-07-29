@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import util.Equals;
 import diff.comparison.iterables.SubiterableDiffIterable;
 import exceptions.IllegalStateException;
 import ds.MergingCharSequence;
@@ -41,11 +42,30 @@ class ByWordRt {
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 		var words3:Array<InlineChunk> = getInlineChunks(text3);
 
-		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffB(words2, words1);
+		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffX(words2, words1);
 		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
 		var iterable1:FairDiffIterable = matchAdjustmentDelimitersA(text2, text1, words2, words1, wordChanges1);
 
-		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffB(words2, words3);
+		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffX(words2, words3);
+		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
+		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
+
+		var wordConflicts:Array<MergeRange> = ComparisonMergeUtil.buildSimple(iterable1, iterable2);
+		var result:Array<MergeRange> = matchAdjustmentWhitespacesB(text1, text2, text3, wordConflicts, policy);
+
+		return convertIntoMergeWordFragments(result);
+	}
+
+	static public function compareX(text1:String, text2:String, text3:String, policy:ComparisonPolicy):Array<MergeWordFragment> {
+		var words1:Array<InlineChunk> = getInlineChunks(text1);
+		var words2:Array<InlineChunk> = getInlineChunks(text2);
+		var words3:Array<InlineChunk> = getInlineChunks(text3);
+
+		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffX(words2, words1);
+		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
+		var iterable1:FairDiffIterable = matchAdjustmentDelimitersA(text2, text1, words2, words1, wordChanges1);
+
+		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffX(words2, words3);
 		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
 		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
@@ -76,7 +96,7 @@ class ByWordRt {
 		var words1:Array<InlineChunk> = getInlineChunks(text1);
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 
-		var wordChanges:FairDiffIterable = DiffIterableUtil.diffB(words1, words2);
+		var wordChanges:FairDiffIterable = DiffIterableUtil.diffX(words1, words2);
 		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
 
 		var wordBlocks:Array<WordBlock> = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges).run();
@@ -346,7 +366,7 @@ class ByWordRt {
 //
 // Helpers
 //
-class WordChunk implements InlineChunk {
+class WordChunk implements InlineChunk<WordChunk> {
 	private var myText:String;
 	private var myOffset1:Int;
 	private var myOffset2:Int;
@@ -384,7 +404,7 @@ class WordChunk implements InlineChunk {
 	}
 }
 
-class NewlineChunk implements InlineChunk {
+class NewlineChunk implements InlineChunk<NewlineChunk> {
 	private var myOffset:Int;
 
 	public function new(offset:Int) {
@@ -399,7 +419,7 @@ class NewlineChunk implements InlineChunk {
 		return myOffset + 1;
 	}
 
-	public function equals(o:NewlineChunk):Bool {
+	public function equals(o:InlineChunk):Bool {
 		if (this == o) {
 			return true;
 		}
@@ -659,7 +679,7 @@ class MergeTrimSpacesCorrector {
 	}
 }
 
-interface InlineChunk {
+interface InlineChunk<T = Dynamic> extends Equals<T> {
 	public function getOffset1():Int;
 
 	public function getOffset2():Int;

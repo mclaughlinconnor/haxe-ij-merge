@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import util.Equals;
 import exceptions.UnsupportedOperationException;
 import util.diff.FilesTooBigForDiffException;
 import ds.Pair;
@@ -28,15 +29,31 @@ class DiffIterableUtil {
 	}
 
 	/*
-	 * Compare two arrays, basing on equals() and hashCode() of it's elements
+	 * Compare two arrays, basing on == of it's elements
 	 */
 	@:generic
 	public static function diffB<T:{}>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
-		var fairIter;
-		FairDiffIterable;
+		var fairIter:FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside
 			var change:Change = Diff.buildChangesB(data1, data2);
+			fairIter = DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
+		} catch (e:FilesTooBigForDiffException) {
+			throw new DiffTooBigException('');
+		}
+
+		return fairIter;
+	}
+
+	/*
+	 * Compare two arrays, basing on equals() and hashCode() of it's elements
+	 */
+	@:generic
+	public static function diffX<T:EqualsType<Dynamic>>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+		var fairIter:FairDiffIterable;
+		try {
+			// TODO: use CancellationChecker inside
+			var change:Change = Diff.buildChangesX(data1, data2);
 			fairIter = DiffIterableUtil.fair(DiffIterableUtil.createA(change, data1.length, data2.length));
 		} catch (e:FilesTooBigForDiffException) {
 			throw new DiffTooBigException('');

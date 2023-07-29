@@ -141,13 +141,13 @@ class ByLineRt {
 	static private function compareSmart(lines1:Array<Line>, lines2:Array<Line>):FairDiffIterable {
 		var threshold:Int = ComparisonUtil.getUnimportantLineCharCount();
 		if (threshold == 0) {
-			return diffB(lines1, lines2);
+			return diffX(lines1, lines2);
 		}
 
 		var bigLines1:Pair<Array<Line>, Array<Int>> = getBigLines(lines1, threshold);
 		var bigLines2:Pair<Array<Line>, Array<Int>> = getBigLines(lines2, threshold);
 
-		var changes:FairDiffIterable = diffB(bigLines1.first, bigLines2.first);
+		var changes:FairDiffIterable = diffX(bigLines1.first, bigLines2.first);
 		return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes).build();
 	}
 

@@ -7,7 +7,7 @@ import diff.comparison.ByLineRt.Line;
 import diff.comparison.iterables.FairDiffIterable;
 import diff.util.Range;
 import diff.comparison.TrimUtil.expandA;
-import diff.comparison.iterables.DiffIterableUtil.diffB;
+import diff.comparison.iterables.DiffIterableUtil.diffX;
 import diff.comparison.iterables.DiffIterableUtil.fair;
 
 /*
@@ -128,7 +128,7 @@ class SmartLineChangeCorrector extends ChangeCorrector {
 
 		var inner1:Array<Line> = myLines1.slice(expand.start1, expand.end1);
 		var inner2:Array<Line> = myLines2.slice(expand.start2, expand.end2);
-		var innerChanges:FairDiffIterable = diffB(inner1, inner2);
+		var innerChanges:FairDiffIterable = diffX(inner1, inner2);
 
 		myBuilder.markEqualC(start1, start2, expand.start1, expand.start2);
 
