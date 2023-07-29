@@ -1,4 +1,4 @@
 --main Main
---interp
+--js js/main.js
 --library thx.core
 -D no-deprecation-warnings
