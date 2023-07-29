@@ -56,7 +56,7 @@ class FairMergeBuilder {
 
 		while (unchanged1.hasNext() && unchanged2.hasNext()) {
 			var sideEnum:SideEnum = add(unchanged1.peek(), unchanged2.peek());
-			var side:Side = new Side(0);
+			var side:Side = Side.fromEnum(sideEnum);
 			side.selectA(unchanged1, unchanged2).next();
 		}
 
