@@ -391,12 +391,16 @@ class WordChunk implements InlineChunk<WordChunk> {
 		return myOffset2;
 	}
 
-	public function equals(word:WordChunk):Bool {
-		if (this == word) {
+	public function equals(o:WordChunk):Bool {
+		if (this == o) {
 			return true;
 		}
 
-		return ComparisonUtil.isEquals(getContent(), word.getContent(), ComparisonPolicy.DEFAULT);
+		if (o == null || Type.getClassName(Type.getClass(o)) != Type.getClassName(Type.getClass(this))) {
+			return false;
+		}
+
+		return ComparisonUtil.isEquals(this.getContent(), o.getContent(), ComparisonPolicy.DEFAULT);
 	}
 
 	public function hashCode():Int {
@@ -422,6 +426,10 @@ class NewlineChunk implements InlineChunk<NewlineChunk> {
 	public function equals(o:InlineChunk):Bool {
 		if (this == o) {
 			return true;
+		}
+
+		if (o == null || Type.getClassName(Type.getClass(o)) != Type.getClassName(Type.getClass(this))) {
+			return false;
 		}
 
 		return true;

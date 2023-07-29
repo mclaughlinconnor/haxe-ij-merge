@@ -228,6 +228,11 @@ class Line {
 		if (this == l) {
 			return true;
 		}
+
+		if (l == null || Type.getClassName(Type.getClass(l)) != Type.getClassName(Type.getClass(this))) {
+			return false;
+		}
+
 		// assert myPolicy == line.myPolicy;
 		return ComparisonUtil.isEquals(getContent(), l.getContent(), myPolicy);
 	}

@@ -23,6 +23,10 @@ class Range {
 			return true;
 		}
 
+		if (range == null || Type.getClassName(Type.getClass(range)) != Type.getClassName(Type.getClass(this))) {
+			return false;
+		}
+
 		if (start1 != range.start1) {
 			return false;
 		}
