@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+using util.SafeBitSetAt;
+
 import thx.BitSet;
 import util.diff.UniqueLCS.binarySearchImpl;
 
@@ -53,13 +55,16 @@ class Reindexer {
 			var x:Int = 0;
 			var y:Int = 0;
 			while (x < myDiscardedLengths[0] || y < myDiscardedLengths[1]) {
-				if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0].at(x) && !discardedChanges[1].at(y)) {
+				if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1])
+					&& !discardedChanges[0].safeAt(x)
+					&& !discardedChanges[1].safeAt(y)) {
+
 					x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
 					y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
-				} else if (discardedChanges[0].at(x)) {
+				} else if (discardedChanges[0].safeAt(x)) {
 					bitSetSetBetween(changes1, getOriginal(myOldIndices[0], x));
 					x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
-				} else if (discardedChanges[1].at(y)) {
+				} else if (discardedChanges[1].safeAt(y)) {
 					bitSetSetBetween(changes2, getOriginal(myOldIndices[1], y));
 					y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
 				}
