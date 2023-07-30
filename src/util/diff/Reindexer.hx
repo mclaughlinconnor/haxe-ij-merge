@@ -132,6 +132,6 @@ function bitSetSetBetween(bitset:BitSet, start:Int, ?end:Null<Int>, ?value:Null<
 	final endIndex = end == null ? bitset.length : end;
 
 	for (i in start...endIndex) {
-		bitset.setAt(i, value);
+		bitset.setAt(i, setValue);
 	}
 }
