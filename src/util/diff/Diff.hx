@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+using util.HashableString;
+import util.Hashable.HashableType;
+import util.HashableString;
 import util.Equals.EqualsType;
 import ds.Enumerator;
 import config.DiffConfig;
@@ -11,15 +14,18 @@ import util.diff.Reindexer;
 
 class Diff {
 	static public function buildChangesA(before:String, after:String):Change {
-		return buildChangesB(splitLines(before), splitLines(after));
+    var hashableBefore:HashableStringArray = splitLines(before);
+    var hashableAfter: HashableStringArray = splitLines(after);
+
+		return buildChangesB(hashableBefore, hashableAfter);
 	}
 
-	static public function splitLines(s:String):Array<String> {
+	static private function splitLines<T:String>(s:String):Array<String> {
 		return s.length == 0 ? [""] : LineTokenizer.tokenizeB(s, false, false);
 	}
 
 	@:generic
-	public static function buildChangesX<T:EqualsType<Dynamic>>(objects1:Array<T>, objects2:Array<T>):Change {
+	public static function buildChangesX<T:(EqualsType<Dynamic> & HashableType)>(objects1:Array<T>, objects2:Array<T>):Change {
 		// Old variant of enumerator worked incorrectly with null values.
 		// This check is to ensure that the corrected version does not Introduce bugs.
 		// for (anObjects1 in objects1) {
@@ -46,7 +52,7 @@ class Diff {
 	}
 
 	@:generic
-	public static function buildChangesB<T:{}>(objects1:Array<T>, objects2:Array<T>):Change {
+	public static function buildChangesB<T:HashableType>(objects1:Array<T>, objects2:Array<T>):Change {
 		// Old variant of enumerator worked incorrectly with null values.
 		// This check is to ensure that the corrected version does not Introduce bugs.
 		// for (anObjects1 in objects1) {
@@ -220,8 +226,8 @@ class Diff {
 	}
 
 	static public function translateLineA(before:String, after:String, line:Int, approximate:Bool):Int {
-		var strings1:Array<String> = LineTokenizer.tokenizeA(before, false);
-		var strings2:Array<String> = LineTokenizer.tokenizeA(after, false);
+		var strings1:HashableStringArray = LineTokenizer.tokenizeA(before, false);
+		var strings2:HashableStringArray = LineTokenizer.tokenizeA(after, false);
 		if (approximate) {
 			strings1 = trim(strings1);
 			strings2 = trim(strings2);
@@ -269,7 +275,7 @@ class Diff {
 		return result;
 	}
 
-	static public function linesDiff(lines1:Array<String>, lines2:Array<String>):Null<String> {
+	static public function linesDiff(lines1:HashableStringArray, lines2:HashableStringArray):Null<String> {
 		var ch:Change = buildChangesB(lines1, lines2);
 		if (ch == null) {
 			return null;

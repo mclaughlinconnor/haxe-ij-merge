@@ -237,6 +237,10 @@ class Line {
 		return ComparisonUtil.isEquals(getContent(), l.getContent(), myPolicy);
 	}
 
+  public function hashCode(): Int {
+    return this.myHash;
+  }
+
 	static private function countNonSpaceChars(text:String):Int {
 		var nonSpace:Int = 0;
 

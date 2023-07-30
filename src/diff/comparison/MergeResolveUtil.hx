@@ -89,7 +89,7 @@ class SimpleHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var changes:Array<MergeWordFragment> = ByWordRt.compareC(leftText, baseText, rightText, policy);
+		var changes:Array<MergeWordFragment> = ByWordRt.compareX(leftText, baseText, rightText, policy);
 		// TODO: fairdiffiterator isn't implemented which makes this bad
 		for (fragment in changes) {
 			var baseRange = nextMergeRange(fragment.getStartOffset(ThreeSide.fromEnum(ThreeSideEnum.LEFT)),

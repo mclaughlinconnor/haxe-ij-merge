@@ -1,15 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package ds;
 
-import haxe.ds.ObjectMap;
+using util.HashableString;
+
+import util.Hashable;
+import haxe.ds.IntMap;
 
 @:generic
-class Enumerator<T:{}> {
-	private final myNumbers:ObjectMap<T, Int>;
+class Enumerator<T:HashableType> {
+	private final myNumbers:IntMap<Int>;
 	private var myNextNumber:Int = 1;
 
 	public function new(expectNumber:Int) {
-		myNumbers = new ObjectMap();
+		myNumbers = new IntMap();
 	}
 
 	public function clear():Void {
@@ -46,24 +49,24 @@ class Enumerator<T:{}> {
 			return 0;
 		}
 
-		var number:Int = myNumbers.get(object);
+		var number:Int = myNumbers.get(object.hashCode());
 		if (number == null) {
 			number = myNextNumber++;
-			myNumbers.set(object, number);
+			myNumbers.set(object.hashCode(), number);
 			return -number;
 		}
 		return number;
 	}
 
 	public function contains(object:T):Bool {
-		return myNumbers.get(object) != 0;
+		return myNumbers.get(object.hashCode()) != 0;
 	}
 
 	public function get(object:T):Int {
 		if (object == null) {
 			return 0;
 		}
-		final res:Int = myNumbers.get(object);
+		final res:Int = myNumbers.get(object.hashCode());
 
 		return res;
 	}

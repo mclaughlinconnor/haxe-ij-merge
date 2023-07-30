@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison.iterables;
 
+import util.Hashable;
 import util.Equals;
 import exceptions.UnsupportedOperationException;
 import util.diff.FilesTooBigForDiffException;
@@ -32,7 +33,7 @@ class DiffIterableUtil {
 	 * Compare two arrays, basing on == of it's elements
 	 */
 	@:generic
-	public static function diffB<T:{}>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+	public static function diffB<T:Hashable>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
 		var fairIter:FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside
@@ -49,7 +50,7 @@ class DiffIterableUtil {
 	 * Compare two arrays, basing on equals() and hashCode() of it's elements
 	 */
 	@:generic
-	public static function diffX<T:EqualsType<Dynamic>>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+	public static function diffX<T:(EqualsType<Dynamic> & HashableType)>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
 		var fairIter:FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside

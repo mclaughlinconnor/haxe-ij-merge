@@ -1,5 +1,6 @@
 package diff.comparison;
 
+import util.Hashable;
 import util.Equals;
 import diff.comparison.iterables.SubiterableDiffIterable;
 import exceptions.IllegalStateException;
@@ -42,11 +43,11 @@ class ByWordRt {
 		var words2:Array<InlineChunk> = getInlineChunks(text2);
 		var words3:Array<InlineChunk> = getInlineChunks(text3);
 
-		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffX(words2, words1);
+		var wordChanges1:FairDiffIterable = DiffIterableUtil.diffB(words2, words1);
 		wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1);
 		var iterable1:FairDiffIterable = matchAdjustmentDelimitersA(text2, text1, words2, words1, wordChanges1);
 
-		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffX(words2, words3);
+		var wordChanges2:FairDiffIterable = DiffIterableUtil.diffB(words2, words3);
 		wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2);
 		var iterable2:FairDiffIterable = matchAdjustmentDelimitersA(text2, text3, words2, words3, wordChanges2);
 
@@ -434,6 +435,17 @@ class NewlineChunk implements InlineChunk<NewlineChunk> {
 
 		return true;
 	}
+
+	public function hashCode():Int {
+		var name:String = Type.getClassName(Type.getClass(this));
+
+		var hash:Int = 7;
+		for (i in 0...name.length) {
+			hash = hash * 31 + name.charCodeAt(i);
+		}
+
+		return hash;
+	}
 }
 
 class LineBlock {
@@ -687,7 +699,7 @@ class MergeTrimSpacesCorrector {
 	}
 }
 
-interface InlineChunk<T = Dynamic> extends Equals<T> {
+interface InlineChunk<T = Dynamic> extends Equals<T> extends Hashable {
 	public function getOffset1():Int;
 
 	public function getOffset2():Int;
