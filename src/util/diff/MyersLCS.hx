@@ -34,8 +34,8 @@ class MyersLCS {
 
 		if (start1 == null && count1 == null && start2 == null && count2 == null && changes1 == null && changes2 == null) {
 			myStart1 = 0;
-			myStart2 = first.length;
-			myCount1 = 0;
+			myStart2 = 0;
+			myCount1 = first.length;
 			myCount2 = second.length;
 			myChanges1 = new BitSet(first.length);
 			myChanges2 = new BitSet(second.length);
@@ -112,11 +112,11 @@ class MyersLCS {
 			var xx, kk, td:Int;
 			xx = kk = td = -1;
 
-			for (d in 0...halfD) {
+			for (d in 0...halfD + 1) {
 				final L:Int = newLength + Std.int(Math.max(-d, -newLength + ((d ^ newLength) & 1)));
 				final R:Int = newLength + Std.int(Math.min(d, oldLength - ((d ^ oldLength) & 1)));
 
-				for (k in new StepIterator(L, R, 2)) {
+				for (k in new StepIterator(L, R, 2, true)) {
 					var x:Int = k == L || k != R && VForward[k - 1] < VForward[k + 1] ? VForward[k + 1] : VForward[k - 1] + 1;
 					var y:Int = x - k + newLength;
 					x += commonSubsequenceLengthForward(oldStart + x, newStart + y, Std.int(Math.min(oldEnd - oldStart - x, newEnd - newStart - y)));
@@ -124,7 +124,7 @@ class MyersLCS {
 				}
 				if ((oldLength - newLength) % 2 != 0) {
 					var b:Bool = false;
-					for (k in new StepIterator(L, R, 2)) {
+					for (k in new StepIterator(L, R, 2, true)) {
 						if (oldLength - (d - 1) <= k && k <= oldLength + (d - 1)) {
 							if (VForward[k] + VBackward[newLength + oldLength - k] >= oldLength) {
 								xx = VForward[k];
@@ -137,11 +137,11 @@ class MyersLCS {
 						}
 					}
 
-					if (break) {
+					if (b) {
 						break;
 					}
 				}
-				for (k in new StepIterator(L, R, 2)) {
+				for (k in new StepIterator(L, R, 2, true)) {
 					var x:Int = k == L || k != R && VBackward[k - 1] < VBackward[k + 1] ? VBackward[k + 1] : VBackward[k - 1] + 1;
 					var y:Int = x - k + newLength;
 
@@ -151,7 +151,7 @@ class MyersLCS {
 				if ((oldLength - newLength) % 2 == 0) {
 					var b:Bool = false;
 
-					for (k in new StepIterator(L, R, 2)) {
+					for (k in new StepIterator(L, R, 2, true)) {
 						if (oldLength - d <= k && k <= oldLength + d) {
 							if (VForward[oldLength + newLength - k] + VBackward[k] >= oldLength) {
 								xx = oldLength - VBackward[k];
