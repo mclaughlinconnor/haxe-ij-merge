@@ -294,6 +294,7 @@ class GreedyHelper {
 		}
 
 		newContent.add(baseText.substring(lastBaseOffset, endOffset));
+		lastBaseOffset = endOffset;
 	}
 
 	private function getInsertedContent(fragments:Array<DiffFragment>, start:Int, end:Int, side:Side):String {
