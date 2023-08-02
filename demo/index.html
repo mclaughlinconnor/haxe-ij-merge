@@ -6,6 +6,14 @@
     <title>Haxe Application</title>
 </head>
 <style>
+  #examples > span {
+    display: block;
+  }
+
+  #examples {
+    margin-bottom: 1em;
+  }
+
   .files label {
     display: block;
   }
@@ -53,10 +61,10 @@
       const dmp = new diff_match_patch();
 
       const REQUIRED_MERGE = Object.freeze({
-        IMPOSSIBLE: 0,
-        GIT: 1,
-        IJ_REGULAR: 2,
-        IJ_GREEDY: 3,
+        IMPOSSIBLE: 'IMPOSSIBLE',
+        GIT: 'GIT MERGABLE',
+        IJ_REGULAR: 'REGULAR MERGABLE',
+        IJ_GREEDY: 'GREEDY MERGABLE',
       });
 
       const examples = [
@@ -213,9 +221,10 @@
       }
 
       function setExample(index) {
-        const {left, middle, right} = examples[index];
+        const {left, middle, right, required_merge} = examples[index];
 
         document.getElementById('ij_output').value = "";
+        document.getElementById('merge_status').innerHTML = required_merge;
 
         setText(left, middle, right);
       }
@@ -280,24 +289,30 @@
       });
     </script>
 
-    <label>
-      <span>Examples</span>
-      <select id='examples_dropdown'>
-      </select>
-    </label>
+    <h2>IJ Merge</h2>
+
+    <div id='examples'>
+      <label>
+        <span>Examples</span>
+        <select id='examples_dropdown'></select>
+      </label>
+
+      <span>Merge status: <code id='merge_status'></code></span>
+    </div>
+
 
     <div class='files'>
       <label>
         <span>Left</span>
-        <textarea id='ij_left' rows="4" cols="50"></textarea>
+        <textarea id='ij_left' rows="4" cols="120"></textarea>
       </label>
       <label>
         <span>Middle</span>
-        <textarea id='ij_middle' rows="4" cols="50"></textarea>
+        <textarea id='ij_middle' rows="4" cols="120"></textarea>
       </label>
       <label>
         <span>Right</span>
-        <textarea id='ij_right' rows="4" cols="50"></textarea>
+        <textarea id='ij_right' rows="4" cols="120"></textarea>
       </label>
 
     </div>
@@ -340,7 +355,7 @@
 
       <label>
         <span>Merge Output</span>
-        <textarea id='ij_output' rows="4" cols="50" readonly></textarea>
+        <textarea id='ij_output' rows="8" cols="120" readonly></textarea>
       </label>
     </div>
 
