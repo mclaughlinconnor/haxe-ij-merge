@@ -21,6 +21,170 @@
 <body>
     <script src="js/main.js"></script>
     <script>
+      const REQUIRED_MERGE = Object.freeze({
+        IMPOSSIBLE: 0,
+        GIT: 1,
+        IJ_REGULAR: 2,
+        IJ_GREEDY: 3,
+      });
+
+      const examples = [
+        {
+          left:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match yours",
+          middle:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match your interests",
+          right:"commonInterests: People with common business interests\nwithCommonInterests: People with common business interests\nwithMatchingActivities: People whose sales match your business interests",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "a X b",
+          middle: "a X a",
+          right: "b X a",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "console.log('goodbye')",
+          middle: "console.log('hello')",
+          right: "console.error('hello')",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "if (user.isAdmin) {do(); some(); master(); console.log(`isn't admin`);}",
+          middle: "if (user.isAdmin) {console.log('is admin');}",
+          right: "if (user.isNotAdmin) {console.log(`isn't admin`); do(); some(); bespoke()}",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "if (user.isAdmin) {do(); some(); master(); console.log('is admin')}",
+          middle: "if (user.isAdmin) {console.log('is admin');}",
+          right: "if (user.isNotAdmin) {console.log(`isn't admin`); do(); some(); bespoke()}",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "if (user.isAdmin) {do(); some(); master()}",
+          middle: "if (user.isAdmin) {console.log('is admin')}",
+          right: "if (user.isNotAdmin) {console.log(`isn't admin`); do(); some(); bespoke()}",
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
+        },
+        {
+          left:   "You're already member of this business.",
+          middle: "You are already member of this group.",
+          right:  "You are already a member of this group.",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "type: Business Type\napproved: Approved\ndeclined: Declined",
+          middle: "type: Business Type\napproved: Approved the application\ndeclined: Declined the application",
+          right: "type: Business Type",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "import {utils} from '../api/controllers/utils';\nimport {tools} from '../api/hooks/tools';",
+          middle: "import {tools} from '../api/hooks/tools';",
+          right: "import {tools} from '../api/hooks/tools/tools-data.enum';",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "    DatePickerModule,\n\n    // Needed for the new features for the client\n    DatabaseModule,\n",
+          middle: "    DatePickerModule, ",
+          right: "    BrowserModule, ",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left:   "    AppModule,\n    BrowserModule,\n    CommonModule,\n    RouterModule,\n  ],\n",
+          middle: "    AppModule,\n    BrowserModule,\n  ],\n",
+          right:  "    AppModule,\n    BrowserModule,\n    FormsModule,\n  ],\n",
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
+        },
+        {
+          left: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n\n// This interface is not so important\nexport interface KindaImportantInterface extends BaseInterface {\n  type: 'kinda-important';\n}\n\n",
+          middle: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
+          right: "// This interface is very important\nexport interface ImportantInterface extends BaseInterface {\n  type: 'important';\n}\n\n/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "",
+          middle: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
+          right: "// This interface is very important\nexport interface ImportantInterface extends BaseInterface {\n  type: 'important';\n}\n\n/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "  | RouterModule\n  | FormsModule;\n",
+          middle: "  | FormsModule;\n",
+          right: "  | FormsModule;\n",
+          required_merge: REQUIRED_MERGE.GIT,
+        },
+        {
+          left:   "  showInformation: false,\n  // If the membership information should be shown\n  showMembership: true,\n",
+          middle: "  showInformation: true,\n  // If the membership information should be shown\n  showMembership: true,\n",
+          right:  "  showInformation: true,\n  // If all of the user's data should be shown\n  showAll: true,\n",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "import {Directive, ElementRef, Injector, Input, Renderer2} from '@angular/core';\n",
+          middle: "import {ChangeDetectionStrategy, Component, forwardRef, Input} from '@angular/core';\nimport {NG_VALUE_ACCESSOR} from '@angular/forms';\n",
+          right: "import {Directive, ElementRef, inject, Input, Renderer2} from '@angular/core';\n",
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
+        },
+        {
+          left: "  public constructor(inj: Injector) {\n    super(inj);\n    this.r2: inj.get(Renderer2);\n    this.el: inj.get(ElementRef).nativeElement;\n  }\n",
+          middle: "",
+          right: "  public constructor() {\n    super();\n    this.r2: inject(Renderer2);\n    this.el: inject(ElementRef).nativeElement;\n  }\n",
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
+        },
+        {
+          left: "version: 2.0.0",
+          middle: "version: 1.0.0",
+          right: "version: 1.0.4",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "[ ]",
+          middle: "[ one ]",
+          right: "[ three ]",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "[ one, two, one ]",
+          middle: "[ one, one ]",
+          right: "[ ]",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "[ ]",
+          middle: "[ one ]",
+          right: "[ two ]",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+        {
+          left: "[ two ]",
+          middle: "[ one, one ]",
+          right: "[ one, two ]",
+          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+        },
+      ];
+
+      window.addEventListener('load', () => {
+        content = "";
+        for (let i = 1; i <= examples.length - 1; i++) {
+          content += `<option value=${i} onclick="setExample(${i})">Example ${i}</option>`
+        }
+        document.getElementById("examples_dropdown").innerHTML = content;
+      });
+
+      function setText(left, middle, right) {
+        document.getElementById('ij_left').value = left;
+        document.getElementById('ij_middle').value = middle;
+        document.getElementById('ij_right').value = right;
+      }
+
+      function setExample(index) {
+        const {left, middle, right} = examples[index];
+
+        document.getElementById('ij_output').value = "";
+
+        setText(left, middle, right);
+      }
+
       function ijMerge(left, middle, right) {
         return API.merge(left, middle, right);
       }
@@ -40,15 +204,23 @@
       function doIjMerge() {
         const [left, middle, right] = getIjText();
 
+        document.getElementById('ij_output').value = "";
         document.getElementById('ij_output').value = ijMerge(left, middle, right);
       }
 
       function doIjGreedyMerge() {
         const [left, middle, right] = getIjText();
 
+        document.getElementById('ij_output').value = "";
         document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
       }
     </script>
+
+    <label>
+      <span>Examples</span>
+      <select id='examples_dropdown'>
+      </select>
+    </label>
 
     <label>
       <span>Left</span>
