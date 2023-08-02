@@ -187,8 +187,8 @@ class GreedyHelper {
 	}
 
 	public function execute(policy:ComparisonPolicy):Null<String> {
-		var fragments1 = ByWordRt.compareA(baseText, leftText, policy);
-		var fragments2 = ByWordRt.compareA(baseText, rightText, policy);
+		var fragments1 = ByWordRt.compareY(baseText, leftText, policy);
+		var fragments2 = ByWordRt.compareY(baseText, rightText, policy);
 
 		while (true) {
 			var fragIdx1:Null<Int> = fragments1[index1]?.getStartOffset1();

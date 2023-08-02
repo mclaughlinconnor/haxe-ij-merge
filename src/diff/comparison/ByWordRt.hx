@@ -76,6 +76,25 @@ class ByWordRt {
 		return convertIntoMergeWordFragments(result);
 	}
 
+	static public function compareY(text1:String, text2:String, policy:ComparisonPolicy):Array<DiffFragment> {
+		var words1:Array<InlineChunk> = getInlineChunks(text1);
+		var words2:Array<InlineChunk> = getInlineChunks(text2);
+
+		// TODO: check naming and how overloading works
+		return compareZ(text1, words1, text2, words2, policy);
+	}
+
+	static public function compareZ(text1:String, words1:Array<InlineChunk>, text2:String, words2:Array<InlineChunk>,
+			policy:ComparisonPolicy):Array<DiffFragment> {
+		var wordChanges:FairDiffIterable = DiffIterableUtil.diffX(words1, words2);
+		wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges);
+
+		var delimitersIterable:FairDiffIterable = matchAdjustmentDelimitersA(text1, text2, words1, words2, wordChanges);
+		var iterable:DiffIterable = matchAdjustmentWhitespacesA(text1, text2, delimitersIterable, policy);
+
+		return convertIntoDiffFragments(iterable);
+	}
+
 	static function compareAndSplit(text1:String, text2:String, policy:ComparisonPolicy):Array<LineBlock> {
 		// TODO: figure out, what do we exactly want from 'Split' logic
 		// -- it is used for trimming of ignored blocks. So we want whitespace-only leading/trailing lines to be separate block.
