@@ -6,6 +6,17 @@
     <title>Haxe Application</title>
 </head>
 <style>
+  .warning {
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  @media (min-width: 768px) {
+    .warning {
+      display: none;
+    }
+  }
+
   #examples > span {
     display: block;
   }
@@ -52,6 +63,10 @@
 
   #diff_output {
     font-size: 18px;
+  }
+
+  code {
+    font-size: 14px;
   }
 </style>
 <body>
@@ -291,13 +306,32 @@
 
     <h2>IJ Merge</h2>
 
+    <div class='warning'>
+      Long line lengths means this demo is best viewed on desktop, but should still be fully functional on mobile.
+    </div>
+
+    <p>
+      A demo of a Haxe port of IntelliJ's cool diff merging algorithm, compiled to JavaScript for the browser: <a href="https://github.com/mclaughlinconnor/haxe-ij-merge">haxe-ij-merge</a>.
+    </p>
+    <p>
+      Regular merging (<code>Do IJ Merge</code> below) will merge all non-conflicting changes, in a similar way to how Git's <code>recursive</code> or <code>ort</code> algorithms work, but working on word level, rather than a hunk level.
+    </p>
+    <p>
+      Greedy merging (<code>Do IJ Greedy Merge</code> below) assumes that all resolve results are validated by the user, so trades some accuracy for a higher chance of a good resolve.
+      It works by assuming that <code>A-X-B</code> and <code>B-X-A</code> conflicts should have equal results, meaning that <code>insert-insert</code> conflicts cannot be merged because we don't know the insertion order.
+      Therefore, merge <code>delete-insert</code> by applying both, <code>delete-delete</code> by merging deleted intervals, and modifications the same as <code>delete-insert</code> changes.
+    </p>
+    <p>
+      All merges match the original IntelliJ implementation, but greedy merging sometimes produces slightly weird results.
+    </p>
+
     <div id='examples'>
       <label>
         <span>Examples</span>
         <select id='examples_dropdown'></select>
       </label>
 
-      <span>Merge status: <code id='merge_status'></code></span>
+      <span>Merge status: <code id='merge_status'>Select an example</code></span>
     </div>
 
 
@@ -349,7 +383,7 @@
 
     <div class='files'>
       <div>
-        <span>Diff Output</span>
+        <span>Diff Output: Left -> Right</span>
         <pre><code id='diff_output'></code></pre>
       </div>
 
