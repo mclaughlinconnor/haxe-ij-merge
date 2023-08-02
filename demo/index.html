@@ -6,21 +6,52 @@
     <title>Haxe Application</title>
 </head>
 <style>
-  label {
+  .files label {
     display: block;
   }
 
-  label span {
+  .files label span {
     display: block;
   }
 
-  textarea {
+  .files textarea {
     margin-bottom: 1em;
+  }
+
+  legend {
+    background-color: #000;
+    color: #fff;
+    padding: 3px 6px;
+  }
+
+  fieldset {
+    border: 1px solid gray;
+    display: inline-block;
+    margin-bottom: 1em;
+  }
+
+  fieldset label:not(:last-child) input[type=radio] {
+    margin-right: 2em;
+  }
+
+  input[type=radio], input[type=checkbox] {
+    accent-color: blue;
+  }
+
+  input {
+    margin: 0.4rem;
+  }
+
+  #diff_output {
+    font-size: 18px;
   }
 </style>
 <body>
     <script src="js/main.js"></script>
+    <script src="js/diff_match_patch.js"></script>
     <script>
+      const dmp = new diff_match_patch();
+
       const REQUIRED_MERGE = Object.freeze({
         IMPOSSIBLE: 0,
         GIT: 1,
@@ -169,12 +200,16 @@
           content += `<option value=${i} onclick="setExample(${i})">Example ${i}</option>`
         }
         document.getElementById("examples_dropdown").innerHTML = content;
+
+        calculateDiff();
       });
 
       function setText(left, middle, right) {
         document.getElementById('ij_left').value = left;
         document.getElementById('ij_middle').value = middle;
         document.getElementById('ij_right').value = right;
+
+        calculateDiff();
       }
 
       function setExample(index) {
@@ -214,6 +249,35 @@
         document.getElementById('ij_output').value = "";
         document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
       }
+
+      function calculateDiff() {
+        const left = document.getElementById('ij_left').value;
+        const right = document.getElementById('ij_right').value;
+
+        const diff = dmp.diff_main(left, right);
+
+        if (document.getElementById('semantic').checked) {
+          dmp.diff_cleanupSemantic(diff);
+        }
+
+        if (document.getElementById('efficiency').checked) {
+          dmp.diff_cleanupEfficiency(diff);
+        }
+
+        let pretty = dmp.diff_prettyHtml(diff);
+
+        if (pretty === "") {
+          pretty = "No diff generated";
+        }
+
+        document.getElementById('diff_output').innerHTML = pretty;
+      }
+
+      addEventListener("input", function() {
+        if (document.getElementById('auto_update').checked) {
+          calculateDiff()
+        }
+      });
     </script>
 
     <label>
@@ -222,23 +286,63 @@
       </select>
     </label>
 
-    <label>
-      <span>Left</span>
-      <textarea id='ij_left' rows="4" cols="50"></textarea>
-    </label>
-    <label>
-      <span>Middle</span>
-      <textarea id='ij_middle' rows="4" cols="50"></textarea>
-    </label>
-    <label>
-      <span>Right</span>
-      <textarea id='ij_right' rows="4" cols="50"></textarea>
-    </label>
+    <div class='files'>
+      <label>
+        <span>Left</span>
+        <textarea id='ij_left' rows="4" cols="50"></textarea>
+      </label>
+      <label>
+        <span>Middle</span>
+        <textarea id='ij_middle' rows="4" cols="50"></textarea>
+      </label>
+      <label>
+        <span>Right</span>
+        <textarea id='ij_right' rows="4" cols="50"></textarea>
+      </label>
 
-    <label>
-      <span>Output</span>
-      <textarea id='ij_output' rows="4" cols="50"></textarea>
-    </label>
+    </div>
+
+    <fieldset id='cleanup_config'>
+      <legend>Diff Configuration</legend>
+
+      <div>
+        <label>
+          <span>Automatic Updates</span>
+          <input type="checkbox" id="auto_update" checked />
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <span>Semantic Cleanup</span>
+          <input type="radio" id="semantic" name="clean" value="semantic" checked />
+        </label>
+
+        <label>
+          <span>Efficient Cleanup</span>
+          <input type="radio" id="efficiency" name="clean" value="efficiency" />
+        </label>
+
+        <label>
+          <span>No Cleanup</span>
+          <input type="radio" id="none" name="clean" value="none" />
+        </label>
+      </div>
+
+      <button onclick="calculateDiff()">Calculate Diff</button>
+    </fieldset>
+
+    <div class='files'>
+      <div>
+        <span>Diff Output</span>
+        <pre><code id='diff_output'></code></pre>
+      </div>
+
+      <label>
+        <span>Merge Output</span>
+        <textarea id='ij_output' rows="4" cols="50" readonly></textarea>
+      </label>
+    </div>
 
     <button onclick="doIjMerge()">Do IJ Merge</button>
     <button onclick="doIjGreedyMerge()">Do IJ Greedy Merge</button>
