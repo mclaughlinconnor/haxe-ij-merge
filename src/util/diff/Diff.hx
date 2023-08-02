@@ -159,7 +159,7 @@ class Diff {
 			var one:T = o1[o1.length - i - 1];
 			var two:T = o2[o2.length - i - 1];
 
-			if (one == two) {
+			if (one != two) {
 				break;
 			}
 			++idx;
