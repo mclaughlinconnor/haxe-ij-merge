@@ -17,6 +17,6 @@ class API {
   }
 
   static public function greedyMerge(left, middle, right): String {
-    return MergeResolveUtil.tryResolve(left, middle, right);
+    return MergeResolveUtil.tryGreedyResolve(left, middle, right);
   }
 }
