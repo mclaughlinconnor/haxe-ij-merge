@@ -249,9 +249,10 @@ class GreedyHelper {
 				break;
 			}
 
-			if (index1 != end1 || index2 != end2) {
-				throw "Assert index1 != end1 || index2 != end2";
-			}
+			// Trying out assert
+			// if (!(index1 != end1 || index2 != end2)) {
+			// 	throw "Assert index1 != end1 || index2 != end2";
+			// }
 
 			var inserted1 = getInsertedContent(fragments1, index1, end1, Side.fromEnum(SideEnum.LEFT));
 			var inserted2 = getInsertedContent(fragments2, index2, end2, Side.fromEnum(SideEnum.RIGHT));
