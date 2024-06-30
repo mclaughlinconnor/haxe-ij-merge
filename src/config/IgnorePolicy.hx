@@ -11,18 +11,22 @@ enum IgnorePolicyEnum {
 }
 
 class IgnorePolicy {
-	private var myTextKey:String;
+	private var myKey:IgnorePolicyEnum;
 
 	// @NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey
-	public function IgnorePolicy(textKey:String) {
-		this.myTextKey = textKey;
+	public function new(key:IgnorePolicyEnum) {
+		this.myKey = key;
 	}
 
-	public function getText():String {
-		return DiffBundle.message(myTextKey);
+	// public function getText():String {
+	// 	return DiffBundle.message(myTextKey);
+	// }
+
+	public function getComparisonPolicyA():ComparisonPolicy {
+    return IgnorePolicy.getComparisonPolicyB(myKey);
 	}
 
-	public function getComparisonPolicy(ignorePolicy:IgnorePolicyEnum):ComparisonPolicy {
+	public static function getComparisonPolicyB(ignorePolicy:IgnorePolicyEnum):ComparisonPolicy {
 		var policy:ComparisonPolicy;
 		switch (ignorePolicy) {
 			case IgnorePolicyEnum.FORMATTING:
