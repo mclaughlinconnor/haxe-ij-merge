@@ -21,22 +21,25 @@ class MergeLineFragment {
 		myEndLine3 = endLine3;
 	}
 
-	public function alsoHopefullyUnused(fragment:MergeLineFragment) {
-		myStartLine1 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.LEFT));
-		myEndLine1 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.LEFT));
-		myStartLine2 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
-		myEndLine2 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
-		myStartLine3 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
-		myEndLine3 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
-	}
-
-	public function new(range:MergeRange) {
-		myStartLine1 = range.start1;
-		myEndLine1 = range.end1;
-		myStartLine2 = range.start2;
-		myEndLine2 = range.end2;
-		myStartLine3 = range.start3;
-		myEndLine3 = range.end3;
+	// TODO: need to combine the constructors :(
+	public function new(?fragment:MergeLineFragment, ?range:MergeRange) {
+		if (fragment != null) {
+			myStartLine1 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.LEFT));
+			myEndLine1 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.LEFT));
+			myStartLine2 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+			myEndLine2 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+			myStartLine3 = fragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
+			myEndLine3 = fragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
+		} else if (range != null) {
+			myStartLine1 = range.start1;
+			myEndLine1 = range.end1;
+			myStartLine2 = range.start2;
+			myEndLine2 = range.end2;
+			myStartLine3 = range.start3;
+			myEndLine3 = range.end3;
+		} else {
+			throw 'Must provide fragment or range';
+		}
 	}
 
 	public function getStartLine(side:ThreeSide):Int {

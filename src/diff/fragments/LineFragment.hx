@@ -14,17 +14,17 @@ class LineFragment {
 
 	private var myInnerFragments:Array<DiffFragment>;
 
-	public function newFromExpanded(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
+	public static function newFromExpanded(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
 			endOffset2:Int) {
-		newFromSomethingDifferent(startLine1, endLine1, startLine2, endLine2, startOffset1, endOffset1, startOffset2, endOffset2, null);
+		return new LineFragment(startLine1, endLine1, startLine2, endLine2, startOffset1, endOffset1, startOffset2, endOffset2, null);
 	}
 
-	public function newFromFragment(fragment:LineFragment, fragments:Null<Array<DiffFragment>>) {
-		newFromSomethingDifferent(fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartLine2(), fragment.getEndLine2(),
+	public static function newFromFragment(fragment:LineFragment, fragments:Null<Array<DiffFragment>>) {
+		return new LineFragment(fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartLine2(), fragment.getEndLine2(),
 			fragment.getStartOffset1(), fragment.getEndOffset1(), fragment.getStartOffset2(), fragment.getEndOffset2(), fragments);
 	}
 
-	public function newFromSomethingDifferent(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
+	public function new(startLine1:Int, endLine1:Int, startLine2:Int, endLine2:Int, startOffset1:Int, endOffset1:Int, startOffset2:Int,
 			endOffset2:Int, innerFragments:Null<Array<DiffFragment>>) {
 		myStartLine1 = startLine1;
 		myEndLine1 = endLine1;
