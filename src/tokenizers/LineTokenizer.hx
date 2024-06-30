@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package tokenizers;
 
+import diff.tools.util.text.SimpleThreesideTextDiffProvider;
+
 class LineTokenizer {
 	private var myOffset:Int;
 	private var myLength:Int;
