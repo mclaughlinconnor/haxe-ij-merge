@@ -92,4 +92,9 @@ class ThreeSide {
 		// assert array.length == 3;
 		return array[myIndex];
 	}
+
+	@:generic
+	public static function map<T>(f:(t:ThreeSide) -> T):Array<T> {
+		return [f(fromEnum(LEFT)), f(fromEnum(BASE)), f(fromEnum(RIGHT))];
+	}
 }
