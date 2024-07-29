@@ -275,11 +275,12 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 	// State
 	//
 
-	public function storeState():State {
-		return new State(myIndex, getStartLineA(), getEndLineA(), myResolved[0], myResolved[1], myOnesideAppliedConflict/*, myIsResolvedWithAI*/);
+	public function storeState():TextMergeChangeState {
+		return new TextMergeChangeState(myIndex, getStartLineA(), getEndLineA(), myResolved[0], myResolved[1],
+			myOnesideAppliedConflict /*, myIsResolvedWithAI*/);
 	}
 
-	public function restoreState(state:State):Void {
+	public function restoreState(state:TextMergeChangeState):Void {
 		myResolved[0] = state.myResolved1;
 		myResolved[1] = state.myResolved2;
 
@@ -287,7 +288,7 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 		// myIsResolvedWithAI = state.myIsResolvedByAI;
 	}
 
-	private function resetState():Void {
+	public function resetState():Void {
 		myResolved[0] = false;
 		myResolved[1] = false;
 		myOnesideAppliedConflict = false;
@@ -297,14 +298,15 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 	// }
 }
 
-class State extends MergeModelBaseState {
+class TextMergeChangeState extends MergeModelBaseState {
 	public final myResolved1:Bool;
 	public final myResolved2:Bool;
 
 	public final myOnesideAppliedConflict:Bool;
+
 	// public final myIsResolvedByAI:Bool;
 
-	public function new(index:Int, startLine:Int, endLine:Int, resolved1:Bool, resolved2:Bool, onesideAppliedConflict:Bool/*, isResolvedByAI:Bool*/) {
+	public function new(index:Int, startLine:Int, endLine:Int, resolved1:Bool, resolved2:Bool, onesideAppliedConflict:Bool /*, isResolvedByAI:Bool*/) {
 		super(index, startLine, endLine);
 		myResolved1 = resolved1;
 		myResolved2 = resolved2;
