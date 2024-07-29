@@ -29,7 +29,7 @@ class TextDiffProviderBase {
 
 	public function getIgnorePolicy():IgnorePolicy {
 		// return myIgnorePolicySettingAction.getValue();
-		return new IgnorePolicy(IgnorePolicyEnum.DEFAULT);
+		return new IgnorePolicy(IgnorePolicyEnum.IGNORE_WHITESPACES);
 	}
 
 	public function getHighlightPolicy():HighlightPolicy{
