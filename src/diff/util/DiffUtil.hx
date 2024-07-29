@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
+import util.Runnable;
+import diff.tools.util.text.LineOffsets;
+import diff.tools.util.text.LineOffsetsUtil;
 import diff.util.ThreeSide.ThreeSideEnum;
 import diff.comparison.ByWordRt;
 import diff.fragments.DiffFragment;
@@ -434,7 +437,7 @@ class DiffUtil {
 	// 	var components:Array<JComponent> = [];
 	// 	var diffTitleCustomizers:Array<DiffEditorTitleCustomizer> = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
 	// 	var needCreateTitle:Bool = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
-	// 	for (i in 0...contents.size() - 1) {
+	// 	for (i in 0...contents.size()) {
 	// 		var customizer:DiffEditorTitleCustomizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
 	// 		var title:JComponent = needCreateTitle ? createTitle(titles.get(i), customizer) : null;
 	// 		title = createTitleWithNotifications(viewer, title, contents.get(i));
@@ -454,7 +457,7 @@ class DiffUtil {
 	//
 	// 	var diffTitleCustomizers:Array<DiffEditorTitleCustomizer> = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
 	// 	var needCreateTitle:Bool = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
-	// 	for (i in 0...contents.size() - 1) {
+	// 	for (i in 0...contents.size()) {
 	// 		var title:JComponent = needCreateTitle ? createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i),
 	// 			diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
 	// 		title = createTitleWithNotifications(viewer, title, contents.get(i));
@@ -468,7 +471,7 @@ class DiffUtil {
 	//
 	// 	var diffTitleCustomizers:Array<DiffEditorTitleCustomizer> = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
 	// 	var needCreateTitle:Bool = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
-	// 	for (i in 0...titles.size() - 1) {
+	// 	for (i in 0...titles.size()) {
 	// 		var title:JComponent = null;
 	// 		if (needCreateTitle) {
 	// 			var titleText:String = titles[i];
@@ -822,7 +825,7 @@ class DiffUtil {
 	// @:generic
 	// public static function getSortedIndexes<T>(values:Array<T>, comparator:Comparator<T>):Array<Int> {
 	// 	final indexes:Array<Integer> = [];
-	// 	for (i in 0...values.size() - 1) {
+	// 	for (i in 0...values.size()) {
 	// 		indexes.add(i);
 	// 	}
 	//
@@ -836,7 +839,7 @@ class DiffUtil {
 	// }
 	// public static function invertIndexes(indexes:Array<Int>):Array<Int> {
 	// 	var inverted:Array<Int> = [for (_ in 0...indexes.length) 0];
-	// 	for (i in 0...indexes.length - 1) {
+	// 	for (i in 0...indexes.length) {
 	// 		inverted[indexes[i]] = i;
 	// 	}
 	// 	return inverted;
@@ -938,115 +941,124 @@ class DiffUtil {
 	// 		return next != -1 && next < line2;
 	// 	}
 	// }
-	// private static function deleteLines(document:Document, line1:Int, line2:Int):Void {
-	// 	var range:TextRange = getLinesRange(document, line1, line2);
-	// 	var offset1:Int = range.getStartOffset();
-	// 	var offset2:Int = range.getEndOffset();
-	//
-	// 	if (offset1 > 0) {
-	// 		offset1--;
-	// 	} else if (offset2 < document.getTextLength()) {
-	// 		offset2++;
-	// 	}
-	// 	document.deleteString(offset1, offset2);
-	// }
-	// private static function insertLines(document:Document, line:Int, text:String):Void {
-	// 	if (line == getLineCount(document)) {
-	// 		document.insertString(document.getTextLength(), "\n" + text);
-	// 	} else {
-	// 		document.insertString(document.getLineStartOffset(line), text + "\n");
-	// 	}
-	// }
-	// private static function replaceLines(document:Document, line1:Int, line2:Int, text:String):Void {
-	// 	var currentTextRange:TextRange = getLinesRange(document, line1, line2);
-	// 	var offset1:Int = currentTextRange.getStartOffset();
-	// 	var offset2:Int = currentTextRange.getEndOffset();
-	//
-	// 	document.replaceString(offset1, offset2, text);
-	// }
-	// public static function applyModification(document:Document, line1:Int, line2:Int, newLines:Array<String>):Void {
-	// 	if (line1 == line2 && newLines.isEmpty())
-	// 		return;
-	// 	if (line1 == line2) {
-	// 		insertLines(document, line1, StringUtil.join(newLines, "\n"));
-	// 	} else if (newLines.isEmpty()) {
-	// 		deleteLines(document, line1, line2);
-	// 	} else {
-	// 		replaceLines(document, line1, line2, StringUtil.join(newLines, "\n"));
-	// 	}
-	// }
-	// public static function applyModification(document1:Document, line1:Int, line2:Int, document2:Document, oLine1:Int, oLine2:Int):Void {
-	// 	if (line1 == line2 && oLine1 == oLine2)
-	// 		return;
-	// 	if (line1 == line2) {
-	// 		insertLines(document1, line1, getLinesContent(document2, oLine1, oLine2));
-	// 	} else if (oLine1 == oLine2) {
-	// 		deleteLines(document1, line1, line2);
-	// 	} else {
-	// 		replaceLines(document1, line1, line2, getLinesContent(document2, oLine1, oLine2));
-	// 	}
-	// }
-	//   public static function  applyModification(
-	// text: String ,
-	//        lineOffsets: LineOffsets ,
-	//        otherText: String ,
-	//        otherLineOffsets: LineOffsets ,
-	//        ranges: Array<Range>
-	// ): String {
-	//     return new Object() {
-	//       private final StringBuilder stringBuilder = new StringBuilder();
-	//       private Bool isEmpty = true;
-	//
-	//
-	//         public String execute() {
-	//           Int lastLine = 0;
-	//
-	//           for (
-	// Range range : ranges
-	// ) {
-	//             String newChunkContent = DiffRangeUtil.getLinesContent(
-	// otherText, otherLineOffsets, range.start2, range.end2
-	// );
-	//
-	//             appendOriginal(
-	// lastLine, range.start1
-	// );
-	//             append(
-	// newChunkContent, range.end2 - range.start2
-	// );
-	//
-	//             lastLine = range.end1;
-	//           }
-	//
-	//           appendOriginal(
-	// lastLine, lineOffsets.getLineCount());
-	//
-	//           return stringBuilder.toString();
-	//         }
-	//
-	//       private Void appendOriginal(
-	// Int start, Int end
-	// ) {
-	//         append(
-	// DiffRangeUtil.getLinesContent(text, lineOffsets, start, end
-	// ), end - start);
-	//       }
-	//
-	//       private Void append(
-	// String content, Int lineCount
-	// ) {
-	//         if (
-	// lineCount > 0 && !isEmpty
-	// ) {
-	//           stringBuilder.append('\n');
-	//         }
-	//         stringBuilder.append(
-	// content
-	// );
-	//         isEmpty &= lineCount == 0;
-	//       }
-	//     }.execute();
-	//   }
+
+	private static function deleteLines(document:String, line1:Int, line2:Int):String {
+		var range:TextRange = getLinesRangeA(document, line1, line2);
+		var offset1:Int = range.getStartOffset();
+		var offset2:Int = range.getEndOffset();
+
+		if (offset1 > 0) {
+			offset1--;
+		} else if (offset2 < document.length) {
+			offset2++;
+		}
+
+		var beforeRange = document.substring(0, offset1);
+		var afterRange = document.substring(offset2, document.length);
+
+		return beforeRange + afterRange;
+	}
+
+	private static function insertLines(document:String, line:Int, text:String):String {
+		var lines = document.split("\n");
+
+		if (line < 0)
+			line = 0;
+		if (line > lines.length)
+			line = lines.length;
+
+		lines.insert(line, text);
+
+		// Join the lines back into a single string
+		return lines.join("\n");
+
+		// if (line == getLineCount(document)) {
+		// 	document.insertString(document.length, "\n" + text);
+		// } else {
+		// 	document.insertString(document.getLineStartOffset(line), text + "\n");
+		// }
+	}
+
+	private static function replaceLines(document:String, line1:Int, line2:Int, text:String):String {
+		var currentTextRange:TextRange = getLinesRangeA(document, line1, line2);
+		var offset1:Int = currentTextRange.getStartOffset();
+		var offset2:Int = currentTextRange.getEndOffset();
+
+		// document.replaceString(offset1, offset2, text);
+		if (offset1 < 0)
+			offset1 = 0;
+		if (offset2 > document.length)
+			offset2 = document.length;
+
+		var beforeRange = document.substring(0, offset1);
+		var afterRange = document.substring(offset2, document.length);
+
+		return beforeRange + text + afterRange;
+	}
+
+	public static function applyModificationA(document:String, line1:Int, line2:Int, newLines:Array<String>):String {
+		if (line1 == line2 && newLines.length == 0)
+			return document;
+
+		if (line1 == line2) {
+			insertLines(document, line1, newLines.join("\n"));
+		} else if (newLines.length == 0) {
+			deleteLines(document, line1, line2);
+		} else {
+			document = replaceLines(document, line1, line2, newLines.join("\n"));
+		}
+
+		return document;
+	}
+
+	public static function applyModificationB(document1:String, line1:Int, line2:Int, document2:String, oLine1:Int, oLine2:Int):Void {
+		if (line1 == line2 && oLine1 == oLine2)
+			return;
+		if (line1 == line2) {
+			insertLines(document1, line1, getLinesContentA(document2, oLine1, oLine2));
+		} else if (oLine1 == oLine2) {
+			deleteLines(document1, line1, line2);
+		} else {
+			replaceLines(document1, line1, line2, getLinesContentA(document2, oLine1, oLine2));
+		}
+	}
+
+	public static function applyModificationC(text:String, lineOffsets:LineOffsets, otherText:String, otherLineOffsets:LineOffsets,
+			ranges:Array<Range>):String {
+		final stringBuilder:StringBuf = new StringBuf();
+		var isEmpty:Bool = true;
+		function append(content:String, lineCount:Int):Void {
+			if (lineCount > 0 && !isEmpty) {
+				stringBuilder.add('\n');
+			}
+			stringBuilder.add(content);
+			isEmpty = isEmpty && lineCount == 0;
+		}
+
+		function appendOriginal(start:Int, end:Int):Void {
+			append(DiffRangeUtil.getLinesContent(text, lineOffsets, start, end), end - start);
+		}
+
+		function execute():String {
+			var lastLine:Int = 0;
+
+			for (range in ranges) {
+				var newChunkContent:String = DiffRangeUtil.getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
+
+				appendOriginal(lastLine, range.start1);
+				append(newChunkContent, range.end2 - range.start2);
+
+				lastLine = range.end1;
+			}
+
+			appendOriginal(lastLine, lineOffsets.getLineCount());
+
+			return stringBuilder.toString();
+		}
+
+		return execute();
+	}
+
 	// public static function clearLineModificationFlags(document:Document, startLine:Int, endLine:Int):Void {
 	// 	if (document.getTextLength() == 0)
 	// 		return; // empty document has no lines
@@ -1054,24 +1066,28 @@ class DiffUtil {
 	// 		return;
 	// 	Std.downcast(document, DocumentImpl).clearLineModificationFlags(startLine, endLine);
 	// }
-	// public static function getLinesContent(document:Document, line1:Int, line2:Int):String {
-	// 	return getLinesRange(document, line1, line2).subSequence(document.getImmutableString());
-	// }
-	// public static function getLinesContent(document:Document, line1:Int, line2:Int, includeNewLine:Bool):String {
-	// 	return getLinesRange(document, line1, line2, includeNewLine).subSequence(document.getImmutableString());
-	// }
+	public static function getLinesContentA(document:String, line1:Int, line2:Int):String {
+		return getLinesRangeA(document, line1, line2).subSequence(document /*.getImmutableString()*/);
+	}
+
+	public static function getLinesContentB(document:String, line1:Int, line2:Int, includeNewLine:Bool):String {
+		return getLinesRangeB(document, line1, line2, includeNewLine).subSequence(document /*.getImmutableString()*/);
+	}
+
 	/**
 	 * Return affected range, without non-internal newlines
 	 * <p/>
 	 * we consider '\n' not as a part of line, but a separator between lines
 	 * ex: if last line is not empty, the last symbol will not be '\n'
 	 */
-	// public static function getLinesRange(document:Document, line1:Int, line2:Int):TextRange {
-	// 	return getLinesRange(document, line1, line2, false);
-	// }
-	// public static function getLinesRange(document:Document, line1:Int, line2:Int, includeNewline:Bool):TextRange {
-	// 	return DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
-	// }
+	public static function getLinesRangeA(document:String, line1:Int, line2:Int):TextRange {
+		return getLinesRangeB(document, line1, line2, false);
+	}
+
+	public static function getLinesRangeB(document:String, line1:Int, line2:Int, includeNewline:Bool):TextRange {
+		return DiffRangeUtil.getLinesRange(LineOffsetsUtil.createB(document), line1, line2, includeNewline);
+	}
+
 	// public static function getOffset(document:Document, line:Int, column:Int):Int {
 	// 	if (line < 0)
 	// 		return 0;
@@ -1094,12 +1110,18 @@ class DiffUtil {
 	// public static function getLineCount(document:Document):Int {
 	// 	return Math.max(document.getLineCount(), 1);
 	// }
-	// public static function getLines(document:Document):Array<String> {
-	// 	return getLines(document, 0, getLineCount(document));
-	// }
-	// public static function getLines(document:Document, startLine:Int, endLine:Int):Array<String> {
-	// 	return DiffRangeUtil.getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
-	// }
+	public static function getLineCount(document:String):Int {
+		return Std.int(Math.max(document.split("\n").length - 1, 1));
+	}
+
+	public static function getLinesA(document:String):Array<String> {
+		return getLinesB(document, 0, getLineCount(document));
+	}
+
+	public static function getLinesB(document:String, startLine:Int, endLine:Int):Array<String> {
+		return DiffRangeUtil.getLines(document /*.getCharsSequence()*/, LineOffsetsUtil.createB(document), startLine, endLine);
+	}
+
 	// public static function bound(value:Int, lowerBound:Int, upperBound:Int):Int {
 	// 	// assert lowerBound <= upperBound :String.format ("%s - [%s, %s]", value, lowerBound, upperBound);
 	// 	return MathUtil.clamp(value, lowerBound, upperBound);
@@ -1115,35 +1137,37 @@ class DiffUtil {
 	// public static function countLinesShift(e:DocumentEvent):Int {
 	// 	return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
 	// }
-	// public static function updateRangeOnModification(start:Int, end:Int, changeStart:Int, changeEnd:Int, shift:Int):UpdatedLineRange {
-	// 	return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
-	// }
-	// public static function updateRangeOnModification(start:Int, end:Int, changeStart:Int, changeEnd:Int, shift:Int, greedy:Bool):UpdatedLineRange {
-	// 	if (end <= changeStart) { // change before
-	// 		return new UpdatedLineRange(start, end, false);
-	// 	}
-	// 	if (start >= changeEnd) { // change after
-	// 		return new UpdatedLineRange(start + shift, end + shift, false);
-	// 	}
-	//
-	// 	if (start <= changeStart && end >= changeEnd) { // change inside
-	// 		return new UpdatedLineRange(start, end + shift, false);
-	// 	}
-	//
-	// 	// range is damaged. We don't know new boundaries.
-	// 	// But we can try to return approximate new position
-	// 	var newChangeEnd:Int = changeEnd + shift;
-	//
-	// 	if (start >= changeStart && end <= changeEnd) { // fully inside change
-	// 		return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true) : new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
-	// 	}
-	//
-	// 	if (start < changeStart) { // bottom boundary damaged
-	// 		return greedy ? new UpdatedLineRange(start, newChangeEnd, true) : new UpdatedLineRange(start, changeStart, true);
-	// 	} else { // top boundary damaged
-	// 		return greedy ? new UpdatedLineRange(changeStart, end + shift, true) : new UpdatedLineRange(newChangeEnd, end + shift, true);
-	// 	}
-	// }
+	public static function updateRangeOnModificationA(start:Int, end:Int, changeStart:Int, changeEnd:Int, shift:Int):UpdatedLineRange {
+		return updateRangeOnModificationB(start, end, changeStart, changeEnd, shift, false);
+	}
+
+	public static function updateRangeOnModificationB(start:Int, end:Int, changeStart:Int, changeEnd:Int, shift:Int, greedy:Bool):UpdatedLineRange {
+		if (end <= changeStart) { // change before
+			return new UpdatedLineRange(start, end, false);
+		}
+		if (start >= changeEnd) { // change after
+			return new UpdatedLineRange(start + shift, end + shift, false);
+		}
+
+		if (start <= changeStart && end >= changeEnd) { // change inside
+			return new UpdatedLineRange(start, end + shift, false);
+		}
+
+		// range is damaged. We don't know new boundaries.
+		// But we can try to return approximate new position
+		var newChangeEnd:Int = changeEnd + shift;
+
+		if (start >= changeStart && end <= changeEnd) { // fully inside change
+			return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true) : new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
+		}
+
+		if (start < changeStart) { // bottom boundary damaged
+			return greedy ? new UpdatedLineRange(start, newChangeEnd, true) : new UpdatedLineRange(start, changeStart, true);
+		} else { // top boundary damaged
+			return greedy ? new UpdatedLineRange(changeStart, end + shift, true) : new UpdatedLineRange(newChangeEnd, end + shift, true);
+		}
+	}
+
 	//
 	// Types
 	//
@@ -1189,36 +1213,38 @@ class DiffUtil {
 	//
 	// Writable
 	//
-	// public static function executeWriteCommand(project:Null<Project>, document:Document, commandName:Null<String>, commandGroupId:Null<String>,
-	// 		confirmationPolicy:UndoConfirmationPolicy, underBulkUpdate:Bool, task:Runnable):Bool {
-	// 	return executeWriteCommand(project, document, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, true, task);
+	// public static function executeWriteCommandA(/*project:Null<Project>, document:Document, commandName:Null<String>, commandGroupId:Null<String>,
+	// 		confirmationPolicy:UndoConfirmationPolicy, underBulkUpdate:Bool,*/ task:Runnable):Bool {
+	// 	return executeWriteCommandB(/*project, document, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, true,*/ task);
 	// }
-	// public static function executeWriteCommand(project:Null<Project>, document:Document, commandName:Null<String>, commandGroupId:Null<String>,
-	// 		confirmationPolicy:UndoConfirmationPolicy, underBulkUpdate:Bool, shouldRecordCommandForActiveDocument:Bool, task:Runnable):Bool {
-	// 	if (!makeWritable(project, document)) {
-	// 		var file:VirtualFile = FileDocumentManager.getInstance().getFile(document);
-	// 		var warning:String = "Document is read-only";
-	// 		if (file != null) {
-	// 			warning += ": " + file.getPresentableName();
-	// 			if (!file.isValid())
-	// 				warning += " (invalid)";
-	// 		}
-	// 		LOG.warn(warning);
-	// 		return false;
-	// 	}
-	//
-	// 	ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
-	// 		if (underBulkUpdate) {
-	// 			DocumentUtil.executeInBulk(document, task);
-	// 		} else {
-	// 			task.run();
-	// 		}
-	// 	}, commandName, commandGroupId, confirmationPolicy,
-	// 		shouldRecordCommandForActiveDocument, document));
-	// 	return true;
-	// }
-	// public static function executeWriteCommand(document:Document, project:Null<Project>, commandName:Null<String>, task:Runnable):Bool {
-	// 	return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
+
+	public static function executeWriteCommand(/*project:Null<Project>, document:Document, commandName:Null<String>, commandGroupId:Null<String>,
+		confirmationPolicy:UndoConfirmationPolicy, underBulkUpdate:Bool, shouldRecordCommandForActiveDocument:Bool, */ task:Runnable):Bool {
+		// if (!makeWritable(project, document)) {
+		// 	var file:VirtualFile = FileDocumentManager.getInstance().getFile(document);
+		// 	var warning:String = "Document is read-only";
+		// 	if (file != null) {
+		// 		warning += ": " + file.getPresentableName();
+		// 		if (!file.isValid())
+		// 			warning += " (invalid)";
+		// 	}
+		// 	LOG.warn(warning);
+		// 	return false;
+		// }
+
+		// ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+		// 	if (underBulkUpdate) {
+		// 		DocumentUtil.executeInBulk(document, task);
+		// 	} else {
+		task();
+		// }
+		// }, commandName, commandGroupId, confirmationPolicy,
+		// shouldRecordCommandForActiveDocument, document));
+		return true;
+	}
+
+	// public static function executeWriteCommandC(/*document:Document, project:Null<Project>, commandName:Null<String>, task:Runnable):Bool {
+	// 	return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, */task);
 	// }
 	// public static function isEditable(editor:Editor):Bool {
 	// 	return !editor.isViewer() && canMakeWritable(editor.getDocument());
@@ -1525,20 +1551,14 @@ class DiffUtil {
 	// }
 }
 
-// class UpdatedLineRange {
-// 	public final startLine:Int;
-// 	public final endLine:Int;
-// 	public final damaged:Bool;
-//
-// 	public function UpdatedLineRange(startLine:Int, endLine:Int, damaged:Bool) {
-// 		this.startLine = startLine;
-// 		this.endLine = endLine;
-// 		this.damaged = damaged;
-// 	}
-//
-// 	public function new(startLine:Int, endLine:Int, damaged:Bool) {
-// 		this.startLine = startLine;
-// 		this.endLine = endLine;
-// 		this.damaged = damaged;
-// 	}
-// }
+class UpdatedLineRange {
+	public final startLine:Int;
+	public final endLine:Int;
+	public final damaged:Bool;
+
+	public function new(startLine:Int, endLine:Int, damaged:Bool) {
+		this.startLine = startLine;
+		this.endLine = endLine;
+		this.damaged = damaged;
+	}
+}
