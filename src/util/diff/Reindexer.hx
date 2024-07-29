@@ -58,14 +58,13 @@ class Reindexer {
 				if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1])
 					&& !discardedChanges[0].safeAt(x)
 					&& !discardedChanges[1].safeAt(y)) {
-
 					x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
 					y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
 				} else if (discardedChanges[0].safeAt(x)) {
-					bitSetSetBetween(changes1, getOriginal(myOldIndices[0], x));
+					changes1.setAt(getOriginal(myOldIndices[0], x), true);
 					x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
 				} else if (discardedChanges[1].safeAt(y)) {
-					bitSetSetBetween(changes2, getOriginal(myOldIndices[1], y));
+					changes2.setAt(getOriginal(myOldIndices[1], y), true);
 					y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
 				}
 			}
