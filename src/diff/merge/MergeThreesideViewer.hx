@@ -398,16 +398,6 @@ class MyMergeModel extends MergeModelBase<TextMergeChangeState> {
 		return change.storeState();
 	}
 
-	private override function restoreChangeState(state:TextMergeChangeState):Void {
-		super.restoreChangeState(state);
-		var change:TextMergeChange = myAllMergeChanges[state.myIndex];
-
-		var wasResolved:Bool = change.isResolvedA();
-		change.restoreState(state);
-		if (wasResolved != change.isResolvedA())
-			onChangeResolved(change);
-	}
-
 	private override function processDocumentChange(index:Int, oldLine1:Int, oldLine2:Int, shift:Int):TextMergeChangeState {
 		var state:TextMergeChangeState = super.processDocumentChange(index, oldLine1, oldLine2, shift);
 

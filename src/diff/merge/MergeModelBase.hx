@@ -6,12 +6,8 @@ import diff.util.DiffUtil;
 import diff.tools.util.text.LineRange;
 
 abstract class MergeModelBase<S:MergeModelBaseState> {
-	// private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
-	// @Nullable private final Project myProject;
-	// @NotNull private final Document myDocument;
 	private var myDocument:String;
 
-	// @Nullable private final UndoManager myUndoManager;
 	private var myStartLines:Array<Int> = [];
 	private var myEndLines:Array<Int> = [];
 
@@ -22,20 +18,14 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 
 	private var myDisposed:Bool;
 
-	public function new(/*project: Null<Project>, */ document:String) {
-		// myProject = project;
+	public function new(document:String) {
 		myDocument = document;
-		// myUndoManager = myProject != null ? UndoManager.getInstance(myProject) : UndoManager.getGlobalInstance();
-
-		// myDocument.addDocumentListener(new MyDocumentListener(), this);
 	}
 
 	public function dispose():Void {
 		if (myDisposed)
 			return;
 		myDisposed = true;
-
-		// LOG.assertTrue(myBulkChangeUpdateDepth == 0);
 
 		myStartLines = [];
 		myEndLines = [];
@@ -121,47 +111,9 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	}
 
 	//
-	// RepaInt
-	//
-	// public Void invalidateHighlighters(Int index) {
-	//   if (myBulkChangeUpdateDepth > 0) {
-	//     myChangesToUpdate.add(index);
-	//   }
-	//   else {
-	//     reinstallHighlighters(index);
-	//   }
-	// }
-	//
-	// @RequiresEdt
-	// public Void enterBulkChangeUpdateBlock() {
-	//   myBulkChangeUpdateDepth++;
-	// }
-	//
-	// @RequiresEdt
-	// public Void exitBulkChangeUpdateBlock() {
-	//   myBulkChangeUpdateDepth--;
-	//   LOG.assertTrue(myBulkChangeUpdateDepth >= 0);
-	//
-	//   if (myBulkChangeUpdateDepth == 0) {
-	//     myChangesToUpdate.forEach((IntConsumer)index -> {
-	//       reinstallHighlighters(index);
-	//     });
-	//     myChangesToUpdate.clear();
-	//   }
-	// }
-	//
-	// @RequiresEdt
-	// protected abstract Void reinstallHighlighters(Int index);
-	//
 	// Undo
 	//
 	private abstract function storeChangeState(index:Int):S;
-
-	// @RequiresEdt
-	private function restoreChangeState(state:S):Void {
-		setLineStart(state.myIndex, state.myStartLine);
-		setLineEnd(state.myIndex, state.myEndLine);
-	}
 
 	private function processDocumentChange(index:Int, oldLine1:Int, oldLine2:Int, shift:Int):S {
 		var line1:Int = getLineStart(index);
@@ -172,11 +124,6 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		// RangeMarker can be updated in a different way
 		var rangeAffected:Bool = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2);
 
-		var rangeManuallyEdit:Bool = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2);
-		// if (rangeManuallyEdit && !isInsideCommand() && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
-		//   onRangeManuallyEdit(index);
-		// }
-
 		var oldState:S = rangeAffected ? storeChangeState(index) : null;
 
 		setLineStart(index, newRange.startLine);
@@ -185,65 +132,16 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		return oldState;
 	}
 
-	// @ApiStatus.Internal
-	// protected Void onRangeManuallyEdit(Int index) {
-	//
-	// }
-
-	public function executeMergeCommand(commandName:Null<String>, commandGroupId:Null<String>, /*confirmationPolicy: UndoConfirmationPolicy,*/
-			underBulkUpdate:Bool, affectedChanges:Null<Array<Int>>, task:Runnable):Bool {
-		var allAffectedChanges:Array<Int> = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
+	public function executeMergeCommand(commandName:Null<String>, commandGroupId:Null<String>, underBulkUpdate:Bool, affectedChanges:Null<Array<Int>>,
+			task:Runnable):Bool {
 		return DiffUtil.executeWriteCommand(task);
-		// return DiffUtil.executeWriteCommand(/*myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate,*/ () -> {
-		// 	LOG.assertTrue(!myInsideCommand);
-		//
-		// 	// We should restore states after changes in document (by DocumentUndoProvider) to aVoid corruption by our onBeforeDocumentChange()
-		// 	// Undo actions are performed in backward order, while redo actions are performed in forward order.
-		// 	// Thus we should register two UndoableActions.
-		//
-		// 	// myInsideCommand = true;
-		// 	// enterBulkChangeUpdateBlock();
-		// 	task.run();
-		// 	// try {
-		// 	//   registerUndoRedo(true, allAffectedChanges);
-		// 	//   try {
-		// 	//     task.run();
-		// 	//   }
-		// 	//   finally {
-		// 	//     registerUndoRedo(false, allAffectedChanges);
-		// 	//   }
-		// 	// }
-		// 	// finally {
-		// 	//   exitBulkChangeUpdateBlock();
-		// 	//   myInsideCommand = false;
-		// 	// }
-		// });
 	}
 
-	// private function registerUndoRedo(undo: Bool , affectedChanges: Null<Array<Int>> ): Void {
-	//   if (myUndoManager == null) return;
-	//
-	//   var  states: List<S>;
-	//   if (affectedChanges != null) {
-	//     states = [];
-	//     for (change in affectedChanges) {
-	//       states.add(storeChangeState(index));
-	//     }
-	//   }
-	//   else {
-	//     states = [];
-	//     for (index in 0...getChangesCount()-1) {
-	//       states.add(storeChangeState(index));
-	//     }
-	//   }
-	//   myUndoManager.undoableActionPerformed(new MyUndoableAction(this, states, undo));
-	// }
 	//
 	// Actions
 	//
 
 	public function replaceChange(index:Int, newContent:Array<String>):Void {
-		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
@@ -273,7 +171,6 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	}
 
 	public function appendChange(index:Int, newContent:Array<String>):Void {
-		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
@@ -292,12 +189,9 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	 * So we should check all other changes and shift them if necessary.
 	 */
 	private function moveChangesAfterInsertion(index:Int, newOutputStartLine:Int, newOutputEndLine:Int):Void {
-		// LOG.assertTrue(isInsideCommand());
-
 		if (getLineStart(index) != newOutputStartLine || getLineEnd(index) != newOutputEndLine) {
 			setLineStart(index, newOutputStartLine);
 			setLineEnd(index, newOutputEndLine);
-			// invalidateHighlighters(index);
 		}
 
 		var beforeChange:Bool = true;
@@ -360,7 +254,6 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 			otherIndex++;
 		}
 
-		// LOG.assertTrue(directChanges.size() <= result.size());
 		return result;
 	}
 
@@ -371,12 +264,11 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	public function beforeDocumentChange(e:DocumentEvent<S>):Void {
 		if (isDisposed())
 			return;
-		// enterBulkChangeUpdateBlock();
 
 		if (getChangesCount() == 0)
 			return;
 
-		// Weird types here
+		// CM: Weird types here
 		var lineRange:LineRange = DiffUtil.getAffectedLineRange(cast e);
 		var shift:Int = DiffUtil.countLinesShift(cast e);
 
@@ -390,62 +282,8 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 			if (!isInsideCommand())
 				corruptedStates.push(oldState);
 		}
-
-		// if (myUndoManager != null && !corruptedStates.isEmpty()) {
-		//   // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
-		//   // thus thus we can aVoid checks for isUndoInProgress() (to aVoid modification of the same TextMergeChange by this listener)
-		//   myUndoManager.undoableActionPerformed(new MyUndoableAction(MergeModelBase.this, corruptedStates, true));
-		// }
 	}
-
-	// public Void documentChanged(@NotNull DocumentEvent e) {
-	//   if (isDisposed()) return;
-	//   exitBulkChangeUpdateBlock();
-	// }
 }
-
-// private static final class MyUndoableAction extends BasicUndoableAction {
-//   @NotNull private final WeakReference<MergeModelBase<?>> myModelRef;
-//   @NotNull private final List<? extends State> myStates;
-//   private final Bool myUndo;
-//
-//   MyUndoableAction(@NotNull MergeModelBase<?> model, @NotNull List<? extends State> states, Bool undo) {
-//     super(model.myDocument);
-//     myModelRef = new WeakReference<>(model);
-//
-//     myStates = states;
-//     myUndo = undo;
-//   }
-//
-//   @Override
-//   public Void undo() {
-//     MergeModelBase<?> model = myModelRef.get();
-//     if (model != null && myUndo) restoreStates(model);
-//   }
-//
-//   @Override
-//   public Void redo() {
-//     MergeModelBase<?> model = myModelRef.get();
-//     if (model != null && !myUndo) restoreStates(model);
-//   }
-//
-//   private Void restoreStates(@NotNull MergeModelBase model) {
-//     if (model.isDisposed()) return;
-//     if (model.getChangesCount() == 0) return;
-//
-//     model.enterBulkChangeUpdateBlock();
-//     try {
-//       for (state in myStates) {
-//         //noinspection unchecked
-//         model.restoreChangeState(state);
-//         model.invalidateHighlighters(state.myIndex);
-//       }
-//     }
-//     finally {
-//       model.exitBulkChangeUpdateBlock();
-//     }
-//   }
-// }
 
 class DocumentEvent<S:MergeModelBaseState> {
 	private final myMergeModel:MergeModelBase<S>;
