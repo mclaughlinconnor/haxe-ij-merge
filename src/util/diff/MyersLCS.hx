@@ -49,11 +49,11 @@ class MyersLCS {
 			myChanges2 = changes2;
 		}
 
-		for (i in myStart1...myStart1 + myCount1) {
+		for (i in myStart1...myStart1 + myCount1 + 1) {
 			myChanges1.setAt(i, true);
 		}
 
-		for (i in myStart2...myStart2 + myCount2) {
+		for (i in myStart2...myStart2 + myCount2 + 1) {
 			myChanges2.setAt(i, true);
 		}
 
@@ -86,7 +86,7 @@ class MyersLCS {
 	}
 
 	public function executeWithThreshold():Void {
-		var threshold:Int = Std.int(Math.max(20000 + 10 * Math.sqrt(myCount1 + myCount2), DiffConfig.DELTA_THRESHOLD_SIZE));
+		var threshold:Int = Std.int(Math.max(20000 + 10 * Std.int(Math.sqrt(myCount1 + myCount2)), DiffConfig.DELTA_THRESHOLD_SIZE));
 		executeB(threshold, true);
 	}
 
