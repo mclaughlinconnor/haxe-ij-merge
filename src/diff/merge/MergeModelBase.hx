@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.merge;
 
-import diff.fragments.MergeModelBase.MergeModelBaseState;
 import util.Runnable;
 import diff.util.DiffUtil;
 import diff.tools.util.text.LineRange;
@@ -52,6 +51,43 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 
 	public function getDocument():String {
 		return myDocument;
+	}
+
+	public function getLineStartOffset(line:Int):Int {
+		if (line == 0) {
+			return 0; // for 0 length document
+		}
+
+		var currentLine = 0;
+		for (i in 0...myDocument.length) {
+			if (currentLine == line) {
+				return i;
+			}
+			if (myDocument.charAt(i) == '\n') {
+				currentLine++;
+			}
+		}
+
+		throw "Line number out of bounds";
+	}
+
+	public function getLineNumber(index:Int):Int {
+		if (index < 0) {
+			index = 0;
+		}
+
+		if (index > myDocument.length) {
+			index = myDocument.length;
+		}
+
+		var lineNumber = 0;
+		for (i in 0...index) {
+			if (myDocument.charAt(i) == '\n') {
+				lineNumber++;
+			}
+		}
+
+		return lineNumber;
 	}
 
 	public function getLineStart(index:Int):Int {
@@ -211,6 +247,23 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
+		var lines = StringUtil.countNewLines(myDocument) + 1;
+		var newString:String;
+		if (newContent.length == 0) {
+			newString = "";
+		} else {
+			if (index == lines) {
+				newString = "\n" + newContent.join("\n");
+			} else {
+				newString = newContent.join("\n") + "\n";
+			}
+		}
+
+		// + 1 needed for the "\n" trailing
+		var event:DocumentEvent<S> = new DocumentEvent(this, getLineStartOffset(outputStartLine),
+			myDocument.substring(getLineStartOffset(outputStartLine), getLineStartOffset(outputEndLine)), newString);
+		beforeDocumentChange(event);
+
 		myDocument = DiffUtil.applyModificationA(myDocument, outputStartLine, outputEndLine, newContent);
 
 		if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
@@ -224,6 +277,8 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
+		var event:DocumentEvent<S> = new DocumentEvent(this, getLineStartOffset(outputStartLine), "", newContent.join("\n"));
+		beforeDocumentChange(event);
 		myDocument = DiffUtil.applyModificationA(myDocument, outputEndLine, outputEndLine, newContent);
 
 		var newOutputEndLine:Int = outputEndLine + newContent.length;
@@ -312,40 +367,43 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	//
 	// Helpers
 	//
+
+	public function beforeDocumentChange(e:DocumentEvent<S>):Void {
+		if (isDisposed())
+			return;
+		// enterBulkChangeUpdateBlock();
+
+		if (getChangesCount() == 0)
+			return;
+
+		// Weird types here
+		var lineRange:LineRange = DiffUtil.getAffectedLineRange(cast e);
+		var shift:Int = DiffUtil.countLinesShift(cast e);
+
+		var corruptedStates:Array<S> = [];
+		for (index in 0...getChangesCount()) {
+			var oldState:S = processDocumentChange(index, lineRange.start, lineRange.end, shift);
+			if (oldState == null)
+				continue;
+
+			// invalidateHighlighters(index);
+			if (!isInsideCommand())
+				corruptedStates.push(oldState);
+		}
+
+		// if (myUndoManager != null && !corruptedStates.isEmpty()) {
+		//   // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
+		//   // thus thus we can aVoid checks for isUndoInProgress() (to aVoid modification of the same TextMergeChange by this listener)
+		//   myUndoManager.undoableActionPerformed(new MyUndoableAction(MergeModelBase.this, corruptedStates, true));
+		// }
+	}
+
+	// public Void documentChanged(@NotNull DocumentEvent e) {
+	//   if (isDisposed()) return;
+	//   exitBulkChangeUpdateBlock();
+	// }
 }
-// private class MyDocumentListener implements DocumentListener {
-//   @Override
-//   public Void beforeDocumentChange(@NotNull DocumentEvent e) {
-//     if (isDisposed()) return;
-//     enterBulkChangeUpdateBlock();
-//
-//     if (getChangesCount() == 0) return;
-//
-//     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
-//     Int shift = DiffUtil.countLinesShift(e);
-//
-//     List<S> corruptedStates = new SmartList<>();
-//     for (Int index = 0; index < getChangesCount(); index++) {
-//       S oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift);
-//       if (oldState == null) continue;
-//
-//       invalidateHighlighters(index);
-//       if (!isInsideCommand()) corruptedStates.add(oldState);
-//     }
-//
-//     if (myUndoManager != null && !corruptedStates.isEmpty()) {
-//       // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
-//       // thus thus we can aVoid checks for isUndoInProgress() (to aVoid modification of the same TextMergeChange by this listener)
-//       myUndoManager.undoableActionPerformed(new MyUndoableAction(MergeModelBase.this, corruptedStates, true));
-//     }
-//   }
-//
-//   @Override
-//   public Void documentChanged(@NotNull DocumentEvent e) {
-//     if (isDisposed()) return;
-//     exitBulkChangeUpdateBlock();
-//   }
-// }
+
 // private static final class MyUndoableAction extends BasicUndoableAction {
 //   @NotNull private final WeakReference<MergeModelBase<?>> myModelRef;
 //   @NotNull private final List<? extends State> myStates;
@@ -388,6 +446,44 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 //     }
 //   }
 // }
+
+class DocumentEvent<S:MergeModelBaseState> {
+	private final myMergeModel:MergeModelBase<S>;
+	private final myOffset:Int;
+	private final myOldString:String;
+	private final myNewString:String;
+	private final myOldLength:Int;
+	private final myNewLength:Int;
+
+	public function new(mergeModel:MergeModelBase<S>, offset:Int, oldString:String, newString:String) {
+		myMergeModel = mergeModel;
+		myOffset = offset;
+		myOldString = oldString;
+		myNewString = newString;
+		myOldLength = oldString.length;
+		myNewLength = newString.length;
+	}
+
+	public function getOffset():Int {
+		return myOffset;
+	}
+
+	public function getOldLength():Int {
+		return myOldLength;
+	}
+
+	public function getNewFragment():String {
+		return myNewString;
+	}
+
+	public function getOldFragment():String {
+		return myOldString;
+	}
+
+	public function getModel():MergeModelBase<S> {
+		return myMergeModel;
+	}
+}
 
 class MergeModelBaseState {
 	public final myIndex:Int;

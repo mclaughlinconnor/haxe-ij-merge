@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.util;
 
+import diff.merge.MergeModelBase.MergeModelBaseState;
+import diff.tools.util.text.LineRange;
+import diff.merge.MergeModelBase.DocumentEvent;
 import util.Runnable;
 import diff.tools.util.text.LineOffsets;
 import diff.tools.util.text.LineOffsetsUtil;
@@ -1022,7 +1025,7 @@ class DiffUtil {
 			document1 = replaceLines(document1, line1, line2, getLinesContentA(document2, oLine1, oLine2));
 		}
 
-    return document1;
+		return document1;
 	}
 
 	public static function applyModificationC(text:String, lineOffsets:LineOffsets, otherText:String, otherLineOffsets:LineOffsets,
@@ -1131,14 +1134,16 @@ class DiffUtil {
 	//
 	// Updating ranges on change
 	//
-	// public static function getAffectedLineRange(e:DocumentEvent):LineRange {
-	// 	var line1:Int = e.getDocument().getLineNumber(e.getOffset());
-	// 	var line2:Int = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
-	// 	return new LineRange(line1, line2);
-	// }
-	// public static function countLinesShift(e:DocumentEvent):Int {
-	// 	return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
-	// }
+	public static function getAffectedLineRange(e:DocumentEvent<MergeModelBaseState>):LineRange {
+		var line1:Int = e.getModel().getLineNumber(e.getOffset());
+		var line2:Int = e.getModel().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+		return new LineRange(line1, line2);
+	}
+
+	public static function countLinesShift(e:DocumentEvent<MergeModelBaseState>):Int {
+		return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+	}
+
 	public static function updateRangeOnModificationA(start:Int, end:Int, changeStart:Int, changeEnd:Int, shift:Int):UpdatedLineRange {
 		return updateRangeOnModificationB(start, end, changeStart, changeEnd, shift, false);
 	}
@@ -1562,5 +1567,18 @@ class UpdatedLineRange {
 		this.startLine = startLine;
 		this.endLine = endLine;
 		this.damaged = damaged;
+	}
+}
+
+class StringUtil {
+	public static function countNewLines(text:String):Int {
+		var count = 0;
+		for (i in 0...text.length) {
+			if (text.charAt(i) == '\n') {
+				count++;
+			}
+		}
+
+		return count;
 	}
 }
