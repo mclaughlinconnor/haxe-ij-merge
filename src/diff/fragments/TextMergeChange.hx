@@ -3,7 +3,6 @@ package diff.fragments;
 
 import diff.merge.MergeModelBase;
 import diff.tools.util.text.MergeInnerDifferences;
-import diff.fragments.MergeModelBase.MergeModelBaseState;
 import diff.util.Side;
 import diff.util.TextDiffType;
 import diff.util.ThreeSide;

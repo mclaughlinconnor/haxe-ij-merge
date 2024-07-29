@@ -388,3 +388,15 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 //     }
 //   }
 // }
+
+class MergeModelBaseState {
+	public final myIndex:Int;
+	public final myStartLine:Int;
+	public final myEndLine:Int;
+
+	public function new(index:Int, startLine:Int, endLine:Int) {
+		myIndex = index;
+		myStartLine = startLine;
+		myEndLine = endLine;
+	}
+}
