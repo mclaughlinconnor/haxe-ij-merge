@@ -50,6 +50,10 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		return myStartLines.length;
 	}
 
+	public function getDocument():String {
+		return myDocument;
+	}
+
 	public function getLineStart(index:Int):Int {
 		return myStartLines[index];
 	}
@@ -202,7 +206,7 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	// Actions
 	//
 
-	public function replaceChange(index:Int, newContent:Array<String>):String {
+	public function replaceChange(index:Int, newContent:Array<String>):Void {
 		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
@@ -213,11 +217,9 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 			var newOutputEndLine:Int = outputStartLine + newContent.length;
 			moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
 		}
-
-    return myDocument;
 	}
 
-	public function appendChange(index:Int, newContent:Array<String>):String {
+	public function appendChange(index:Int, newContent:Array<String>):Void {
 		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
@@ -226,8 +228,6 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 
 		var newOutputEndLine:Int = outputEndLine + newContent.length;
 		moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
-
-    return myDocument;
 	}
 
 	/*

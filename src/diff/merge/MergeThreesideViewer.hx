@@ -25,22 +25,17 @@ import diff.tools.util.text.TextDiffProviderBase;
 class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	public final myModel:MergeModelBase<TextMergeChangeState>;
 
-	public var myResultDocument:String;
-
+	private final myAllMergeChanges:Array<TextMergeChange> = []; // all changes - both applied and unapplied ones
+	private final myMergeRequest:Array<String>;
 	private final myTextDiffProvider:TextDiffProviderBase;
 
-	// all changes - both applied and unapplied ones
-	private final myAllMergeChanges:Array<TextMergeChange> = [];
 	private var myCurrentIgnorePolicy:IgnorePolicy;
-
-	private final myMergeRequest:Array<String>;
 
 	public function new(request:Array<String>, resultDocument:String) {
 		super(request);
-		myResultDocument = resultDocument;
 		myMergeRequest = request;
 
-		myModel = new MyMergeModel(myResultDocument, myAllMergeChanges, this.onChangeResolved, this.markChangeResolvedA);
+		myModel = new MyMergeModel(resultDocument, myAllMergeChanges, this.onChangeResolved, this.markChangeResolvedA);
 		myTextDiffProvider = new TextDiffProviderBase([
 			IgnorePolicyEnum.DEFAULT,
 			IgnorePolicyEnum.TRIM_WHITESPACES,
@@ -96,14 +91,14 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		return new MergeLineFragmentsWithImportMetadata(fragments);
 	}
 
-	private function apply(baseContent:String, fragmentsWithMetadata:MergeLineFragmentsWithImportMetadata, conflictTypes:Array<MergeConflictType>, ignorePolicy:IgnorePolicy):Void {
+	private function apply(baseContent:String, fragmentsWithMetadata:MergeLineFragmentsWithImportMetadata, conflictTypes:Array<MergeConflictType>,
+			ignorePolicy:IgnorePolicy):Void {
 		resetChangeCounters();
 
 		var fragments:Array<MergeLineFragment> = fragmentsWithMetadata.getFragments();
 
-		myModel.setChanges(fragments.map((f) -> 
-			new LineRange(f.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)), f.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)))
-		));
+		myModel.setChanges(fragments.map((f) -> new LineRange(f.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)),
+			f.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)))));
 
 		for (index in 0...fragments.length) {
 			var fragment:MergeLineFragment = fragments[index];
@@ -118,7 +113,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
 		myCurrentIgnorePolicy = ignorePolicy;
 
-    var isAutoApplyNonConflictedChanges = true; // getTextSettings().isAutoApplyNonConflictedChanges()
+		var isAutoApplyNonConflictedChanges = true; // getTextSettings().isAutoApplyNonConflictedChanges()
 		if (isAutoApplyNonConflictedChanges) {
 			if (hasNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE))) {
 				applyNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE));
@@ -143,9 +138,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 
 	public function getChanges():Array<TextMergeChange> {
-		return myAllMergeChanges.filter((mergeChange) -> 
-			!mergeChange.isResolvedA()
-		);
+		return myAllMergeChanges.filter((mergeChange) -> !mergeChange.isResolvedA());
 	}
 
 	/*
@@ -215,9 +208,9 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			var append:Bool = change.isOnesideAppliedConflict();
 			if (append) {
 				newLineStart = myModel.getLineEnd(change.getIndex());
-				myResultDocument = myModel.appendChange(change.getIndex(), newContent);
+				myModel.appendChange(change.getIndex(), newContent);
 			} else {
-				myResultDocument = myModel.replaceChange(change.getIndex(), newContent);
+				myModel.replaceChange(change.getIndex(), newContent);
 				newLineStart = myModel.getLineStart(change.getIndex());
 			}
 
@@ -228,7 +221,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 				markChangeResolvedB(change, side);
 			}
 		} else {
-			myResultDocument = myModel.replaceChange(change.getIndex(), newContent);
+			myModel.replaceChange(change.getIndex(), newContent);
 			newLineStart = myModel.getLineStart(change.getIndex());
 			markChangeResolvedA(change);
 		}
@@ -247,7 +240,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		var content:String = ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(myMergeRequest);
 		var baseContent:Array<String> = DiffUtil.getLinesB(content, startLine, endLine);
 
-		myResultDocument = myModel.replaceChange(change.getIndex(), baseContent);
+		myModel.replaceChange(change.getIndex(), baseContent);
 
 		change.resetState();
 		onChangeResolved(change);
@@ -264,11 +257,8 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	}
 
 	private function applyNonConflictedChanges(side:ThreeSide):Void {
-		executeMergeCommandA("merge.dialog.apply.non.conflicted.changes.command", true, null, () -> 
-			resolveChangesAutomatically(getAllChanges().filter((change) -> 
-				!change.isConflict()
-			), side)
-		);
+		executeMergeCommandA("merge.dialog.apply.non.conflicted.changes.command", true, null,
+			() -> resolveChangesAutomatically(getAllChanges().filter((change) -> !change.isConflict()), side));
 
 		var firstUnresolved:TextMergeChange;
 		for (change in getAllChanges()) {
@@ -311,9 +301,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 				&& !change.isResolvedB(Side.fromEnum(SideEnum.RIGHT))
 				&& !isChangeRangeModified(change);
 		} else {
-			return !change.isResolvedA()
-				&& change.isChangeB(ThreeSide.fromIndex(side.getIndex()))
-				&& !isChangeRangeModified(change);
+			return !change.isResolvedA() && change.isChangeB(ThreeSide.fromIndex(side.getIndex())) && !isChangeRangeModified(change);
 		}
 	}
 
@@ -329,7 +317,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		// var resultDocument:String = getEditor().getDocument();
 
 		var baseContent:String = DiffUtil.getLinesContentA(/*baseDocument*/ baseDiffContent, baseStartLine, baseEndLine);
-		var resultContent:String = DiffUtil.getLinesContentA(myResultDocument, resultStartLine, resultEndLine);
+		var resultContent:String = DiffUtil.getLinesContentA(myModel.getDocument(), resultStartLine, resultEndLine);
 		return baseContent != resultContent;
 	}
 
@@ -382,7 +370,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			}
 
 			var newContentLines:Array<String> = LineTokenizer.tokenizeA(newContent, false);
-			myResultDocument = myModel.replaceChange(change.getIndex(), newContentLines);
+			myModel.replaceChange(change.getIndex(), newContentLines);
 			markChangeResolvedA(change);
 			return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
 		} else {
