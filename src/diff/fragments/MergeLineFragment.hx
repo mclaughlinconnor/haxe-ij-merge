@@ -50,3 +50,19 @@ class MergeLineFragment {
 		return side.selectA(myEndLine1, myEndLine2, myEndLine3);
 	}
 }
+
+@:forward(map)
+abstract MergeLineFragmentsWithImportMetadata(Array<MergeLineFragment>) {
+  // private final fragments:Array<MergeLineFragment>;
+	public function new(fragments:Array<MergeLineFragment>, importBlockStart:Int = -1, importBlockEnd:Int = -1) {
+    this = fragments;
+  }
+
+	public function isIndexInImportRange(index:Int) {
+		return false;
+	}
+
+  public function getFragments(): Array<MergeLineFragment> {
+    return this;
+  }
+}
