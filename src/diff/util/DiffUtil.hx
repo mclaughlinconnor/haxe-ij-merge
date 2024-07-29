@@ -1001,9 +1001,9 @@ class DiffUtil {
 			return document;
 
 		if (line1 == line2) {
-			insertLines(document, line1, newLines.join("\n"));
+			document = insertLines(document, line1, newLines.join("\n"));
 		} else if (newLines.length == 0) {
-			deleteLines(document, line1, line2);
+			document = deleteLines(document, line1, line2);
 		} else {
 			document = replaceLines(document, line1, line2, newLines.join("\n"));
 		}
@@ -1011,16 +1011,18 @@ class DiffUtil {
 		return document;
 	}
 
-	public static function applyModificationB(document1:String, line1:Int, line2:Int, document2:String, oLine1:Int, oLine2:Int):Void {
+	public static function applyModificationB(document1:String, line1:Int, line2:Int, document2:String, oLine1:Int, oLine2:Int):String {
 		if (line1 == line2 && oLine1 == oLine2)
-			return;
+			return document1;
 		if (line1 == line2) {
-			insertLines(document1, line1, getLinesContentA(document2, oLine1, oLine2));
+			document1 = insertLines(document1, line1, getLinesContentA(document2, oLine1, oLine2));
 		} else if (oLine1 == oLine2) {
-			deleteLines(document1, line1, line2);
+			document1 = deleteLines(document1, line1, line2);
 		} else {
-			replaceLines(document1, line1, line2, getLinesContentA(document2, oLine1, oLine2));
+			document1 = replaceLines(document1, line1, line2, getLinesContentA(document2, oLine1, oLine2));
 		}
+
+    return document1;
 	}
 
 	public static function applyModificationC(text:String, lineOffsets:LineOffsets, otherText:String, otherLineOffsets:LineOffsets,

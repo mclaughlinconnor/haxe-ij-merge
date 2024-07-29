@@ -10,7 +10,7 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	// private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 	// @Nullable private final Project myProject;
 	// @NotNull private final Document myDocument;
-	private final myDocument:String;
+	private var myDocument:String;
 
 	// @Nullable private final UndoManager myUndoManager;
 	private var myStartLines:Array<Int> = [];
@@ -202,28 +202,32 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 	// Actions
 	//
 
-	public function replaceChange(index:Int, newContent:Array<String>):Void {
+	public function replaceChange(index:Int, newContent:Array<String>):String {
 		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
-		DiffUtil.applyModificationA(myDocument, outputStartLine, outputEndLine, newContent);
+		myDocument = DiffUtil.applyModificationA(myDocument, outputStartLine, outputEndLine, newContent);
 
 		if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
 			var newOutputEndLine:Int = outputStartLine + newContent.length;
 			moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
 		}
+
+    return myDocument;
 	}
 
-	public function appendChange(index:Int, newContent:Array<String>):Void {
+	public function appendChange(index:Int, newContent:Array<String>):String {
 		// LOG.assertTrue(isInsideCommand());
 		var outputStartLine:Int = getLineStart(index);
 		var outputEndLine:Int = getLineEnd(index);
 
-		DiffUtil.applyModificationA(myDocument, outputEndLine, outputEndLine, newContent);
+		myDocument = DiffUtil.applyModificationA(myDocument, outputEndLine, outputEndLine, newContent);
 
 		var newOutputEndLine:Int = outputEndLine + newContent.length;
 		moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
+
+    return myDocument;
 	}
 
 	/*

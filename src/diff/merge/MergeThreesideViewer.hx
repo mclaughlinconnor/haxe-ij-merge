@@ -25,9 +25,9 @@ import diff.fragments.TextMergeChange;
 import diff.tools.util.text.TextDiffProviderBase;
 
 class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
-	private final myModel:MergeModelBase<TextMergeChangeState>;
+	public final myModel:MergeModelBase<TextMergeChangeState>;
 
-	private final myResultDocument:String;
+	public var myResultDocument:String;
 
 	// private final myDocuments:Array<String>;
 	// private final myModifierProvider:ModifierProvider;
@@ -644,9 +644,9 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			var append:Bool = change.isOnesideAppliedConflict();
 			if (append) {
 				newLineStart = myModel.getLineEnd(change.getIndex());
-				myModel.appendChange(change.getIndex(), newContent);
+				myResultDocument = myModel.appendChange(change.getIndex(), newContent);
 			} else {
-				myModel.replaceChange(change.getIndex(), newContent);
+				myResultDocument = myModel.replaceChange(change.getIndex(), newContent);
 				newLineStart = myModel.getLineStart(change.getIndex());
 			}
 
@@ -657,7 +657,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 				markChangeResolvedB(change, side);
 			}
 		} else {
-			myModel.replaceChange(change.getIndex(), newContent);
+			myResultDocument = myModel.replaceChange(change.getIndex(), newContent);
 			newLineStart = myModel.getLineStart(change.getIndex());
 			markChangeResolvedA(change);
 		}
@@ -676,7 +676,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		var content:String = ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(myMergeRequest);
 		var baseContent:Array<String> = DiffUtil.getLinesB(content, startLine, endLine);
 
-		myModel.replaceChange(change.getIndex(), baseContent);
+		myResultDocument = myModel.replaceChange(change.getIndex(), baseContent);
 
 		change.resetState();
 		// if (change.isResolvedWithAI()) {
@@ -890,7 +890,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			}
 
 			var newContentLines:Array<String> = LineTokenizer.tokenizeA(newContent, false);
-			myModel.replaceChange(change.getIndex(), newContentLines);
+			myResultDocument = myModel.replaceChange(change.getIndex(), newContentLines);
 			markChangeResolvedA(change);
 			return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
 		} else {
