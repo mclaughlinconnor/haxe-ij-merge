@@ -203,7 +203,7 @@ class ByLineRt {
 class Line {
 	private var myText:String;
 	private var myPolicy:ComparisonPolicy;
-	private var myHash:Int;
+	private var myHash:Int = 0;
 	private var myNonSpaceChars:Int;
 
 	public function new(text:String, policy:ComparisonPolicy) {
@@ -237,9 +237,25 @@ class Line {
 		return ComparisonUtil.isEquals(getContent(), l.getContent(), myPolicy);
 	}
 
-  public function hashCode(): Int {
-    return this.myHash;
-  }
+	public function hashCode():Int {
+		if (myHash == 0) {
+			var prime = 31;
+			myHash = 1;
+
+			var textHash = myHash;
+			if (myText != null) {
+				for (i in 0...myText.length) {
+					textHash = prime * textHash + myText.charCodeAt(i);
+				}
+			}
+
+			myHash = prime * myHash + (myText != null ? textHash : 0);
+			myHash = prime * myHash + myPolicy.getIndex();
+			myHash = prime * myHash + myNonSpaceChars;
+		}
+
+		return myHash;
+	}
 
 	static private function countNonSpaceChars(text:String):Int {
 		var nonSpace:Int = 0;
@@ -421,13 +437,13 @@ class AlignmentRunner {
 		if (weight > bestWeight) {
 			bestWeight = weight;
 
-      // TODO: wow is this awful. Just copy the implementation of blit to here
+			// TODO: wow is this awful. Just copy the implementation of blit to here
 
-      var c = haxe.ds.Vector.fromArrayCopy(comb);
-      var b = haxe.ds.Vector.fromArrayCopy(best);
+			var c = haxe.ds.Vector.fromArrayCopy(comb);
+			var b = haxe.ds.Vector.fromArrayCopy(best);
 			haxe.ds.Vector.blit(c, 0, b, 0, c.length);
-      comb = c.toArray();
-      best = b.toArray();
+			comb = c.toArray();
+			best = b.toArray();
 		}
 	}
 }
