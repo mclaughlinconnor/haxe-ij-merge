@@ -31,7 +31,7 @@ class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 	public function compare(text1:String, text2:String, text3:String /*, indicator:ProgressIndicator*/):Array<FineMergeLineFragment> {
 		var ignorePolicy:IgnorePolicy = getIgnorePolicy();
 		var highlightPolicy:HighlightPolicy = getHighlightPolicy();
-		var comparisonPolicy:ComparisonPolicy = ignorePolicy.getComparisonPolicy();
+		var comparisonPolicy:ComparisonPolicy = ignorePolicy.getComparisonPolicyA();
 
 		var sequences:Array<String> = [text1, text2, text3];
 		var lineOffsets:Array<LineOffsets> = sequences.map(LineOffsetsUtil.createB);
