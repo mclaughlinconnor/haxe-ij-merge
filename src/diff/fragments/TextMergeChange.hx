@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.fragments;
 
+import diff.merge.MergeModelBase;
 import diff.tools.util.text.MergeInnerDifferences;
 import diff.fragments.MergeModelBase.MergeModelBaseState;
 import diff.util.Side;
@@ -18,10 +19,13 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 	private final myResolved:Array<Bool> = [];
 	private var myOnesideAppliedConflict:Bool;
 
+	private final myModel:MergeModelBase<TextMergeChangeState>;
+
 	// private var myIsResolvedWithAI:Bool;
 	private var myInnerFragments:MergeInnerDifferences; // warning: might be out of date
 
-	public function new(index:Int, isImportChange:Bool, fragment:MergeLineFragment, conflictType:MergeConflictType/*, viewer:TextMergeViewer*/) {
+	public function new(index:Int, isImportChange:Bool, fragment:MergeLineFragment, conflictType:MergeConflictType /*, viewer:TextMergeViewer*/,
+			model:MergeModelBase<TextMergeChangeState>) {
 		super(conflictType);
 		// myMergeViewer = viewer;
 		// myViewer = viewer.getViewer();
@@ -29,6 +33,8 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 		myIndex = index;
 		myFragment = fragment;
 		myIsImportChange = isImportChange;
+
+		myModel = model;
 
 		// reinstallHighlighters();
 	}
@@ -79,7 +85,7 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 		return myOnesideAppliedConflict;
 	}
 
-	private function markOnesideAppliedConflict():Void {
+	public function markOnesideAppliedConflict():Void {
 		myOnesideAppliedConflict = true;
 	}
 
@@ -103,12 +109,12 @@ class TextMergeChange extends ThreesideDiffChangeBase {
 	}
 
 	public function getStartLineA():Int {
-		return 0;
+		return myModel.getLineStart(myIndex);
 		// return myViewer.getModel().getLineStart(myIndex);
 	}
 
 	public function getEndLineA():Int {
-		return 100;
+		return myModel.getLineEnd(myIndex);
 		// return myViewer.getModel().getLineEnd(myIndex);
 	}
 

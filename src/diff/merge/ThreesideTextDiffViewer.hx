@@ -16,71 +16,75 @@
 
 package diff.merge;
 
-abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
-	private var myEditors:Null<List<EditorEx>>;
-	private final myEditableEditors:List<EditorEx>;
+import diff.util.ThreeSide;
 
-	private final myVisibleAreaListener:MyVisibleAreaListener = new MyVisibleAreaListener();
-	private var mySyncScrollSupport:Null<ThreesideSyncScrollSupport>;
+// import diff.util.ThreeSide;
+abstract class ThreesideTextDiffViewer {
+	// private var myEditors:Null<List<EditorEx>>;
+	// private final myEditableEditors:List<EditorEx>;
+	// private final myVisibleAreaListener:MyVisibleAreaListener = new MyVisibleAreaListener();
+	// private var mySyncScrollSupport:Null<ThreesideSyncScrollSupport>;
+	// private final myEditorSettingsAction:SetEditorSettingsAction;
+	private final myRequest:Array<String>;
 
-	private final myEditorSettingsAction:SetEditorSettingsAction;
+	public function new(/*context:DiffContext, */ request:Array<String>) {
+		myRequest = request;
 
-	public function new(context:DiffContext, request:ContentDiffRequest) {
-		super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
-
-		new MyFocusOppositePaneAction(true).install(myPanel);
-		new MyFocusOppositePaneAction(false).install(myPanel);
-
-		myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
-		myEditorSettingsAction.applyDefaults();
-
-		new MyOpenInEditorWithMouseAction().install(getEditors());
-
-		myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
-
-		TextDiffViewerUtil.checkDifferentDocuments(myRequest);
-
-		for (side in ThreeSide.values()) {
-			DiffUtil.installLineConvertor(getEditor(side), getContent(side));
-		}
-
-		if (getProject() != null) {
-			for (side in ThreeSide.values()) {
-				myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
-			}
-		}
+		// super(/*context, */request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
+		//
+		// new MyFocusOppositePaneAction(true).install(myPanel);
+		// new MyFocusOppositePaneAction(false).install(myPanel);
+		//
+		// myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
+		// myEditorSettingsAction.applyDefaults();
+		//
+		// new MyOpenInEditorWithMouseAction().install(getEditors());
+		//
+		// myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
+		//
+		// TextDiffViewerUtil.checkDifferentDocuments(myRequest);
+		//
+		// for (side in ThreeSide.values()) {
+		// 	DiffUtil.installLineConvertor(getEditor(side), getContent(side));
+		// }
+		//
+		// if (getProject() != null) {
+		// 	for (side in ThreeSide.values()) {
+		// 		myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+		// 	}
+		// }
 	}
 
-	private function onInit():Void {
-		super.onInit();
-		installEditorListeners();
-	}
-
-	private function onDispose():Void {
-		destroyEditorListeners();
-		super.onDispose();
-	}
-
-	private function createEditorHolders(factory:EditorHolderFactory<TextEditorHolder>):List<TextEditorHolder> {
-		var holders:List<TextEditorHolder> = super.createEditorHolders(factory);
-
-		var forceReadOnly:Array<Bool> = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
-		for (i = 0...3 - 1
-	)
-		{
-			if (forceReadOnly[i])
-				holders.get(i).getEditor().setViewer(true);
-		}
-
-		ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
-
-		for (holder in holders) {
-			DiffUtil.disableBlitting(holder.getEditor());
-		}
-
-		return holders;
-	}
-
+	// private function onInit():Void {
+	// 	super.onInit();
+	// 	installEditorListeners();
+	// }
+	//
+	// private function onDispose():Void {
+	// 	destroyEditorListeners();
+	// 	super.onDispose();
+	// }
+	//
+	// private function createEditorHolders(factory:EditorHolderFactory<TextEditorHolder>):List<TextEditorHolder> {
+	// 	var holders:List<TextEditorHolder> = super.createEditorHolders(factory);
+	//
+	// 	var forceReadOnly:Array<Bool> = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
+	// 	for (i = 0...3 - 1
+	// )
+	// 	{
+	// 		if (forceReadOnly[i])
+	// 			holders.get(i).getEditor().setViewer(true);
+	// 	}
+	//
+	// 	ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
+	//
+	// 	for (holder in holders) {
+	// 		DiffUtil.disableBlitting(holder.getEditor());
+	// 	}
+	//
+	// 	return holders;
+	// }
+	//
 	// private List<JComponent> createTitles() {
 	//   return DiffUtil.createTextTitles(this, myRequest, getEditors());
 	// }
@@ -135,13 +139,12 @@ abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHol
 	// private List<AnAction> createEditorPopupActions() {
 	//   return TextDiffViewerUtil.createEditorPopupActions();
 	// }
-
-	@Override
-	private function onDocumentChange(event:DocumentEvent):Void {
-		super.onDocumentChange(event);
-		myContentPanel.repaintDividers();
-	}
-
+	//
+	// @Override
+	// private function onDocumentChange(event:DocumentEvent):Void {
+	// 	super.onDocumentChange(event);
+	// 	myContentPanel.repaintDividers();
+	// }
 	//
 	// Getters
 	//
@@ -150,45 +153,50 @@ abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHol
 	// public EditorEx getCurrentEditor() {
 	//   return getEditor(getCurrentSide());
 	// }
-
-	public function getCurrentContent():DocumentContent {
-		return getContent(getCurrentSide());
-	}
-
-	public function getContents():List<DocumentContent> {
+	// public function getCurrentContent():DocumentContent {
+	// 	return getContent(getCurrentSide());
+	// }
+	//
+	public function getContents():Array<String> {
 		// noinspection unchecked,rawtypes
-		return myRequest.getContents();
+		// return myRequest.getContents();
+		return myRequest;
 	}
 
-	public function getEditors():List<EditorEx> {
-		if (myEditors == null) {
-			myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
-		}
-		return myEditors;
+	//
+	// public function getEditors():List<EditorEx> {
+	// 	if (myEditors == null) {
+	// 		myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
+	// 	}
+	// 	return myEditors;
+	// }
+	//
+	// private function getEditableEditors():List<EditorEx> {
+	// 	return myEditableEditors;
+	// }
+	//
+	// public function getEditor(side:ThreeSide):EditorEx {
+	// 	return side.select(getEditors());
+	// }
+	//
+	// public function getContent(side:ThreeSide):DocumentContent {
+	// 	return side.select(getContents());
+	// }
+
+	public function getContentString(side:ThreeSide):String {
+		return side.selectC(getContents());
 	}
 
-	private function getEditableEditors():List<EditorEx> {
-		return myEditableEditors;
-	}
-
-	public function getEditor(side:ThreeSide):EditorEx {
-		return side.select(getEditors());
-	}
-
-	public function getContent(side:ThreeSide):DocumentContent {
-		return side.select(getContents());
-	}
-
-	public function getEditorSide(editor:Null<Editor>):ThreeSide {
-		if (getEditor(ThreeSide.BASE) == editor)
-			return ThreeSide.BASE;
-		if (getEditor(ThreeSide.RIGHT) == editor)
-			return ThreeSide.RIGHT;
-		if (getEditor(ThreeSide.LEFT) == editor)
-			return ThreeSide.LEFT;
-		return null;
-	}
-
+	//
+	// public function getEditorSide(editor:Null<Editor>):ThreeSide {
+	// 	if (getEditor(ThreeSide.BASE) == editor)
+	// 		return ThreeSide.BASE;
+	// 	if (getEditor(ThreeSide.RIGHT) == editor)
+	// 		return ThreeSide.RIGHT;
+	// 	if (getEditor(ThreeSide.LEFT) == editor)
+	// 		return ThreeSide.LEFT;
+	// 	return null;
+	// }
 	//
 	// Abstract
 	//

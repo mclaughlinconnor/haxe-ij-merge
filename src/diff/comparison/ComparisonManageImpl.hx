@@ -43,19 +43,15 @@ class ComparisonManagerImpl extends ComparisonManager {
 		return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, iterable);
 	}
 
-	// public function mergeLines(
-	//     text1: String ,
-	//     text2: String ,
-	//     text3: String ,
-	//     policy: ComparisonPolicy ,
-	//     ): Array<MergeLineFragment>   {
-	//   var lineTexts1: Array<String>  = getLineContents(text1);
-	//   var lineTexts2: Array<String>  = getLineContents(text2);
-	//   var lineTexts3: Array<String>  = getLineContents(text3);
-	//
-	//   var ranges: Array<MergeRange>  = ByLineRt.merge(lineTexts1, lineTexts2, lineTexts3, policy);
-	//   return ByLineRt.convertIntoMergeLineFragments(ranges);
-	// }
+	public function mergeLines(text1:String, text2:String, text3:String, policy:ComparisonPolicy,):Array<MergeLineFragment> {
+		var lineTexts1:Array<String> = getLineContentsA(text1);
+		var lineTexts2:Array<String> = getLineContentsA(text2);
+		var lineTexts3:Array<String> = getLineContentsA(text3);
+
+		var ranges:Array<MergeRange> = ByLineRt.merge(lineTexts1, lineTexts2, lineTexts3, policy);
+		return ByLineRt.convertIntoMergeLineFragments(ranges);
+	}
+
 	// public function mergeLinesWithinRange( text1: String ,
 	//     text2: String ,
 	//     text3: String ,
@@ -498,7 +494,7 @@ class ComparisonManagerImpl extends ComparisonManager {
 
 	private static function getLineContentsB(start:Int, end:Int, text:String, lineOffsets:LineOffsets):Array<String> {
 		var lines:Array<String> = [];
-		for (line in start...end - 1) {
+		for (line in start...end) {
 			lines.push(text.substring(lineOffsets.getLineStart(line), lineOffsets.getLineEndA(line)));
 		}
 		return lines;

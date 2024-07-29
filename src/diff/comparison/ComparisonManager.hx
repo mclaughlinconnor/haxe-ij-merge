@@ -38,7 +38,7 @@ abstract class ComparisonManager {
 	//  * Compare three texts by-line (LEFT - BASE - RIGHT)
 	//  * Do not actually skip "ignored" changes, but keep them from forming merge conflicts.
 	//  */
-	// public abstract function mergeLines(text1:String, text2:String, text3:String, policy:ComparisonPolicy/*, indicator:ProgressIndicator*/):Array<MergeLineFragment>;
+	public abstract function mergeLines(text1:String, text2:String, text3:String, policy:ComparisonPolicy/*, indicator:ProgressIndicator*/):Array<MergeLineFragment>;
 	//
 	// /**
 	//  * Compare three texts by-line (LEFT - BASE - RIGHT)

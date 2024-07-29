@@ -1,36 +1,39 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package diff.merge;
 
+import diff.fragments.TextMergeChange;
+import diff.fragments.ThreesideDiffChangeBase;
+
 abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
-  private final mySyncScrollable1: SyncScrollSupport.SyncScrollable ;
-  private final mySyncScrollable2: SyncScrollSupport.SyncScrollable ;
+  // private final mySyncScrollable1: SyncScrollSupport.SyncScrollable ;
+  // private final mySyncScrollable2: SyncScrollSupport.SyncScrollable ;
 
-  private final myPrevNextDifferenceIterable: PrevNextDifferenceIterable ;
-  private final myPrevNextConflictIterable: PrevNextDifferenceIterable ;
-  private final myStatusPanel: StatusPanel ;
+  // private final myPrevNextDifferenceIterable: PrevNextDifferenceIterable ;
+  // private final myPrevNextConflictIterable: PrevNextDifferenceIterable ;
+  // private final myStatusPanel: StatusPanel ;
 
-  private final myFoldingModel: MyFoldingModel ;
-  private final myInitialScrollHelper: MyInitialScrollHelper  = new MyInitialScrollHelper();
+  // private final myFoldingModel: MyFoldingModel ;
+  // private final myInitialScrollHelper: MyInitialScrollHelper  = new MyInitialScrollHelper();
 
   private var myChangesCount: Int  = -1;
   private var myConflictsCount: Int  = -1;
 
-  public function new (context: DiffContext , request: ContentDiffRequest ) {
-    super(context, request);
+  public function new (/*context: DiffContext ,*/ request: Array<String>) {
+    super(/*context, */request);
 
-    mySyncScrollable1 = new MySyncScrollable(Side.LEFT);
-    mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
-    myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
-    myPrevNextConflictIterable = new MyPrevNextConflictIterable();
-    myStatusPanel = createStatusPanel();
-    myFoldingModel = new MyFoldingModel(getProject(), getEditors().toArray(/*new EditorEx[0]*/), myContentPanel, this);
+    // mySyncScrollable1 = new MySyncScrollable(Side.LEFT);
+    // mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
+    // myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
+    // myPrevNextConflictIterable = new MyPrevNextConflictIterable();
+    // myStatusPanel = createStatusPanel();
+    // myFoldingModel = new MyFoldingModel(getProject(), getEditors().toArray(/*new EditorEx[0]*/), myContentPanel, this);
 
-    for (side in ThreeSide.values()) {
-      DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
-    }
-
-    DiffUtil.registerAction(new PrevConflictAction(), myPanel);
-    DiffUtil.registerAction(new NextConflictAction(), myPanel);
+    // for (side in ThreeSide.values()) {
+    //   DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
+    // }
+    //
+    // DiffUtil.registerAction(new PrevConflictAction(), myPanel);
+    // DiffUtil.registerAction(new NextConflictAction(), myPanel);
   }
 
   // private function createStatusPanel(): StatusPanel {
@@ -134,7 +137,7 @@ abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
     else {
       myChangesCount++;
     }
-    myStatusPanel.update();
+    // myStatusPanel.update();
   }
 
   private function onChangeRemoved(change: ThreesideDiffChangeBase ): Void {
@@ -144,7 +147,7 @@ abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
     else {
       myChangesCount--;
     }
-    myStatusPanel.update();
+    // myStatusPanel.update();
   }
 
   //
@@ -158,15 +161,15 @@ abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
    * Some changes (ex: applied ones) can be excluded from general processing, but should be painted/used for synchronized scrolling
    */
   @NotNull
-  public function getAllChanges(): List<ThreesideDiffChangeBase> {
+  public function getAllChanges(): Array<TextMergeChange> {
     return getChanges();
   }
 
-  private function getChanges(): List<ThreesideDiffChangeBase>;
+  private abstract function getChanges(): Array<TextMergeChange>;
 
-  private function getSyncScrollable(side: Side ): SyncScrollSupport.SyncScrollable {
-    return side.select(mySyncScrollable1, mySyncScrollable2);
-  }
+  // private function getSyncScrollable(side: Side ): SyncScrollSupport.SyncScrollable {
+  //   return side.select(mySyncScrollable1, mySyncScrollable2);
+  // }
 
   // private function function getStatusPanel(): JComponent {
   //   return myStatusPanel;
@@ -182,17 +185,17 @@ abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
   // Misc
   //
 
-  private function getSelectedChange(side: ThreeSide ): ThreesideDiffChangeBase {
-    var caretLine: Int  = getEditor(side).getCaretModel().getLogicalPosition().line;
-
-    for (change in getChanges()) {
-      var line1: Int  = change.getStartLine(side);
-      var line2: Int  = change.getEndLine(side);
-
-      if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
-    }
-    return null;
-  }
+  // private function getSelectedChange(side: ThreeSide ): ThreesideDiffChangeBase {
+  //   var caretLine: Int  = getEditor(side).getCaretModel().getLogicalPosition().line;
+  //
+  //   for (change in getChanges()) {
+  //     var line1: Int  = change.getStartLine(side);
+  //     var line2: Int  = change.getEndLine(side);
+  //
+  //     if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
+  //   }
+  //   return null;
+  // }
 
   //
   // Actions

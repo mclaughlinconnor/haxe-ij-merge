@@ -1,55 +1,84 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.merge;
 
+import exceptions.ProcessCanceledException;
+import diff.comparison.DiffTooBigException;
+import diff.util.MergeRangeUtil;
+import diff.tools.util.text.LineOffsetsUtil;
+import diff.tools.util.text.LineOffsets;
+import diff.util.MergeRange;
+import diff.tools.util.base.HighlightPolicy.HighlightPolicyEnum;
+import util.Runnable;
+import diff.tools.util.text.LineRange;
+import diff.fragments.ThreesideDiffChangeBase;
+import diff.util.MergeConflictType;
+import diff.comparison.ComparisonManager;
+import tokenizers.LineTokenizer;
+import diff.comparison.ComparisonMergeUtil;
+import diff.fragments.MergeLineFragment;
+import diff.util.Side;
+import diff.util.Side.SideEnum;
+import diff.util.ThreeSide;
+import diff.util.DiffUtil;
+import config.IgnorePolicy;
+import diff.fragments.TextMergeChange;
+import diff.tools.util.text.TextDiffProviderBase;
+
 class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
-	private final myModel:MergeModelBase<TextMergeChange.State>;
+	private final myModel:MergeModelBase<TextMergeChangeState>;
 
-	private final myModifierProvider:ModifierProvider;
-	private final myInnerDiffWorker:MyInnerDiffWorker;
+	private final myResultDocument:String;
 
+	// private final myDocuments:Array<String>;
+	// private final myModifierProvider:ModifierProvider;
+	// private final myInnerDiffWorker:MyInnerDiffWorker;
 	// private final myLineStatusTracker: SimpleLineStatusTracker ;
 	private final myTextDiffProvider:TextDiffProviderBase;
 
 	// all changes - both applied and unapplied ones
-	private final myAllMergeChanges:List<TextMergeChange> = new ArrayList<>();
+	private final myAllMergeChanges:Array<TextMergeChange> = [];
 	private var myCurrentIgnorePolicy:IgnorePolicy;
 
-	private var myInitialRediffStarted:Bool;
-	private var myInitialRediffFinished:Bool;
-	private var myContentModified:Bool;
-	private var myResolveImportConflicts:Bool;
+	// private var myInitialRediffStarted:Bool;
+	// private var myInitialRediffFinished:Bool;
+	// private var myContentModified:Bool;
+	// private var myResolveImportConflicts:Bool;
+	// private var myPsiFiles:List<PsiFile> = new ArrayList<>();
+	// private final myCancelResolveAction:Action;
+	// private final myLeftResolveAction:Action;
+	// private final myRightResolveAction:Action;
+	// private final myAcceptResolveAction:Action;
+	// private var myAggregator:MergeStatisticsAggregator;
+	// private final myMergeContext:MergeContext;
+	// private final myMergeRequest:TextMergeRequest;
+	private final myMergeRequest:Array<String>;
 
-	private var myPsiFiles:List<PsiFile> = new ArrayList<>();
+	// private final myTextMergeViewer:TextMergeViewer;
 
-	private final myCancelResolveAction:Action;
-	private final myLeftResolveAction:Action;
-	private final myRightResolveAction:Action;
-	private final myAcceptResolveAction:Action;
-	private var myAggregator:MergeStatisticsAggregator;
+	public function new(/*context:DiffContext, */ request:Array<String>, /*, mergeContext:MergeContext, mergeRequest:TextMergeRequest*/ /*,
+		mergeViewer:TextMergeViewer */ resultDocument:String /*, documents:Array<String>*/) {
+		super(/*context,*/ request);
+		myResultDocument = resultDocument;
+		// myDocuments = documents;
+		// myMergeContext = mergeContext;
+		myMergeRequest = request;
+		// myTextMergeViewer = mergeViewer;
 
-	private final myMergeContext:MergeContext;
-	private final myMergeRequest:TextMergeRequest;
-	private final myTextMergeViewer:TextMergeViewer;
+		myModel = new MyMergeModel(/*getProject(), */ myResultDocument, myAllMergeChanges, this.onChangeResolved, this.markChangeResolvedA);
 
-	public function new(context:DiffContext, request:ContentDiffRequest, mergeContext:MergeContext, mergeRequest:TextMergeRequest,
-			mergeViewer:TextMergeViewer) {
-		super(context, request);
-		myMergeContext = mergeContext;
-		myMergeRequest = mergeRequest;
-		myTextMergeViewer = mergeViewer;
-
-		myModel = new MyMergeModel(getProject(), getEditor().getDocument());
-
-		myModifierProvider = new ModifierProvider();
-		myInnerDiffWorker = new MyInnerDiffWorker();
+		// myModifierProvider = new ModifierProvider();
+		// myInnerDiffWorker = new MyInnerDiffWorker();
 
 		// myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), MyLineStatusMarkerRenderer::new);
 
-		myTextDiffProvider = new TextDiffProviderBase(getTextSettings(), function() {
+		myTextDiffProvider = new TextDiffProviderBase(/*getTextSettings(), function() {
 			restartMergeResolveIfNeeded();
 			myInnerDiffWorker.onSettingsChanged();
-		}, this,
-			ar(IgnorePolicy.DEFAULT, IgnorePolicy.TRIM_WHITESPACES, IgnorePolicy.IGNORE_WHITESPACES), ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
+		}, this,*/ [
+			IgnorePolicyEnum.DEFAULT,
+			IgnorePolicyEnum.TRIM_WHITESPACES,
+			IgnorePolicyEnum.IGNORE_WHITESPACES
+		], [HighlightPolicyEnum.BY_LINE, HighlightPolicyEnum.BY_WORD]);
 
 		// getTextSettings().addListener(new TextDiffSettingsHolder.TextDiffSettings.Listener() {
 		//   @Override
@@ -57,12 +86,12 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		//     restartMergeResolveIfNeeded();
 		//   }
 		// }, this);
-		myCurrentIgnorePolicy = myTextDiffProvider.getIgnorePolicy();
-		myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
-		myCancelResolveAction = getResolveAction(MergeResult.CANCEL);
-		myLeftResolveAction = getResolveAction(MergeResult.LEFT);
-		myRightResolveAction = getResolveAction(MergeResult.RIGHT);
-		myAcceptResolveAction = getResolveAction(MergeResult.RESOLVED);
+		// myCurrentIgnorePolicy = myTextDiffProvider.getIgnorePolicy();
+		// myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
+		// myCancelResolveAction = getResolveAction(MergeResult.CANCEL);
+		// myLeftResolveAction = getResolveAction(MergeResult.LEFT);
+		// myRightResolveAction = getResolveAction(MergeResult.RIGHT);
+		// myAcceptResolveAction = getResolveAction(MergeResult.RESOLVED);
 
 		// DiffUtil.registerAction(new NavigateToChangeMarkerAction(false), myPanel);
 		// DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
@@ -165,73 +194,70 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 	//   return group;
 	// }
+	// public function getResolveAction(result:MergeResult):Action {
+	// 	var caption:String = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
+	// 	var a = new AbstractAction(caption);
+	// 	a.actionPerformed = function(e:ActionEvent) {
+	// 		if ((result == MergeResult.LEFT || result == MergeResult.RIGHT)
+	// 			&& !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
+	// 				result == MergeResult.LEFT ? DiffBundle.message("button.merge.resolve.accept.left") : DiffBundle.message("button.merge.resolve.accept.right"),
+	// 				myContentModified)) {
+	// 			return;
+	// 		}
+	// 		if (result == MergeResult.RESOLVED
+	// 			&& (getChangesCount() > 0 || getConflictsCount() > 0)
+	// 			&& !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+	// 				DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+	// 				.yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+	// 				.noText(DiffBundle.message("continue.merge"))
+	// 				.ask(myPanel.getRootPane())) {
+	// 			return;
+	// 		}
+	// 		if (result == MergeResult.CANCEL
+	// 			&& !MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified)) {
+	// 			return;
+	// 		}
+	// 		doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
+	// 	}
+	//
+	// 	return a;
+	// }
 
-	public function getResolveAction(result:MergeResult):Action {
-		var caption:String = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
-		var a = new AbstractAction(caption);
-		a.actionPerformed = function(e:ActionEvent) {
-			if ((result == MergeResult.LEFT || result == MergeResult.RIGHT)
-				&& !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
-					result == MergeResult.LEFT ? DiffBundle.message("button.merge.resolve.accept.left") : DiffBundle.message("button.merge.resolve.accept.right"),
-					myContentModified)) {
-				return;
-			}
-			if (result == MergeResult.RESOLVED
-				&& (getChangesCount() > 0 || getConflictsCount() > 0)
-				&& !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-					DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
-					.yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
-					.noText(DiffBundle.message("continue.merge"))
-					.ask(myPanel.getRootPane())) {
-				return;
-			}
-			if (result == MergeResult.CANCEL
-				&& !MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified)) {
-				return;
-			}
-			doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
-		}
-
-		return a;
-	}
-
-	private function doFinishMerge(result:MergeResult, source:MergeResultSource):Void {
-		logMergeResult(result, source);
+	private function doFinishMerge(result:MergeResult /*, source:MergeResultSource*/):Void {
+		// logMergeResult(result, source);
 		destroyChangedBlocks();
-		myMergeContext.finishMerge(result);
+		// myMergeContext.finishMerge(result);
 	}
 
 	//
 	// Diff
 	//
-
-	private function restartMergeResolveIfNeeded():Void {
-		if (isDisposed())
-			return;
-		if (myTextDiffProvider.getIgnorePolicy().equals(myCurrentIgnorePolicy)
-			&& getTextSettings().isAutoResolveImportConflicts() == myResolveImportConflicts) {
-			return;
-		}
-
-		if (!myInitialRediffFinished) {
-			ApplicationManager.getApplication().invokeLater(() -> restartMergeResolveIfNeeded());
-			return;
-		}
-
-		if (myContentModified) {
-			if (Messages.showYesNoDialog(myProject, DiffBundle.message("changing.highlighting.requires.the.file.merge.restart"),
-				DiffBundle.message("update.highlighting.settings"), DiffBundle.message("discard.changes.and.restart.merge"),
-				DiffBundle.message("continue.merge"), Messages.getQuestionIcon()) != Messages.YES) {
-				getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
-				getTextSettings().setAutoResolveImportConflicts(myResolveImportConflicts);
-				return;
-			}
-		}
-
-		myInitialRediffFinished = false;
-		doRediff();
-	}
-
+	// private function restartMergeResolveIfNeeded():Void {
+	// 	if (isDisposed())
+	// 		return;
+	// 	if (myTextDiffProvider.getIgnorePolicy().equals(myCurrentIgnorePolicy)
+	// 		&& getTextSettings().isAutoResolveImportConflicts() == myResolveImportConflicts) {
+	// 		return;
+	// 	}
+	//
+	// 	if (!myInitialRediffFinished) {
+	// 		ApplicationManager.getApplication().invokeLater(() -> restartMergeResolveIfNeeded());
+	// 		return;
+	// 	}
+	//
+	// 	if (myContentModified) {
+	// 		if (Messages.showYesNoDialog(myProject, DiffBundle.message("changing.highlighting.requires.the.file.merge.restart"),
+	// 			DiffBundle.message("update.highlighting.settings"), DiffBundle.message("discard.changes.and.restart.merge"),
+	// 			DiffBundle.message("continue.merge"), Messages.getQuestionIcon()) != Messages.YES) {
+	// 			getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
+	// 			getTextSettings().setAutoResolveImportConflicts(myResolveImportConflicts);
+	// 			return;
+	// 		}
+	// 	}
+	//
+	// 	myInitialRediffFinished = false;
+	// 	doRediff();
+	// }
 	// private function setInitialOutputContent(CharSequence baseContent): Bool {
 	//   final outputDocument: Document  = myMergeRequest.getOutputContent().getDocument();
 	//
@@ -249,12 +275,13 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 	// @Override
 	// @RequiresEdt
-	// public Void rediff(Bool trySync) {
-	//   if (myInitialRediffStarted) return;
-	//   myInitialRediffStarted = true;
-	//   assert myAllMergeChanges.isEmpty();
-	//   doRediff();
-	// }
+	public function rediff(trySync:Bool):Void {
+		// if (myInitialRediffStarted) return;
+		// myInitialRediffStarted = true;
+		// assert myAllMergeChanges.isEmpty();
+		doRediff();
+	}
+
 	//
 	// @NotNull
 	// @Override
@@ -263,73 +290,84 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	// }
 	//
 	// @RequiresEdt
-	// private Void doRediff() {
-	//   myStatusPanel.setBusy(true);
-	//   myInnerDiffWorker.disable();
-	//
-	//   // This is made to reduce unwanted modifications before rediff is finished.
-	//   // It could happen between this init() EDT chunk and invokeLater().
-	//   getEditor().setViewer(true);
-	//   myLoadingPanel.startLoading();
-	//   myAcceptResolveAction.setEnabled(false);
-	//
-	//   BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-	//                                          try {
-	//                                            return doPerformRediff(indicator);
-	//                                          }
-	//                                          catch (ProcessCanceledException e) {
-	//                                            return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-	//                                          }
-	//                                          catch (Throwable e) {
-	//                                            LOG.error(e);
-	//                                            return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-	//                                          }
-	//                                        }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
-	//                                        ApplicationManager.getApplication().isUnitTestMode());
-	// }
+	private function doRediff():Void {
+		// myStatusPanel.setBusy(true);
+		// myInnerDiffWorker.disable();
+
+		// This is made to reduce unwanted modifications before rediff is finished.
+		// It could happen between this init() EDT chunk and invokeLater().
+		// getEditor().setViewer(true);
+		// myLoadingPanel.startLoading();
+		// myAcceptResolveAction.setEnabled(false);
+
+		// BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+		// try {
+		return doPerformRediff(/*indicator*/)();
+		// }
+		// catch (ProcessCanceledException e) {
+		// return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+		// }
+		// catch (Throwable e) {
+		// LOG.error(e);
+		// return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+		// }
+		// }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
+		// ApplicationManager.getApplication().isUnitTestMode());
+	}
+
 	//
 	// @NotNull
-	// private function Runnable doPerformRediff(ProgressIndicator indicator) {
-	//   try {
-	//     List<CharSequence> sequences = new ArrayList<>();
-	//
-	//     indicator.checkCanceled();
-	//     IgnorePolicy ignorePolicy = myTextDiffProvider.getIgnorePolicy();
-	//
-	//     List<DocumentContent> contents = myMergeRequest.getContents();
-	//     MergeRange importRange = ReadAction.compute(() -> {
-	//       sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
-	//       if (getTextSettings().isAutoResolveImportConflicts()) {
-	//         initPsiFiles();
-	//         return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
-	//       }
-	//       return null;
-	//     });
-	//     MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
-	//     List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
-	//     List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(), fragment -> {
-	//       return MergeRangeUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
-	//     });
-	//
-	//     FoldingModelSupport.Data foldingState =
-	//       myFoldingModel.createState(lineFragments.getFragments(), lineOffsets, getFoldingModelSettings());
-	//
-	//     return () -> apply(ThreeSide.BASE.select(sequences), lineFragments, conflictTypes, foldingState, ignorePolicy);
-	//   }
-	//   catch (DiffTooBigException e) {
-	//     return applyNotification(DiffNotifications.createDiffTooBig());
-	//   }
-	//   catch (ProcessCanceledException e) {
-	//     throw e;
-	//   }
-	//   catch (Throwable e) {
-	//     LOG.error(e);
-	//     return () -> {
-	//       clearDiffPresentation();
-	//       myPanel.setErrorContent();
-	//     };
-	//   }
-	// }
+	private function doPerformRediff(/*indicator: ProgressIndicator */):Runnable {
+		try {
+			var sequences:Array<String> = [];
+
+			// indicator.checkCanceled();
+			var ignorePolicy:IgnorePolicy = myTextDiffProvider.getIgnorePolicy();
+
+			var contents:Array<String> = myMergeRequest;
+
+			for (seq in contents) {
+				sequences.push(seq);
+			}
+			// var importRange: MergeRange  = ReadAction.compute(() -> {
+			// sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
+			// if (getTextSettings().isAutoResolveImportConflicts()) {
+			//   initPsiFiles();
+			//   return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+			// }
+			//   return null;
+			// });
+			// var importRange = new MergeRange(0,0,0,0,0, 0);
+			var lineFragments:MergeLineFragmentsWithImportMetadata = getLineFragments(/*indicator, */ sequences, /*importRange,*/ ignorePolicy);
+
+			var lineOffsets:Array<LineOffsets> = sequences.map(function(seq) {
+				return LineOffsetsUtil.createB(seq);
+			});
+			var conflictTypes:Array<MergeConflictType> = lineFragments.map(function(fragment) {
+				// var conflictTypes: List<MergeConflictType>  = fragments.getFragments().map(function(fragment) {
+				return MergeRangeUtil.getLineMergeType(fragment, sequences, lineOffsets, IgnorePolicy.getComparisonPolicyB(IgnorePolicyEnum.DEFAULT));
+			});
+
+			// FoldingModelSupport.Data foldingState =
+			//   myFoldingModel.createState(lineFragments.getFragments(), lineOffsets, getFoldingModelSettings());
+
+			return () -> apply(ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(sequences), lineFragments, conflictTypes /*, foldingState*/, ignorePolicy);
+		} catch (e:DiffTooBigException) {
+			return () -> trace("Diff too big");
+			// return applyNotification(DiffNotifications.createDiffTooBig());
+		} catch (e:ProcessCanceledException) {
+			throw e;
+		} catch (e:Dynamic) {
+			trace(e);
+			throw e;
+			// LOG.error(e);
+			return () -> {
+				// clearDiffPresentation();
+				// myPanel.setErrorContent();
+			};
+		}
+	}
+
 	//
 	// @NotNull
 	// @ApiStatus.Internal
@@ -337,15 +375,15 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//   return myMergeRequest;
 	// }
 	//
-	private static function getLineFragments(indicator:ProgressIndicator, sequences:List<CharSequence>, importRange:Null<MergeRange>,
+	private static function getLineFragments(/*indicator:ProgressIndicator, */ sequences:Array<String> /*, importRange:Null<MergeRange>*/,
 			ignorePolicy:IgnorePolicy):MergeLineFragmentsWithImportMetadata {
-		if (importRange != null) {
-			return MergeImportUtil.getDividedFromImportsFragments(sequences, ignorePolicy.getComparisonPolicy(), importRange, indicator);
-		}
+		// if (importRange != null) {
+		// 	return MergeImportUtil.getDividedFromImportsFragments(sequences, ignorePolicy.getComparisonPolicy(), importRange, indicator);
+		// }
 		var manager:ComparisonManager = ComparisonManager.getInstance();
 
-		var fragments:List<MergeLineFragment> = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2), ignorePolicy.getComparisonPolicy(),
-			indicator);
+		var fragments:Array<MergeLineFragment> = manager.mergeLines(sequences[0], sequences[1], sequences[2], ignorePolicy.getComparisonPolicyA() /*,
+			indicator */);
 		return new MergeLineFragmentsWithImportMetadata(fragments);
 	}
 
@@ -358,70 +396,73 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//   myPsiFiles = files;
 	// }
 	//
-
-	private function apply(baseContent:CharSequence, fragmentsWithMetadata:MergeLineFragmentsWithImportMetadata, conflictTypes:List<MergeConflictType>,
-			foldingState:Null<FoldingModelSupport.Data>, ignorePolicy:IgnorePolicy):Void {
-		if (isDisposed())
-			return;
-		myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
-		clearDiffPresentation();
+	private function apply(baseContent:String, fragmentsWithMetadata:MergeLineFragmentsWithImportMetadata, conflictTypes:Array<MergeConflictType> /*,
+		foldingState:Null<FoldingModelSupport.Data> */, ignorePolicy:IgnorePolicy):Void {
+		// if (isDisposed())
+		// 	return;
+		// myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+		// clearDiffPresentation();
 		resetChangeCounters();
 
-		var success:Bool = setInitialOutputContent(baseContent);
-		var fragments:List<MergeLineFragment> = fragmentsWithMetadata.getFragments();
+		// var success:Bool = setInitialOutputContent(baseContent);
+		var fragments:Array<MergeLineFragment> = fragmentsWithMetadata.getFragments();
 
-		if (!success) {
-			fragments = Collections.emptyList();
-			conflictTypes = Collections.emptyList();
-			myPanel.addNotification(DiffNotifications.createNotification(DiffBundle.message("error.cant.resolve.conflicts.in.a.read.only.file")));
-		}
+		// if (!success) {
+		// 	fragments = [];
+		// 	conflictTypes = [];
+		// 	// myPanel.addNotification(DiffNotifications.createNotification(DiffBundle.message("error.cant.resolve.conflicts.in.a.read.only.file")));
+		// }
 
-		myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE), f.getEndLine(ThreeSide.BASE))));
+		myModel.setChanges(fragments.map(function(f) {
+			return new LineRange(f.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)), f.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE)));
+		}));
 
-		for (index in 0...fragments.size() - 1) {
-			var fragment:MergeLineFragment = fragments.get(index);
-			var conflictType:MergeConflictType = conflictTypes.get(index);
+		for (index in 0...fragments.length) {
+			var fragment:MergeLineFragment = fragments[index];
+			var conflictType:MergeConflictType = conflictTypes[index];
 
 			var isInImportRange:Bool = fragmentsWithMetadata.isIndexInImportRange(index);
-			var change:TextMergeChange = new TextMergeChange(index, isInImportRange, fragment, conflictType, myTextMergeViewer);
+			var change:TextMergeChange = new TextMergeChange(index, isInImportRange, fragment, conflictType /*, myTextMergeViewer*/, myModel);
 
-			myAllMergeChanges.add(change);
+			myAllMergeChanges.push(change);
 			onChangeAdded(change);
 		}
 
-		myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+		// myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+		//
+		// myInitialScrollHelper.onRediff();
+		//
+		// myContentPanel.repaintDividers();
+		// myStatusPanel.update();
 
-		myInitialScrollHelper.onRediff();
-
-		myContentPanel.repaintDividers();
-		myStatusPanel.update();
-
-		getEditor().setViewer(false);
-		myLoadingPanel.stopLoading();
-		myAcceptResolveAction.setEnabled(true);
-
-		myInnerDiffWorker.onEverythingChanged();
-		myInitialRediffFinished = true;
-		myContentModified = false;
+		// getEditor().setViewer(false);
+		// myLoadingPanel.stopLoading();
+		// myAcceptResolveAction.setEnabled(true);
+		//
+		// myInnerDiffWorker.onEverythingChanged();
+		// myInitialRediffFinished = true;
+		// myContentModified = false;
 		myCurrentIgnorePolicy = ignorePolicy;
-		myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
+		// myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
 
 		// build initial statistics
-		var autoResolvableChanges:Int = ContainerUtil.count(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
+		var autoResolvableChanges:Int = getAllChanges().filter(function(c) {
+			return canResolveChangeAutomaticallyB(c, ThreeSide.fromEnum(ThreeSideEnum.BASE));
+		}).length;
 
-		myAggregator = new MergeStatisticsAggregator(getAllChanges().size(), autoResolvableChanges, getConflictsCount());
+		// myAggregator = new MergeStatisticsAggregator(getAllChanges().size(), autoResolvableChanges, getConflictsCount());
 
-		if (myResolveImportConflicts) {
-			var importChanges:List<TextMergeChange> = ContainerUtil.filter(getChanges(), change -> change.isImportChange());
-			if (importChanges.size() != fragmentsWithMetadata.getFragments().size()) {
-				for (importChange in importChanges) {
-					markChangeResolved(importChange);
-				}
-			}
-		}
-		if (getTextSettings().isAutoApplyNonConflictedChanges()) {
-			if (hasNonConflictedChanges(ThreeSide.BASE)) {
-				applyNonConflictedChanges(ThreeSide.BASE);
+		// if (myResolveImportConflicts) {
+		// 	var importChanges:List<TextMergeChange> = ContainerUtil.filter(getChanges(), change -> change.isImportChange());
+		// 	if (importChanges.size() != fragmentsWithMetadata.getFragments().size()) {
+		// 		for (importChange in importChanges) {
+		// 			markChangeResolved(importChange);
+		// 		}
+		// 	}
+		// }
+		if (true /*getTextSettings().isAutoApplyNonConflictedChanges()*/) {
+			if (hasNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE))) {
+				applyNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE));
 			}
 		}
 	}
@@ -437,16 +478,14 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 	//   myModel.setChanges(Collections.emptyList());
 	// }
-
-	public function getLoadedResolveAction(result:MergeResult):Action {
-		return switch (result) {
-			case CANCEL: myCancelResolveAction;
-			case LEFT: myLeftResolveAction;
-			case RIGHT: myRightResolveAction;
-			case RESOLVED: myAcceptResolveAction;
-		};
-	}
-
+	// public function getLoadedResolveAction(result:MergeResult):Action {
+	// 	return switch (result) {
+	// 		case CANCEL: myCancelResolveAction;
+	// 		case LEFT: myLeftResolveAction;
+	// 		case RIGHT: myRightResolveAction;
+	// 		case RESOLVED: myAcceptResolveAction;
+	// 	};
+	// }
 	// public Bool isContentModified() {
 	//   return myContentModified;
 	// }
@@ -456,40 +495,38 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 	// Impl
 	//
-
-	private function onBeforeDocumentChange(e:DocumentEvent):Void {
-		super.onBeforeDocumentChange(e);
-		if (myInitialRediffFinished)
-			myContentModified = true;
-	}
-
+	// private function onBeforeDocumentChange(e:DocumentEvent):Void {
+	// 	super.onBeforeDocumentChange(e);
+	// 	if (myInitialRediffFinished)
+	// 		myContentModified = true;
+	// }
 	// public Void repaintDividers() {
 	//   myContentPanel.repaintDividers();
 	// }
 
 	private function onChangeResolved(change:TextMergeChange):Void {
-		if (change.isResolved()) {
+		if (change.isResolvedA()) {
 			onChangeRemoved(change);
 		} else {
 			onChangeAdded(change);
 		}
 		if (getChangesCount() == 0 && getConflictsCount() == 0) {
 			// LOG.assertTrue(ContainerUtil.and(getAllChanges(), TextMergeChange::isResolved));
-			ApplicationManager.getApplication().invokeLater(function() {
-				if (isDisposed())
-					return;
-
-				var component:JComponent = getEditor().getComponent();
-				var point:RelativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, JBUIScale.scale(5)));
-
-				var title:String = DiffBundle.message("merge.all.changes.processed.title.text");
-				var message:String = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("merge.all.changes.processed.message.text"), "a");
-				DiffBalloons.showSuccessPopup(title, message, point, this, function() {
-					if (isDisposed() || myLoadingPanel.isLoading())
-						return;
-					doFinishMerge(MergeResult.RESOLVED, MergeResultSource.NOTIFICATION);
-				});
-			});
+			// ApplicationManager.getApplication().invokeLater(function() {
+			// 	if (isDisposed())
+			// 		return;
+			//
+			// 	var component:JComponent = getEditor().getComponent();
+			// 	var point:RelativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, JBUIScale.scale(5)));
+			//
+			// 	var title:String = DiffBundle.message("merge.all.changes.processed.title.text");
+			// 	var message:String = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("merge.all.changes.processed.message.text"), "a");
+			// 	DiffBalloons.showSuccessPopup(title, message, point, this, function() {
+			// 		if (isDisposed() || myLoadingPanel.isLoading())
+			// 			return;
+			doFinishMerge(MergeResult.RESOLVED /*, MergeResultSource.NOTIFICATION*/);
+			// 	});
+			// });
 		}
 	}
 
@@ -507,8 +544,10 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//   return myAllMergeChanges;
 	// }
 
-	public function getChanges():List<TextMergeChange> {
-		return ContainerUtil.filter(myAllMergeChanges, mergeChange -> !mergeChange.isResolved());
+	public function getChanges():Array<TextMergeChange> {
+		return myAllMergeChanges.filter(function(mergeChange) {
+			return !mergeChange.isResolvedA();
+		});
 	}
 
 	// private function DiffDividerDrawUtil.DividerPaintable getDividerPaintable(Side side) {
@@ -529,42 +568,42 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	/*
 	 * affected changes should be sorted
 	 */
-	public function executeMergeCommand(commandName:String, underBulkUpdate:Bool, affected:Null<TextMergeChange>, task:Runnable):Bool {
-		myContentModified = true;
+	public function executeMergeCommandA(commandName:String, underBulkUpdate:Bool, affected:Null<Array<TextMergeChange>>, task:Runnable):Bool {
+		// myContentModified = true;
 
-		var affectedIndexes:IntList = null;
+		var affectedIndexes:Array<Int> = null;
 		if (affected != null) {
-			affectedIndexes = new IntArrayList(affected.size());
+			affectedIndexes = [];
 			for (change in affected) {
-				affectedIndexes.add(change.getIndex());
+				affectedIndexes.push(change.getIndex());
 			}
 		}
 
-		return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, affectedIndexes, task);
+		return myModel.executeMergeCommand(commandName, null, /*UndoConfirmationPolicy.DEFAULT,*/ underBulkUpdate, affectedIndexes, task);
 	}
 
-	public function executeMergeCommand(commandName:String, affected:Null<TextMergeChange>, task:Runnable):Bool {
-		return executeMergeCommand(commandName, false, affected, task);
+	public function executeMergeCommandB(commandName:String, affected:Null<Array<TextMergeChange>>, task:Runnable):Bool {
+		return executeMergeCommandA(commandName, false, affected, task);
 	}
 
-	public function markChangeResolved(change:TextMergeChange):Void {
-		if (change.isResolved())
+	public function markChangeResolvedA(change:TextMergeChange):Void {
+		if (change.isResolvedA())
 			return;
-		change.setResolved(Side.LEFT, true);
-		change.setResolved(Side.RIGHT, true);
+		change.setResolved(Side.fromEnum(SideEnum.LEFT), true);
+		change.setResolved(Side.fromEnum(SideEnum.RIGHT), true);
 
 		onChangeResolved(change);
-		myModel.invalidateHighlighters(change.getIndex());
+		// myModel.invalidateHighlighters(change.getIndex());
 	}
 
-	public function markChangeResolved(change:TextMergeChange, side:Side):Void {
-		if (change.isResolved(side))
+	public function markChangeResolvedB(change:TextMergeChange, side:Side):Void {
+		if (change.isResolvedB(side))
 			return;
 		change.setResolved(side, true);
 
-		if (change.isResolved())
+		if (change.isResolvedA())
 			onChangeResolved(change);
-		myModel.invalidateHighlighters(change.getIndex());
+		// myModel.invalidateHighlighters(change.getIndex());
 	}
 
 	// @ApiStatus.Internal
@@ -577,27 +616,28 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
 	public function ignoreChange(change:TextMergeChange, side:Side, resolveChange:Bool):Void {
 		if (!change.isConflict() || resolveChange) {
-			markChangeResolved(change);
+			markChangeResolvedA(change);
 		} else {
-			markChangeResolved(change, side);
+			markChangeResolvedB(change, side);
 		}
 	}
 
 	public function replaceChange(change:TextMergeChange, side:Side, resolveChange:Bool):LineRange {
-		if (change.isResolved(side))
+		if (change.isResolvedB(side))
 			return null;
-		if (!change.isChange(side)) {
-			markChangeResolved(change);
+		if (!change.isChangeA(side)) {
+			markChangeResolvedA(change);
 			return null;
 		}
 
-		var sourceSide:ThreeSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-		var oppositeSide:ThreeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
+		var sourceSide:ThreeSide = side.selectA(ThreeSide.fromEnum(ThreeSideEnum.LEFT), ThreeSide.fromEnum(ThreeSideEnum.RIGHT));
+		var oppositeSide:ThreeSide = side.selectA(ThreeSide.fromEnum(ThreeSideEnum.RIGHT), ThreeSide.fromEnum(ThreeSideEnum.LEFT));
 
-		var sourceDocument:Document = getContent(sourceSide).getDocument();
-		var sourceStartLine:Int = change.getStartLine(sourceSide);
-		var sourceEndLine:Int = change.getEndLine(sourceSide);
-		var newContent:List<String> = DiffUtil.getLines(sourceDocument, sourceStartLine, sourceEndLine);
+		// var sourceDocument:String = getContent(sourceSide).getDocument();
+		var sourceDocument:String = getContentString(sourceSide);
+		var sourceStartLine:Int = change.getStartLineB(ThreeSide.fromIndex(sourceSide.getIndex()));
+		var sourceEndLine:Int = change.getEndLineB(sourceSide);
+		var newContent:Array<String> = DiffUtil.getLinesB(sourceDocument, sourceStartLine, sourceEndLine);
 
 		var newLineStart:Int;
 		if (change.isConflict()) {
@@ -610,39 +650,40 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 				newLineStart = myModel.getLineStart(change.getIndex());
 			}
 
-			if (resolveChange || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
-				markChangeResolved(change);
+			if (resolveChange || change.getStartLineB(ThreeSide.fromIndex(oppositeSide.getIndex())) == change.getEndLineB(oppositeSide)) {
+				markChangeResolvedA(change);
 			} else {
 				change.markOnesideAppliedConflict();
-				markChangeResolved(change, side);
+				markChangeResolvedB(change, side);
 			}
 		} else {
 			myModel.replaceChange(change.getIndex(), newContent);
 			newLineStart = myModel.getLineStart(change.getIndex());
-			markChangeResolved(change);
+			markChangeResolvedA(change);
 		}
 		var newLineEnd:Int = myModel.getLineEnd(change.getIndex());
 		return new LineRange(newLineStart, newLineEnd);
 	}
 
 	private function resetResolvedChange(change:TextMergeChange):Void {
-		if (!change.isResolved())
+		if (!change.isResolvedA())
 			return;
 		var changeFragment:MergeLineFragment = change.getFragment();
-		var startLine:Int = changeFragment.getStartLine(ThreeSide.BASE);
-		var endLine:Int = changeFragment.getEndLine(ThreeSide.BASE);
+		var startLine:Int = changeFragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+		var endLine:Int = changeFragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
 
-		var content:Document = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
-		var baseContent:List<String> = DiffUtil.getLines(content, startLine, endLine);
+		// var content:Document = ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(myMergeRequest.getContents()).getDocument();
+		var content:String = ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(myMergeRequest);
+		var baseContent:Array<String> = DiffUtil.getLinesB(content, startLine, endLine);
 
 		myModel.replaceChange(change.getIndex(), baseContent);
 
 		change.resetState();
-		if (change.isResolvedWithAI()) {
-			myAggregator.wasRolledBackAfterAI(change.getIndex());
-		}
+		// if (change.isResolvedWithAI()) {
+		// 	myAggregator.wasRolledBackAfterAI(change.getIndex());
+		// }
 		onChangeResolved(change);
-		myModel.invalidateHighlighters(change.getIndex());
+		// myModel.invalidateHighlighters(change.getIndex());
 	}
 
 	// private function transferReferences(side: ThreeSide ,
@@ -656,7 +697,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//         ContainerUtil.exists(files, file -> !file.isValid())) {
 	//       return;
 	//     }
-	//     for (i in 0...changes.size() - 1) {
+	//     for (i in 0...changes.size()) {
 	//       var change: TextMergeChange  = changes.get(i);
 	//       var sourceSide: Side  = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
 	//       var sourceThreeSide: ThreeSide  = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
@@ -697,211 +738,245 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	//
 
 	private function hasNonConflictedChanges(side:ThreeSide):Bool {
-		return ContainerUtil.exists(getAllChanges(), function(change) {
-			!change.isConflict()
-			&& canResolveChangeAutomatically(change, side);
-		});
+		return getAllChanges().filter(function(change) {
+			return !change.isConflict() && canResolveChangeAutomaticallyB(change, side);
+		}).length != 0;
 	}
 
 	private function applyNonConflictedChanges(side:ThreeSide):Void {
-		executeMergeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), true, null, function() {
-			resolveChangesAutomatically(ContainerUtil.filter(getAllChanges(), change -> !change.isConflict()), side);
+		executeMergeCommandA(/*DiffBundle.message(*/ "merge.dialog.apply.non.conflicted.changes.command" /*)*/, true, null, function() {
+			resolveChangesAutomatically(getAllChanges().filter(function(change) {
+				return !change.isConflict();
+			}), side);
 		});
 
-		var firstUnresolved:TextMergeChange = ContainerUtil.find(getAllChanges(), c -> !c.isResolved());
-		if (firstUnresolved != null)
-			doScrollToChange(firstUnresolved, true);
+		var firstUnresolved:TextMergeChange;
+		for (change in getAllChanges()) {
+			if (!change.isResolvedA()) {
+				firstUnresolved = change;
+				break;
+			}
+		}
+
+		// if (firstUnresolved != null)
+		// 	doScrollToChange(firstUnresolved, true);
 	}
 
 	private function hasResolvableConflictedChanges():Bool {
-		return ContainerUtil.exists(getAllChanges(), function(change) {
-			canResolveChangeAutomatically(change, ThreeSide.BASE);
-		});
+		for (change in getAllChanges()) {
+			if (canResolveChangeAutomaticallyB(change, ThreeSide.fromEnum(ThreeSideEnum.BASE))) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function applyResolvableConflictedChanges():Void {
-		var changes:List<TextMergeChange> = getAllChanges();
-		executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, function() {
-			resolveChangesAutomatically(changes, ThreeSide.BASE);
+		var changes:Array<TextMergeChange> = getAllChanges();
+		executeMergeCommandA(/*DiffBundle.message(*/ "message.resolve.simple.conflicts.command" /*)*/, true, null, function() {
+			resolveChangesAutomatically(changes, ThreeSide.fromEnum(ThreeSideEnum.BASE));
 		});
 
-		var firstUnresolved:TextMergeChange = ContainerUtil.find(changes, c -> !c.isResolved());
-		if (firstUnresolved != null)
-			doScrollToChange(firstUnresolved, true);
+		var firstUnresolved:TextMergeChange;
+		for (change in getAllChanges()) {
+			if (!change.isResolvedA()) {
+				firstUnresolved = change;
+				break;
+			}
+		}
+
+		// if (firstUnresolved != null)
+		// 	doScrollToChange(firstUnresolved, true);
 	}
 
-	public function canResolveChangeAutomatically(change:TextMergeChange, side:ThreeSide):Bool {
+	public static function canResolveChangeAutomaticallyA(change:TextMergeChange, side:ThreeSide, myMergeRequest:Array<String>, myResultDocument:String):Bool {
 		if (change.isConflict()) {
-			return side == ThreeSide.BASE
+			return ThreeSide.fromIndex(side.getIndex()) == ThreeSideEnum.BASE
 				&& change.getConflictType().canBeResolved()
-				&& !change.isResolved(Side.LEFT)
-				&& !change.isResolved(Side.RIGHT)
-				&& !isChangeRangeModified(change);
+				&& !change.isResolvedB(Side.fromEnum(SideEnum.LEFT))
+				&& !change.isResolvedB(Side.fromEnum(SideEnum.RIGHT))
+				&& !isChangeRangeModifiedA(change, myMergeRequest, myResultDocument);
 		} else {
-			return !change.isResolved() && change.isChange(side) && !isChangeRangeModified(change);
+			return !change.isResolvedA()
+				&& change.isChangeB(ThreeSide.fromIndex(side.getIndex()))
+				&& !isChangeRangeModifiedA(change, myMergeRequest, myResultDocument);
 		}
 	}
 
-	private function isChangeRangeModified(change:TextMergeChange):Bool {
-		var changeFragment:MergeLineFragment = change.getFragment();
-		var baseStartLine:Int = changeFragment.getStartLine(ThreeSide.BASE);
-		var baseEndLine:Int = changeFragment.getEndLine(ThreeSide.BASE);
-		var baseDiffContent:DocumentContent = ThreeSide.BASE.select(myMergeRequest.getContents());
-		var baseDocument:Document = baseDiffContent.getDocument();
-
-		var resultStartLine:Int = change.getStartLine();
-		var resultEndLine:Int = change.getEndLine();
-		var resultDocument:Document = getEditor().getDocument();
-
-		var baseContent:CharSequence = DiffUtil.getLinesContent(baseDocument, baseStartLine, baseEndLine);
-		var resultContent:CharSequence = DiffUtil.getLinesContent(resultDocument, resultStartLine, resultEndLine);
-		return !StringUtil.equals(baseContent, resultContent);
+	public function canResolveChangeAutomaticallyB(change:TextMergeChange, side:ThreeSide):Bool {
+		return canResolveChangeAutomaticallyA(change, side, myMergeRequest, myResultDocument);
 	}
 
-	public function resolveChangesAutomatically(changes:List<TextMergeChange>, threeSide:ThreeSide):Void {
+	public static function isChangeRangeModifiedA(change:TextMergeChange, myMergeRequest:Array<String>, myResultDocument:String):Bool {
+		var changeFragment:MergeLineFragment = change.getFragment();
+		var baseStartLine:Int = changeFragment.getStartLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+		var baseEndLine:Int = changeFragment.getEndLine(ThreeSide.fromEnum(ThreeSideEnum.BASE));
+		var baseDiffContent:String = ThreeSide.fromEnum(ThreeSideEnum.BASE).selectC(myMergeRequest);
+		// var baseDocument:Document = baseDiffContent.getDocument();
+
+		var resultStartLine:Int = change.getStartLineA();
+		var resultEndLine:Int = change.getEndLineA();
+		// var resultDocument:String = getEditor().getDocument();
+
+		var baseContent:String = DiffUtil.getLinesContentA(/*baseDocument*/ baseDiffContent, baseStartLine, baseEndLine);
+		var resultContent:String = DiffUtil.getLinesContentA(myResultDocument, resultStartLine, resultEndLine);
+		return baseContent != resultContent;
+	}
+
+	public function isChangeRangeModifiedB(change:TextMergeChange):Bool {
+		return isChangeRangeModifiedA(change, myMergeRequest, myResultDocument);
+	}
+
+	public function resolveChangesAutomatically(changes:Array<TextMergeChange>, threeSide:ThreeSide):Void {
 		processChangesAndTransferData(changes, threeSide, function(change) {
-			resolveChangeAutomatically(change, threeSide);
+			return resolveChangeAutomatically(change, threeSide);
 		});
 	}
 
 	public function resolveSingleChangeAutomatically(change:TextMergeChange, side:ThreeSide):Void {
-		resolveChangesAutomatically(Collections.singletonList(change), side);
+		resolveChangesAutomatically([change], side);
 	}
 
-	public function replaceChanges(changes:List<TextMergeChange>, side:Side, resolveChanges:Bool):Void {
-		processChangesAndTransferData(changes, side.select(ThreeSide.LEFT, ThreeSide.RIGHT), (change) -> replaceChange(change, side, resolveChanges));
+	public function replaceChanges(changes:Array<TextMergeChange>, side:Side, resolveChanges:Bool):Void {
+		processChangesAndTransferData(changes, side.selectA(ThreeSide.fromEnum(ThreeSideEnum.LEFT), ThreeSide.fromEnum(ThreeSideEnum.RIGHT)),
+			(change) -> replaceChange(change, side, resolveChanges));
 	}
 
 	public function replaceSingleChange(change:TextMergeChange, side:Side, resolveChange:Bool):Void {
-		replaceChanges(Collections.singletonList(change), side, resolveChange);
+		replaceChanges([change], side, resolveChange);
 	}
 
-	private function processChangesAndTransferData(changes:List<TextMergeChange>, side:ThreeSide, processor:Function<TextMergeChange, LineRange>):Void {
-		var newRanges:ArrayList<LineRange> = new ArrayList<>();
-		var filteredChanges:List<TextMergeChange> = new ArrayList<>();
+	private function processChangesAndTransferData(changes:Array<TextMergeChange>, side:ThreeSide, processor:TextMergeChange->LineRange):Void {
+		var newRanges:Array<LineRange> = [];
+		var filteredChanges:Array<TextMergeChange> = [];
 
 		for (change in changes) {
 			if (change.isImportChange()) {
 				continue;
 			}
-			var newRange:LineRange = processor.apply(change);
+			var newRange:LineRange = processor(change);
 			if (newRange != null) {
-				newRanges.add(newRange);
-				filteredChanges.add(change);
+				newRanges.push(newRange);
+				filteredChanges.push(change);
 			}
 		}
-		transferReferenceData(filteredChanges, side, newRanges);
+		// transferReferenceData(filteredChanges, side, newRanges);
 	}
 
-	private function transferReferenceData(changes:List<TextMergeChange>, side:ThreeSide, newRanges:List<LineRange>):Void {
-		if (myResolveImportConflicts) {
-			var document:Document = getContent(ThreeSide.BASE).getDocument();
-			var markers:List<RangeMarker> = ContainerUtil.map(newRanges,
-				range -> document.createRangeMarker(document.getLineStartOffset(range.start), document.getLineEndOffset(range.end)));
-			transferReferences(side, changes, markers);
-		}
-	}
+	// private function transferReferenceData(changes:List<TextMergeChange>, side:ThreeSide, newRanges:List<LineRange>):Void {
+	// 	if (myResolveImportConflicts) {
+	// 		var document:Document = getContent(ThreeSide.BASE).getDocument();
+	// 		var markers:List<RangeMarker> = ContainerUtil.map(newRanges,
+	// 			range -> document.createRangeMarker(document.getLineStartOffset(range.start), document.getLineEndOffset(range.end)));
+	// 		transferReferences(side, changes, markers);
+	// 	}
+	// }
 
 	public function resolveChangeAutomatically(change:TextMergeChange, side:ThreeSide):LineRange {
-		if (!canResolveChangeAutomatically(change, side))
+		if (!canResolveChangeAutomaticallyB(change, side))
 			return null;
 
 		if (change.isConflict()) {
-			var texts:List<CharSequence> = ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it),
-				change.getEndLine(it)));
+			// var texts:Array<String> = ThreeSide.map(function(it) {
+			// 	return DiffUtil.getLinesContentA(getEditor(it).getDocument(), change.getStartLineB(ThreeSide.fromIndex(it.getIndex())), change.getEndLineB(it));
+			// });
+			var texts = myRequest;
 
-			var newContent:CharSequence = ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
+			var newContent:String = ComparisonMergeUtil.tryResolveConflict(texts[0], texts[1], texts[2]);
 			if (newContent == null) {
-				LOG.warn(String.format("Can't resolve conflicting change:\n'%s'\n'%s'\n'%s'\n", texts.get(0), texts.get(1), texts.get(2)));
+				trace('Can\'t resolve conflicting change:\n"${texts[0]}"\n"${texts[1]}"\n"${texts[2]}"\n');
 				return null;
 			}
 
-			var newContentLines:Array<String> = LineTokenizer.tokenize(newContent, false);
-			myModel.replaceChange(change.getIndex(), Arrays.asList(newContentLines));
-			markChangeResolved(change);
+			var newContentLines:Array<String> = LineTokenizer.tokenizeA(newContent, false);
+			myModel.replaceChange(change.getIndex(), newContentLines);
+			markChangeResolvedA(change);
 			return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
 		} else {
-			var masterSide:Side = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
-			return replaceChange(change, masterSide, false);
+			var masterSide = (side).selectA(SideEnum.LEFT, change.isChangeA(Side.fromEnum(SideEnum.LEFT)) ? SideEnum.LEFT : SideEnum.RIGHT, SideEnum.RIGHT);
+			return replaceChange(change, Side.fromEnum(masterSide), false);
 		}
 	}
-
-	// private static final Key<Bool> EXTERNAL_OPERATION_IN_PROGRESS = Key.create("external.resolve.operation");
-	/**
-	 * Allows running external heavy operations and blocks the UI during execution.
-	 */
-	// public <T> Void runExternalResolver(CompletableFuture<T> operation,
-	//                                     Consumer<T> resultHandler,
-	//                                     Consumer<? super Throwable> errorHandler) {
-	//   runBeforeExternalOperation();
-	//
-	//   operation.whenComplete((result, throwable) -> {
-	//
-	//     Runnable runnable = () -> {
-	//       if (isDisposed()) return;
-	//       runAfterExternalOperation();
-	//
-	//       if (throwable != null) {
-	//         errorHandler.accept(throwable);
-	//         return;
-	//       }
-	//
-	//       if (result != null) {
-	//         resultHandler.accept(result);
-	//       }
-	//     };
-	//
-	//     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(getComponent()));
-	//   });
-	// }
-	//
-	// private function Bool isExternalOperationInProgress() {
-	//   return Bool.TRUE.equals(myMergeContext.getUserData(EXTERNAL_OPERATION_IN_PROGRESS));
-	// }
-	//
-	// @RequiresEdt
-	// private Void runBeforeExternalOperation() {
-	//   myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, true);
-	//   enableResolveActions(false);
-	//   getEditor().setViewer(true);
-	//
-	//   for (change in getAllChanges()) {
-	//     change.reinstallHighlighters();
-	//   }
-	// }
-	//
-	// @RequiresEdt
-	// private Void runAfterExternalOperation() {
-	//   myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
-	//   enableResolveActions(true);
-	//   getEditor().setViewer(false);
-	//
-	//   for (change in getAllChanges()) {
-	//     change.reinstallHighlighters();
-	//   }
-	// }
-	//
-	// private Void enableResolveActions(Bool enable) {
-	//   myLeftResolveAction.setEnabled(enable);
-	//   myRightResolveAction.setEnabled(enable);
-	//   myAcceptResolveAction.setEnabled(enable);
-	// }
-	// @ApiStatus.Internal
-	// Void logMergeCancelled() {
-	//   logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
-	// }
-	//
-	// private Void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
-	//   MergeStatisticsCollector.MergeResult statsResult = switch (mergeResult) {
-	//     case CANCEL -> MergeStatisticsCollector.MergeResult.CANCELED;
-	//     case RESOLVED -> MergeStatisticsCollector.MergeResult.SUCCESS;
-	//     case LEFT, RIGHT -> null;
-	//   };
-	//   if (statsResult == null) return;
-	//   myAggregator.setUnresolved(getChanges().size());
-	//   MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, statsResult, source, myAggregator);
-	// }
 }
+
+// private static final Key<Bool> EXTERNAL_OPERATION_IN_PROGRESS = Key.create("external.resolve.operation");
+
+/**
+ * Allows running external heavy operations and blocks the UI during execution.
+ */
+// public <T> Void runExternalResolver(CompletableFuture<T> operation,
+//                                     Consumer<T> resultHandler,
+//                                     Consumer<? super Throwable> errorHandler) {
+//   runBeforeExternalOperation();
+//
+//   operation.whenComplete((result, throwable) -> {
+//
+//     Runnable runnable = () -> {
+//       if (isDisposed()) return;
+//       runAfterExternalOperation();
+//
+//       if (throwable != null) {
+//         errorHandler.accept(throwable);
+//         return;
+//       }
+//
+//       if (result != null) {
+//         resultHandler.accept(result);
+//       }
+//     };
+//
+//     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(getComponent()));
+//   });
+// }
+//
+// private function Bool isExternalOperationInProgress() {
+//   return Bool.TRUE.equals(myMergeContext.getUserData(EXTERNAL_OPERATION_IN_PROGRESS));
+// }
+//
+// @RequiresEdt
+// private Void runBeforeExternalOperation() {
+//   myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, true);
+//   enableResolveActions(false);
+//   getEditor().setViewer(true);
+//
+//   for (change in getAllChanges()) {
+//     change.reinstallHighlighters();
+//   }
+// }
+//
+// @RequiresEdt
+// private Void runAfterExternalOperation() {
+//   myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
+//   enableResolveActions(true);
+//   getEditor().setViewer(false);
+//
+//   for (change in getAllChanges()) {
+//     change.reinstallHighlighters();
+//   }
+// }
+//
+// private Void enableResolveActions(Bool enable) {
+//   myLeftResolveAction.setEnabled(enable);
+//   myRightResolveAction.setEnabled(enable);
+//   myAcceptResolveAction.setEnabled(enable);
+// }
+// @ApiStatus.Internal
+// Void logMergeCancelled() {
+//   logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
+// }
+//
+// private Void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
+//   MergeStatisticsCollector.MergeResult statsResult = switch (mergeResult) {
+//     case CANCEL -> MergeStatisticsCollector.MergeResult.CANCELED;
+//     case RESOLVED -> MergeStatisticsCollector.MergeResult.SUCCESS;
+//     case LEFT, RIGHT -> null;
+//   };
+//   if (statsResult == null) return;
+//   myAggregator.setUnresolved(getChanges().size());
+//   MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, statsResult, source, myAggregator);
+// }
+// }
 // class MyInnerDiffWorker {
 //   private final Set<TextMergeChange> myScheduled = new HashSet<>();
 //
@@ -1036,60 +1111,64 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 // }
 //
 //
-// private function class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
-//   MyMergeModel(Null<Project> project, Document document) {
-//     super(project, document);
-//   }
-//
-//   @Override
-//   private function Void reinstallHighlighters(Int index) {
-//     TextMergeChange change = myAllMergeChanges.get(index);
-//     change.reinstallHighlighters();
-//     myInnerDiffWorker.scheduleRediff(change);
-//   }
-//
-//   @NotNull
-//   @Override
-//   private function TextMergeChange.State storeChangeState(Int index) {
-//     TextMergeChange change = myAllMergeChanges.get(index);
-//     return change.storeState();
-//   }
-//
-//   @Override
-//   private function Void restoreChangeState(TextMergeChange.State state) {
-//     super.restoreChangeState(state);
-//     TextMergeChange change = myAllMergeChanges.get(state.myIndex);
-//
-//     Bool wasResolved = change.isResolved();
-//     if (change.isResolvedWithAI()) {
-//       myAggregator.wasUndoneAfterAI(change.getIndex());
-//     }
-//     change.restoreState(state);
-//     if (wasResolved != change.isResolved()) onChangeResolved(change);
-//   }
-//
-//   @Nullable
-//   @Override
-//   private function TextMergeChange.State processDocumentChange(Int index, Int oldLine1, Int oldLine2, Int shift) {
-//     TextMergeChange.State state = super.processDocumentChange(index, oldLine1, oldLine2, shift);
-//
-//     TextMergeChange mergeChange = myAllMergeChanges.get(index);
-//     if (mergeChange.getStartLine() == mergeChange.getEndLine() &&
-//         mergeChange.getConflictType().getType() == MergeConflictType.Type.DELETED && !mergeChange.isResolved()) {
-//       markChangeResolved(mergeChange);
-//     }
-//
-//     return state;
-//   }
-//
-//   @Override
-//   private function Void onRangeManuallyEdit(Int index) {
-//     TextMergeChange change = myAllMergeChanges.get(index);
-//     if (change.isResolvedWithAI()) {
-//       myAggregator.wasEditedAfterAi(index);
-//     }
-//   }
-// }
+class MyMergeModel extends MergeModelBase<TextMergeChangeState> {
+	private final myAllMergeChanges:Array<TextMergeChange> = [];
+	private final onChangeResolved:TextMergeChange->Void;
+	private final markChangeResolvedA:TextMergeChange->Void;
+
+	public function new(/*project: Null<Project>, */ document:String, myAllMergeChanges:Array<TextMergeChange>, onChangeResolved:TextMergeChange->Void,
+			markChangeResolvedA:TextMergeChange->Void) {
+		super(/*project, */ document);
+		this.onChangeResolved = onChangeResolved;
+		this.markChangeResolvedA = markChangeResolvedA;
+	}
+
+	// private function Void reinstallHighlighters(index: Int ) {
+	//   TextMergeChange change = myAllMergeChanges.get(index);
+	//   change.reinstallHighlighters();
+	//   myInnerDiffWorker.scheduleRediff(change);
+	// }
+
+	private function storeChangeState(index:Int):TextMergeChangeState {
+		var change:TextMergeChange = myAllMergeChanges[index];
+		return change.storeState();
+	}
+
+	private override function restoreChangeState(state:TextMergeChangeState):Void {
+		super.restoreChangeState(state);
+		var change:TextMergeChange = myAllMergeChanges[state.myIndex];
+
+		var wasResolved:Bool = change.isResolvedA();
+		// if (change.isResolvedWithAI()) {
+		//   myAggregator.wasUndoneAfterAI(change.getIndex());
+		// }
+		change.restoreState(state);
+		if (wasResolved != change.isResolvedA())
+			onChangeResolved(change);
+	}
+
+	private override function processDocumentChange(index:Int, oldLine1:Int, oldLine2:Int, shift:Int):TextMergeChangeState {
+		var state:TextMergeChangeState = super.processDocumentChange(index, oldLine1, oldLine2, shift);
+
+		var mergeChange:TextMergeChange = myAllMergeChanges[index];
+		if (mergeChange.getStartLineA() == mergeChange.getEndLineA()
+			&& mergeChange.getConflictType().getType() == MergeConflictTypeEnum.DELETED
+			&& !mergeChange.isResolvedA()) {
+			markChangeResolvedA(mergeChange);
+		}
+
+		return state;
+	}
+
+	// @Override
+	// private function onRangeManuallyEdit(index: Int ): Void {
+	//   var change: TextMergeChange  = myAllMergeChanges.get(index);
+	//   if (change.isResolvedWithAI()) {
+	//     myAggregator.wasEditedAfterAi(index);
+	//   }
+	// }
+}
+
 //
 // private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
 //   @Override
@@ -1635,5 +1714,6 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 //     }
 //     return UIUtil.getLabelForeground();
 //   }
+// }
 // }
 // }
