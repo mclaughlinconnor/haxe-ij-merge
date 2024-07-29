@@ -25,14 +25,13 @@ import diff.tools.util.text.TextDiffProviderBase;
 class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	public final myModel:MergeModelBase<TextMergeChangeState>;
 
-	private final myAllMergeChanges:Array<TextMergeChange> = []; // all changes - both applied and unapplied ones
 	private final myMergeRequest:Array<String>;
 	private final myTextDiffProvider:TextDiffProviderBase;
 
+	private var myAllMergeChanges:Array<TextMergeChange> = []; // all changes - both applied and unapplied ones
 	private var myCurrentIgnorePolicy:IgnorePolicy;
 
 	public function new(request:Array<String>, resultDocument:String) {
-		super(request);
 		myMergeRequest = request;
 
 		myModel = new MyMergeModel(resultDocument, myAllMergeChanges, this.onChangeResolved, this.markChangeResolvedA);
@@ -46,6 +45,11 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	private function doFinishMerge(result:MergeResult):Void {
 		destroyChangedBlocks();
 	}
+
+  private override function destroyChangedBlocks(): Void  {
+    myAllMergeChanges = [];
+    myModel.setChanges([]);
+  }
 
 	//
 	// Diff
@@ -82,6 +86,14 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		} catch (e:Dynamic) {
 			throw e;
 		}
+	}
+
+	public function getContentString(side:ThreeSide):String {
+		return side.selectC(getContents());
+	}
+
+	public function getContents():Array<String> {
+		return myMergeRequest;
 	}
 
 	private static function getLineFragments(sequences:Array<String>, ignorePolicy:IgnorePolicy):MergeLineFragmentsWithImportMetadata {
@@ -361,7 +373,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			return null;
 
 		if (change.isConflict()) {
-			var texts = myRequest;
+			var texts = myMergeRequest;
 
 			var newContent:String = ComparisonMergeUtil.tryResolveConflict(texts[0], texts[1], texts[2]);
 			if (newContent == null) {
