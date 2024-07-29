@@ -381,7 +381,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 }
 
 class MyMergeModel extends MergeModelBase<TextMergeChangeState> {
-	private final myAllMergeChanges:Array<TextMergeChange> = [];
+	private final myAllMergeChanges:Array<TextMergeChange>;
 	private final onChangeResolved:TextMergeChange->Void;
 	private final markChangeResolvedA:TextMergeChange->Void;
 
@@ -390,6 +390,7 @@ class MyMergeModel extends MergeModelBase<TextMergeChangeState> {
 		super(document);
 		this.onChangeResolved = onChangeResolved;
 		this.markChangeResolvedA = markChangeResolvedA;
+		this.myAllMergeChanges = myAllMergeChanges;
 	}
 
 	private function storeChangeState(index:Int):TextMergeChangeState {
