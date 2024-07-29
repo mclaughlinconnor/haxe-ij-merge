@@ -33,13 +33,13 @@ class TextRange {
 		myEndOffset = endOffset;
 	}
 
-	// public final function getStartOffset():Int {
-	// 	return myStartOffset;
-	// }
-	//
-	// public final function getEndOffset():Int {
-	// 	return myEndOffset;
-	// }
+	public final function getStartOffset():Int {
+		return myStartOffset;
+	}
+
+	public final function getEndOffset():Int {
+		return myEndOffset;
+	}
 	//
 	// public final function getLength():Int {
 	// 	return myEndOffset - myStartOffset;
