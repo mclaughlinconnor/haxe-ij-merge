@@ -46,10 +46,10 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		destroyChangedBlocks();
 	}
 
-  private override function destroyChangedBlocks(): Void  {
-    myAllMergeChanges = [];
-    myModel.setChanges([]);
-  }
+	private override function destroyChangedBlocks():Void {
+		myAllMergeChanges = [];
+		myModel.setChanges([]);
+	}
 
 	//
 	// Diff
@@ -373,7 +373,14 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 			return null;
 
 		if (change.isConflict()) {
-			var texts = myMergeRequest;
+			var texts:Array<String> = ThreeSide.map(function(it) {
+				var d = it.selectC([myMergeRequest[0], myModel.getDocument(), myMergeRequest[2]]); // left, current middle, right
+				var side = ThreeSide.fromIndex(it.getIndex());
+				var startline = change.getStartLineB(side);
+				var endline = change.getEndLineB(it);
+
+				return DiffUtil.getLinesContentA(d, startline, endline);
+			});
 
 			var newContent:String = ComparisonMergeUtil.tryResolveConflict(texts[0], texts[1], texts[2]);
 			if (newContent == null) {
