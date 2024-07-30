@@ -125,8 +125,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
 		myCurrentIgnorePolicy = ignorePolicy;
 
-		var isAutoApplyNonConflictedChanges = true; // getTextSettings().isAutoApplyNonConflictedChanges()
-		if (isAutoApplyNonConflictedChanges) {
+		if (DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES) {
 			if (hasNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE))) {
 				applyNonConflictedChanges(ThreeSide.fromEnum(ThreeSideEnum.BASE));
 			}
