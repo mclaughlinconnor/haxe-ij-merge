@@ -252,6 +252,14 @@
         return API.greedyMerge(left, middle, right);
       }
 
+      function resolveNonConflicting(left, middle, right) {
+        return API.resolveNonConflicting(left, middle, right);
+      }
+
+      function applyResolvableConflictedChanges(left, middle, right) {
+        return API.applyResolvableConflictedChanges(left, middle, right);
+      }
+
       function getIjText() {
         const left = document.getElementById('ij_left').value;
         const middle = document.getElementById('ij_middle').value;
@@ -272,6 +280,20 @@
 
         document.getElementById('ij_output').value = "";
         document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
+      }
+
+      function doResolveNonConflicting() {
+        const [left, middle, right] = getIjText();
+
+        document.getElementById('ij_output').value = "";
+        document.getElementById('ij_output').value = resolveNonConflicting(left, middle, right);
+      }
+
+      function doApplyResolvableConflictedChanges() {
+        const [left, middle, right] = getIjText();
+
+        document.getElementById('ij_output').value = "";
+        document.getElementById('ij_output').value = applyResolvableConflictedChanges(left, middle, right);
       }
 
       function calculateDiff() {
@@ -395,5 +417,7 @@
 
     <button onclick="doIjMerge()">Do IJ Merge</button>
     <button onclick="doIjGreedyMerge()">Do IJ Greedy Merge</button>
+    <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
+    <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
 </body>
 </html>
