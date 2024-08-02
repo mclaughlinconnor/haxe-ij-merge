@@ -51,44 +51,17 @@
     width: 100%;
   }
 
-  legend {
-    background-color: #000;
-    color: #fff;
-    padding: 3px 6px;
-  }
-
-  fieldset {
-    border: 1px solid gray;
-    display: inline-block;
-    margin-bottom: 1em;
-  }
-
-  fieldset label:not(:last-child) input[type=radio] {
-    margin-right: 2em;
-  }
-
-  input[type=radio], input[type=checkbox] {
-    accent-color: blue;
-  }
-
-  input {
-    margin: 0.4rem;
-  }
-
-  #diff_output {
-    font-size: 18px;
-  }
-
   code {
     font-size: 14px;
+  }
+
+  .action-buttons {
+    margin-top: 1em
   }
 </style>
 <body>
     <script src="js/main.js"></script>
-    <script src="js/diff_match_patch.js"></script>
     <script>
-      const dmp = new diff_match_patch();
-
       const REQUIRED_MERGE = Object.freeze({
         IMPOSSIBLE: 'IMPOSSIBLE',
         GIT: 'GIT MERGABLE',
@@ -238,7 +211,7 @@
         }
         document.getElementById("examples_dropdown").innerHTML = content;
 
-        calculateDiff();
+        doDiff();
       });
 
       function setText(left, middle, right) {
@@ -246,13 +219,12 @@
         document.getElementById('ij_middle').value = middle;
         document.getElementById('ij_right').value = right;
 
-        calculateDiff();
+        doDiff();
       }
 
       function setExample(index) {
         const {left, middle, right, required_merge} = examples[index];
 
-        document.getElementById('ij_output').value = "";
         document.getElementById('merge_status').innerHTML = required_merge;
 
         setText(left, middle, right);
@@ -286,84 +258,42 @@
         return [left, middle, right];
       }
 
-      function doIjMerge() {
-        const [left, middle, right] = getIjText();
-
-        document.getElementById('ij_output').value = "";
-        document.getElementById('ij_output').value = ijMerge(left, middle, right);
+      function setResults(results) {
+        document.getElementById('ij_left_html').innerHTML = results[1];
+        document.getElementById('ij_middle_html').innerHTML = results[2];
+        document.getElementById('ij_right_html').innerHTML = results[3];
       }
 
-      function doIjGreedyMerge() {
-        const [left, middle, right] = getIjText();
-
-        document.getElementById('ij_output').value = "";
-        document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
+      function clearResults() {
+        setResults(["", "", ""])
       }
 
       function doDiff() {
         const [left, middle, right] = getIjText();
 
-        document.getElementById('ij_output').value = "";
+        clearResults()
         const results = diff(left, middle, right);
-        document.getElementById('ij_output').value = results[0];
-        document.getElementById('ij_left_html').innerHTML = results[1];
-        document.getElementById('ij_middle_html').innerHTML = results[2];
-        document.getElementById('ij_right_html').innerHTML = results[3];
+        setResults(results);
         API.decorate();
       }
 
       function doResolveNonConflicting() {
         const [left, middle, right] = getIjText();
 
-        document.getElementById('ij_output').value = "";
+        clearResults()
         const results = resolveNonConflicting(left, middle, right);
-        document.getElementById('ij_output').value = results[0];
-        document.getElementById('ij_left_html').innerHTML = results[1];
-        document.getElementById('ij_middle_html').innerHTML = results[2];
-        document.getElementById('ij_right_html').innerHTML = results[3];
+        setResults(results);
         API.decorate();
       }
 
       function doApplyResolvableConflictedChanges() {
         const [left, middle, right] = getIjText();
 
-        document.getElementById('ij_output').value = "";
+        clearResults()
         const results = applyResolvableConflictedChanges(left, middle, right);
-        document.getElementById('ij_output').value = results[0];
-        document.getElementById('ij_left_html').innerHTML = results[1];
-        document.getElementById('ij_middle_html').innerHTML = results[2];
-        document.getElementById('ij_right_html').innerHTML = results[3];
+        setResults(results);
         API.decorate();
       }
-
-      function calculateDiff() {
-        const left = document.getElementById('ij_left').value;
-        const right = document.getElementById('ij_right').value;
-
-        const diff = dmp.diff_main(left, right);
-
-        if (document.getElementById('semantic').checked) {
-          dmp.diff_cleanupSemantic(diff);
-        }
-
-        if (document.getElementById('efficiency').checked) {
-          dmp.diff_cleanupEfficiency(diff);
-        }
-
-        let pretty = dmp.diff_prettyHtml(diff);
-
-        if (pretty === "") {
-          pretty = "No diff generated";
-        }
-
-        document.getElementById('diff_output').innerHTML = pretty;
-      }
-
-      addEventListener("input", function() {
-        if (document.getElementById('auto_update').checked) {
-          calculateDiff()
-        }
-      });
 
       addEventListener("resize", function() {
         API.decorate();
@@ -404,69 +334,26 @@
       <div class='files files-flex'>
         <label>
           <span>Left</span>
-          <textarea id='ij_left' rows="60"></textarea>
+          <textarea id='ij_left' rows="20"></textarea>
           <pre><code id='ij_left_html'></code></pre>
         </label>
         <label>
           <span>Middle</span>
-          <textarea id='ij_middle' rows="60"></textarea>
+          <textarea id='ij_middle' rows="20"></textarea>
           <pre><code id='ij_middle_html'></code></pre>
         </label>
         <label>
           <span>Right</span>
-          <textarea id='ij_right' rows="60"></textarea>
+          <textarea id='ij_right' rows="20"></textarea>
           <pre><code id='ij_right_html'></code></pre>
         </label>
       </div>
     </div>
 
-    <fieldset id='cleanup_config'>
-      <legend>Diff Configuration</legend>
-
-      <div>
-        <label>
-          <span>Automatic Updates</span>
-          <input type="checkbox" id="auto_update" checked />
-        </label>
-      </div>
-
-      <div>
-        <label>
-          <span>Semantic Cleanup</span>
-          <input type="radio" id="semantic" name="clean" value="semantic" checked />
-        </label>
-
-        <label>
-          <span>Efficient Cleanup</span>
-          <input type="radio" id="efficiency" name="clean" value="efficiency" />
-        </label>
-
-        <label>
-          <span>No Cleanup</span>
-          <input type="radio" id="none" name="clean" value="none" />
-        </label>
-      </div>
-
-      <button onclick="calculateDiff()">Calculate Diff</button>
-    </fieldset>
-
-    <div class='files'>
-      <div>
-        <span>Diff Output: Left -> Right</span>
-        <pre><code id='diff_output'></code></pre>
-      </div>
-
-      <label>
-        <span>Merge Output</span>
-        <pre><code id='ij_output_html'></code></pre>
-        <textarea id='ij_output' rows="8" cols="120" readonly></textarea>
-      </label>
+    <div class="action-buttons">
+      <button onclick="doDiff()">Render diff</button>
+      <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
+      <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
     </div>
-
-    <button onclick="doIjMerge()">Do IJ Merge</button>
-    <button onclick="doIjGreedyMerge()">Do IJ Greedy Merge</button>
-    <button onclick="doDiff()">Render diff</button>
-    <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
-    <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
 </body>
 </html>

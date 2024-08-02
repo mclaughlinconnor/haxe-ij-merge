@@ -11,13 +11,7 @@ class Main {
 
 @:expose
 class API {
-	static public function merge(left, middle, right):String {
-		return MergeResolveUtil.tryResolve(left, middle, right);
-	}
 
-	static public function greedyMerge(left, middle, right):String {
-		return MergeResolveUtil.tryGreedyResolve(left, middle, right);
-	}
 
 	static public function applyResolvableConflictedChanges(left, middle, right):Array<String> {
 		var viewer = new MergeThreesideViewer([left, middle, right], middle);
