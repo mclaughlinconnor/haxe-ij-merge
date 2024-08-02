@@ -17,7 +17,7 @@ class Diff {
 	}
 
 	public function formatSide(text:String, side:ThreeSideEnum):String {
-    currentLine = 0;
+		currentLine = 0;
 		var lines = text.split("\n");
 		var formattedString = new StringBuf();
 
@@ -25,7 +25,7 @@ class Diff {
 			var start = change.getStartLineB(side);
 			var end = change.getEndLineB(ThreeSide.fromEnum(side));
 
-      pushLinesUntil(formattedString, lines, start);
+			pushLinesUntil(formattedString, lines, start);
 
 			var type = change.getConflictType();
 			var isThisSide = type.isChangeB(side);
@@ -33,9 +33,9 @@ class Diff {
 			var suffix = "";
 
 			if (start == end) {
-				formattedString.add(handleOtherSide(type));
+				formattedString.add(handleOtherSide(change));
 			} else if (isThisSide) {
-				var s = handleThisSide(type);
+				var s = handleThisSide(change);
 				prefix = s[0];
 				suffix = s[1];
 			}
@@ -50,47 +50,51 @@ class Diff {
 		return formattedString.toString();
 	}
 
-	private function handleThisSide(type:MergeConflictType):Array<String> {
+	private function createColouredElement(element:String, colour:String, index:Int):String {
+		return '<$element data-index=$index style="background-color:$colour;">';
+	}
+
+	private function createHr(colour:String, index:Int):String {
+		return '<hr data-index=$index style="border: 2px solid $colour"; margin: 0;/>';
+	}
+
+	private function handleThisSide(change:TextMergeChange):Array<String> {
 		var prefix:String;
 		var suffix:String;
 
+		var type = change.getConflictType();
+
 		switch (type.getType()) {
 			case MergeConflictTypeEnum.DELETED:
-				prefix = createColouredElement('del', DELETED_COLOUR);
+				prefix = createColouredElement('del', DELETED_COLOUR, change.getIndex());
 				suffix = "</del>";
 			case MergeConflictTypeEnum.INSERTED:
-				prefix = createColouredElement('ins', INSERTED_COLOUR);
+				prefix = createColouredElement('ins', INSERTED_COLOUR, change.getIndex());
 				suffix = "</ins>";
 			case MergeConflictTypeEnum.MODIFIED:
-				prefix = createColouredElement('span', MODIFIED_COLOUR);
+				prefix = createColouredElement('span', MODIFIED_COLOUR, change.getIndex());
 				suffix = "</span>";
 			case MergeConflictTypeEnum.CONFLICT:
-				prefix = createColouredElement('span', CONFLICT_COLOUR);
+				prefix = createColouredElement('span', CONFLICT_COLOUR, change.getIndex());
 				suffix = "</span>";
 		}
 
 		return [prefix, suffix];
 	}
 
-	private function handleOtherSide(type:MergeConflictType) {
+	private function handleOtherSide(change:TextMergeChange) {
+		var type = change.getConflictType();
+
 		switch (type.getType()) {
 			case(MergeConflictTypeEnum.DELETED):
 				return "";
 			case MergeConflictTypeEnum.INSERTED:
-				return createHr(INSERTED_COLOUR);
+				return createHr(INSERTED_COLOUR, change.getIndex());
 			case MergeConflictTypeEnum.MODIFIED:
-				return createHr(MODIFIED_COLOUR);
+				return createHr(MODIFIED_COLOUR, change.getIndex());
 			case MergeConflictTypeEnum.CONFLICT:
-				return createHr(CONFLICT_COLOUR);
+				return createHr(CONFLICT_COLOUR, change.getIndex());
 		}
-	}
-
-	private function createColouredElement(element:String, colour:String):String {
-		return '<$element style="background:$colour;">';
-	}
-
-	private function createHr(colour:String):String {
-		return '<hr style="border: 2px solid $colour"; margin: 0;/>';
 	}
 
 	private function pushLinesUntil(formattedString:StringBuf, lines:Array<String>, end:Int) {

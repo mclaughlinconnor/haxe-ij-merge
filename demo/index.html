@@ -6,6 +6,10 @@
     <title>Haxe Application</title>
 </head>
 <style>
+  html {
+    position: relative; /* for doing the SVG diff decorations with position:absolute */
+  }
+
   .warning {
     font-weight: bold;
     font-style: italic;
@@ -305,6 +309,7 @@
         document.getElementById('ij_left_html').innerHTML = results[1];
         document.getElementById('ij_middle_html').innerHTML = results[2];
         document.getElementById('ij_right_html').innerHTML = results[3];
+        API.decorate();
       }
 
       function doResolveNonConflicting() {
@@ -316,6 +321,7 @@
         document.getElementById('ij_left_html').innerHTML = results[1];
         document.getElementById('ij_middle_html').innerHTML = results[2];
         document.getElementById('ij_right_html').innerHTML = results[3];
+        API.decorate();
       }
 
       function doApplyResolvableConflictedChanges() {
@@ -327,6 +333,7 @@
         document.getElementById('ij_left_html').innerHTML = results[1];
         document.getElementById('ij_middle_html').innerHTML = results[2];
         document.getElementById('ij_right_html').innerHTML = results[3];
+        API.decorate();
       }
 
       function calculateDiff() {
@@ -356,6 +363,10 @@
         if (document.getElementById('auto_update').checked) {
           calculateDiff()
         }
+      });
+
+      addEventListener("resize", function() {
+        API.decorate();
       });
     </script>
 

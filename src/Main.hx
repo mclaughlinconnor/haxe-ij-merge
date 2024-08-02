@@ -1,13 +1,7 @@
-/**
-	Multi-line comments for documentation.
-**/
-
-import config.DiffConfig;
-import diff.util.MergeConflictType.MergeConflictTypeEnum;
-import diff.util.ThreeSide;
-import diff.fragments.TextMergeChange;
-import diff.merge.MergeThreesideViewer;
 import diff.comparison.MergeResolveUtil;
+import diff.merge.MergeThreesideViewer;
+import diff.util.ThreeSide;
+import config.DiffConfig;
 
 class Main {
 	static public function main():Void {
@@ -85,4 +79,10 @@ class API {
 		trace(viewer.myModel.getDocument() == expected);
 		return viewer.myModel.getDocument();
 	}
+
+	#if js
+	static public function decorate():Void{
+    DiffDecorations.decorate();
+  }
+	#end
 }
