@@ -147,9 +147,25 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 
 		var lines = StringUtil.countNewLines(myDocument) + 1;
 		var newString:String;
+
+		var offset1 = 0;
+		var offset2 = 0;
+
 		if (newContent.length == 0) {
 			newString = "";
+
+			var range = DiffUtil.getLinesRangeA(myDocument, outputStartLine, outputEndLine);
+			offset1 = range.getStartOffset();
+			offset2 = range.getEndOffset();
+
+			if (offset1 > 0) {
+				offset1--;
+			} else if (offset2 < myDocument.length) {
+				offset2++;
+			}
 		} else {
+			offset1 = getLineStartOffset(outputStartLine);
+			offset2 = getLineStartOffset(outputEndLine);
 			if (index == lines) {
 				newString = "\n" + newContent.join("\n");
 			} else {
@@ -157,9 +173,7 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 			}
 		}
 
-		// + 1 needed for the "\n" trailing
-		var event:DocumentEvent<S> = new DocumentEvent(this, getLineStartOffset(outputStartLine),
-			myDocument.substring(getLineStartOffset(outputStartLine), getLineStartOffset(outputEndLine)), newString);
+		var event:DocumentEvent<S> = new DocumentEvent(this, offset1, myDocument.substring(offset1, offset2), newString);
 		beforeDocumentChange(event);
 
 		myDocument = DiffUtil.applyModificationA(myDocument, outputStartLine, outputEndLine, newContent);
