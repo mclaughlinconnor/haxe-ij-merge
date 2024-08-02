@@ -25,8 +25,17 @@
     margin-bottom: 1em;
   }
 
-  .files label {
-    display: block;
+  .files-flex {
+    display: flex;
+    box-sizing: border-box;
+    gap: 10px; /* Space between columns */
+  }
+
+  .files-flex label {
+    flex: 1; /* Equal width for all columns */
+    background-color: #f2f2f2;
+    padding: 20px;
+    border: 1px solid #ddd;
   }
 
   .files label span {
@@ -35,6 +44,7 @@
 
   .files textarea {
     margin-bottom: 1em;
+    width: 100%;
   }
 
   legend {
@@ -252,6 +262,10 @@
         return API.greedyMerge(left, middle, right);
       }
 
+      function diff(left, middle, right) {
+        return API.diff(left, middle, right);
+      }
+
       function resolveNonConflicting(left, middle, right) {
         return API.resolveNonConflicting(left, middle, right);
       }
@@ -282,18 +296,37 @@
         document.getElementById('ij_output').value = ijGreedyMerge(left, middle, right);
       }
 
+      function doDiff() {
+        const [left, middle, right] = getIjText();
+
+        document.getElementById('ij_output').value = "";
+        const results = diff(left, middle, right);
+        document.getElementById('ij_output').value = results[0];
+        document.getElementById('ij_left_html').innerHTML = results[1];
+        document.getElementById('ij_middle_html').innerHTML = results[2];
+        document.getElementById('ij_right_html').innerHTML = results[3];
+      }
+
       function doResolveNonConflicting() {
         const [left, middle, right] = getIjText();
 
         document.getElementById('ij_output').value = "";
-        document.getElementById('ij_output').value = resolveNonConflicting(left, middle, right);
+        const results = resolveNonConflicting(left, middle, right);
+        document.getElementById('ij_output').value = results[0];
+        document.getElementById('ij_left_html').innerHTML = results[1];
+        document.getElementById('ij_middle_html').innerHTML = results[2];
+        document.getElementById('ij_right_html').innerHTML = results[3];
       }
 
       function doApplyResolvableConflictedChanges() {
         const [left, middle, right] = getIjText();
 
         document.getElementById('ij_output').value = "";
-        document.getElementById('ij_output').value = applyResolvableConflictedChanges(left, middle, right);
+        const results = applyResolvableConflictedChanges(left, middle, right);
+        document.getElementById('ij_output').value = results[0];
+        document.getElementById('ij_left_html').innerHTML = results[1];
+        document.getElementById('ij_middle_html').innerHTML = results[2];
+        document.getElementById('ij_right_html').innerHTML = results[3];
       }
 
       function calculateDiff() {
@@ -356,21 +389,24 @@
       <span>Merge status: <code id='merge_status'>Select an example</code></span>
     </div>
 
-
-    <div class='files'>
-      <label>
-        <span>Left</span>
-        <textarea id='ij_left' rows="4" cols="120"></textarea>
-      </label>
-      <label>
-        <span>Middle</span>
-        <textarea id='ij_middle' rows="4" cols="120"></textarea>
-      </label>
-      <label>
-        <span>Right</span>
-        <textarea id='ij_right' rows="4" cols="120"></textarea>
-      </label>
-
+    <div>
+      <div class='files files-flex'>
+        <label>
+          <span>Left</span>
+          <textarea id='ij_left' rows="60"></textarea>
+          <pre><code id='ij_left_html'></code></pre>
+        </label>
+        <label>
+          <span>Middle</span>
+          <textarea id='ij_middle' rows="60"></textarea>
+          <pre><code id='ij_middle_html'></code></pre>
+        </label>
+        <label>
+          <span>Right</span>
+          <textarea id='ij_right' rows="60"></textarea>
+          <pre><code id='ij_right_html'></code></pre>
+        </label>
+      </div>
     </div>
 
     <fieldset id='cleanup_config'>
@@ -411,12 +447,14 @@
 
       <label>
         <span>Merge Output</span>
+        <pre><code id='ij_output_html'></code></pre>
         <textarea id='ij_output' rows="8" cols="120" readonly></textarea>
       </label>
     </div>
 
     <button onclick="doIjMerge()">Do IJ Merge</button>
     <button onclick="doIjGreedyMerge()">Do IJ Greedy Merge</button>
+    <button onclick="doDiff()">Render diff</button>
     <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
     <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
 </body>

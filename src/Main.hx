@@ -2,6 +2,10 @@
 	Multi-line comments for documentation.
 **/
 
+import config.DiffConfig;
+import diff.util.MergeConflictType.MergeConflictTypeEnum;
+import diff.util.ThreeSide;
+import diff.fragments.TextMergeChange;
 import diff.merge.MergeThreesideViewer;
 import diff.comparison.MergeResolveUtil;
 
@@ -21,17 +25,52 @@ class API {
 		return MergeResolveUtil.tryGreedyResolve(left, middle, right);
 	}
 
-	static public function applyResolvableConflictedChanges(left, middle, right):String {
+	static public function applyResolvableConflictedChanges(left, middle, right):Array<String> {
 		var viewer = new MergeThreesideViewer([left, middle, right], middle);
 		viewer.rediff(false);
 		viewer.applyResolvableConflictedChanges();
-		return viewer.myModel.getDocument();
+
+		var finalMergedText = viewer.myModel.getDocument();
+
+		var diff = new Diff(viewer.myAllMergeChanges);
+
+		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
+		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);
+		var formattedRight = diff.formatSide(right, ThreeSideEnum.RIGHT);
+
+		return [finalMergedText, formattedLeft, formattedMiddle, formattedRight];
 	}
 
-	static public function resolveNonConflicting(left, middle, right):String {
+	static public function diff(left, middle, right):Array<String> {
+		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = false;
 		var viewer = new MergeThreesideViewer([left, middle, right], middle);
 		viewer.rediff(false);
-		return viewer.myModel.getDocument();
+
+		var finalMergedText = viewer.myModel.getDocument();
+
+		var diff = new Diff(viewer.myAllMergeChanges);
+
+		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
+		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);
+		var formattedRight = diff.formatSide(right, ThreeSideEnum.RIGHT);
+
+		return [finalMergedText, formattedLeft, formattedMiddle, formattedRight];
+	}
+
+	static public function resolveNonConflicting(left, middle, right):Array<String> {
+		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = true;
+		var viewer = new MergeThreesideViewer([left, middle, right], middle);
+		viewer.rediff(false);
+
+		var finalMergedText = viewer.myModel.getDocument();
+
+		var diff = new Diff(viewer.myAllMergeChanges);
+
+		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
+		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);
+		var formattedRight = diff.formatSide(right, ThreeSideEnum.RIGHT);
+
+		return [finalMergedText, formattedLeft, formattedMiddle, formattedRight];
 	}
 
 	static public function test():String {
