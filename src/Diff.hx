@@ -32,7 +32,7 @@ class Diff {
 			var prefix = "";
 			var suffix = "";
 
-			if (start == end) {
+			if (start == end && isThisSide) {
 				formattedString.add(handleOtherSide(change));
 			} else if (isThisSide) {
 				var s = handleThisSide(change);
@@ -87,7 +87,7 @@ class Diff {
 
 		switch (type.getType()) {
 			case(MergeConflictTypeEnum.DELETED):
-				return "";
+				return createHr(DELETED_COLOUR, change.getIndex());
 			case MergeConflictTypeEnum.INSERTED:
 				return createHr(INSERTED_COLOUR, change.getIndex());
 			case MergeConflictTypeEnum.MODIFIED:
