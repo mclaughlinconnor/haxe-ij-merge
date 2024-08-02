@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.merge;
 
+import config.DiffConfig;
 import exceptions.ProcessCanceledException;
 import diff.comparison.DiffTooBigException;
 import diff.util.MergeRangeUtil;
@@ -24,11 +25,11 @@ import diff.tools.util.text.TextDiffProviderBase;
 
 class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	public final myModel:MergeModelBase<TextMergeChangeState>;
+	public var myAllMergeChanges:Array<TextMergeChange> = []; // all changes - both applied and unapplied ones
 
 	private final myMergeRequest:Array<String>;
 	private final myTextDiffProvider:TextDiffProviderBase;
 
-	private var myAllMergeChanges:Array<TextMergeChange> = []; // all changes - both applied and unapplied ones
 	private var myCurrentIgnorePolicy:IgnorePolicy;
 
 	public function new(request:Array<String>, resultDocument:String) {
@@ -43,7 +44,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	}
 
 	private function doFinishMerge(result:MergeResult):Void {
-		destroyChangedBlocks();
+		// destroyChangedBlocks();
 	}
 
 	private override function destroyChangedBlocks():Void {
