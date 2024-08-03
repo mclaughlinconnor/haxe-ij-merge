@@ -58,6 +58,10 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 			}
 		}
 
+		if (currentLine == line) {
+			return myDocument.length;
+		}
+
 		throw "Line number out of bounds";
 	}
 
