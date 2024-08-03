@@ -238,16 +238,16 @@
         return API.greedyMerge(left, middle, right);
       }
 
-      function diff(left, middle, right) {
-        return API.diff(left, middle, right);
+      function diff(left, middle, right, patience) {
+        return API.resolve(left, middle, right, false, false, patience);
       }
 
-      function resolveNonConflicting(left, middle, right) {
-        return API.resolveNonConflicting(left, middle, right);
+      function resolveNonConflicting(left, middle, right, greedy, patience) {
+        return API.resolve(left, middle, right, true, greedy, patience, false);
       }
 
-      function applyResolvableConflictedChanges(left, middle, right) {
-        return API.applyResolvableConflictedChanges(left, middle, right);
+      function applyResolvableConflictedChanges(left, middle, right, greedy, patience) {
+        return API.resolve(left, middle, right, true, greedy, patience, true);
       }
 
       function getIjText() {
@@ -265,32 +265,32 @@
       }
 
       function clearResults() {
-        setResults(["", "", ""])
+        setResults(["", "", ""]);
       }
 
-      function doDiff() {
+      function doDiff(patience = false) {
         const [left, middle, right] = getIjText();
 
         clearResults()
-        const results = diff(left, middle, right);
+        const results = diff(left, middle, right, patience);
         setResults(results);
         API.decorate();
       }
 
-      function doResolveNonConflicting() {
+      function doResolveNonConflicting(greedy = false, patience = false) {
         const [left, middle, right] = getIjText();
 
         clearResults()
-        const results = resolveNonConflicting(left, middle, right);
+        const results = resolveNonConflicting(left, middle, right, greedy, patience);
         setResults(results);
         API.decorate();
       }
 
-      function doApplyResolvableConflictedChanges() {
+      function doApplyResolvableConflictedChanges(greedy = false, patience = false) {
         const [left, middle, right] = getIjText();
 
         clearResults()
-        const results = applyResolvableConflictedChanges(left, middle, right);
+        const results = applyResolvableConflictedChanges(left, middle, right, greedy, patience);
         setResults(results);
         API.decorate();
       }
@@ -352,8 +352,15 @@
 
     <div class="action-buttons">
       <button onclick="doDiff()">Render diff</button>
+      <button onclick="doDiff(true)">Render diff (patience)</button>
       <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
-      <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
+      <button onclick="doResolveNonConflicting(true)">Resolve non-conflicting changes (greedy)</button>
+      <button onclick="doResolveNonConflicting(false, true)">Resolve non-conflicting changes (patience)</button>
+      <button onclick="doResolveNonConflicting(true, true)">Resolve non-conflicting changes (greedy, patience)</button>
+      <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes ()</button>
+      <button onclick="doApplyResolvableConflictedChanges(true)">Apply resolvable conflicted changes (greedy)</button>
+      <button onclick="doApplyResolvableConflictedChanges(false, true)">Apply resolvable conflicted changes (patience)</button>
+      <button onclick="doApplyResolvableConflictedChanges(true, true)">Apply resolvable conflicted changes (greedy, patience)</button>
     </div>
 </body>
 </html>

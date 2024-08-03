@@ -11,44 +11,17 @@ class Main {
 
 @:expose
 class API {
+	static public function resolve(left, middle, right, applyNonConflicted = false, greedy = false, patience = false, conflicts = false):Array<String> {
+		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = applyNonConflicted;
+		DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE = greedy;
+		DiffConfig.USE_PATIENCE_ALG = patience;
 
-
-	static public function applyResolvableConflictedChanges(left, middle, right):Array<String> {
-		var viewer = new MergeThreesideViewer([left, middle, right], middle);
-		viewer.rediff(false);
-		viewer.applyResolvableConflictedChanges();
-
-		var finalMergedText = viewer.myModel.getDocument();
-
-		var diff = new Diff(viewer.myAllMergeChanges);
-
-		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
-		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);
-		var formattedRight = diff.formatSide(right, ThreeSideEnum.RIGHT);
-
-		return [finalMergedText, formattedLeft, formattedMiddle, formattedRight];
-	}
-
-	static public function diff(left, middle, right):Array<String> {
-		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = false;
 		var viewer = new MergeThreesideViewer([left, middle, right], middle);
 		viewer.rediff(false);
 
-		var finalMergedText = viewer.myModel.getDocument();
-
-		var diff = new Diff(viewer.myAllMergeChanges);
-
-		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
-		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);
-		var formattedRight = diff.formatSide(right, ThreeSideEnum.RIGHT);
-
-		return [finalMergedText, formattedLeft, formattedMiddle, formattedRight];
-	}
-
-	static public function resolveNonConflicting(left, middle, right):Array<String> {
-		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = true;
-		var viewer = new MergeThreesideViewer([left, middle, right], middle);
-		viewer.rediff(false);
+		if (conflicts) {
+			viewer.applyResolvableConflictedChanges();
+		}
 
 		var finalMergedText = viewer.myModel.getDocument();
 
@@ -75,8 +48,8 @@ class API {
 	}
 
 	#if js
-	static public function decorate():Void{
-    DiffDecorations.decorate();
-  }
+	static public function decorate():Void {
+		DiffDecorations.decorate();
+	}
 	#end
 }
