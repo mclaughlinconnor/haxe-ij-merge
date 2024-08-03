@@ -21,8 +21,8 @@ class PatienceIntLCS {
 
 		if (start1 == null && count1 == null && start2 == null && count2 == null && changes1 == null && changes2 == null) {
 			myStart1 = 0;
-			myStart2 = first.length;
-			myCount1 = 0;
+			myStart2 = 0;
+			myCount1 = first.length;
 			myCount2 = second.length;
 			myChanges1 = new BitSet(first.length);
 			myChanges2 = new BitSet(second.length);

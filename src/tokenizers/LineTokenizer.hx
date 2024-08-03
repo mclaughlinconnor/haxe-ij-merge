@@ -5,8 +5,8 @@ import diff.tools.util.text.SimpleThreesideTextDiffProvider;
 
 class LineTokenizer {
 	private var myOffset:Int;
-	private var myLength:Int;
-	private var myLineSeparatorLength:Int;
+	private var myLength:Int = 0;
+	private var myLineSeparatorLength:Int = 0;
 	private var isAtEnd:Bool;
 	private final myText:String;
 
