@@ -55,7 +55,7 @@ class Diff {
 	}
 
 	private function createHr(colour:String, index:Int):String {
-		return '<hr data-index=$index style="border: 2px solid $colour"; margin: 0;/>';
+		return '<hr data-index=$index style="border-color: $colour; border-width: 2px; border-style: solid; margin: 0;"/>';
 	}
 
 	private function handleThisSide(change:TextMergeChange):Array<String> {

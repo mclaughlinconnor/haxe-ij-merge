@@ -74,7 +74,12 @@ class DiffDecorations {
 
 			p.points.appendItem(four);
 
-			p.setAttribute("fill", nodes[index].style.backgroundColor);
+			if (nodes[index].style.backgroundColor != "") {
+				p.setAttribute("fill", nodes[index].style.backgroundColor);
+			} else if (nodes[index].style.borderColor != "") {
+				p.setAttribute("fill", nodes[index].style.borderColor);
+			}
+
 			p.style.opacity = "50%";
 
 			elementsToAppend.push(p);
