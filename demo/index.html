@@ -71,6 +71,18 @@
 
       const examples = [
         {
+          left: "1 ======\ninsert left\n2 ======\nremove right\n3 ======\nnew both\n4 ======\nmodify both\n5 ======\nmodify\n6 ======\n7 ======\nremove modify\n8 ======",
+          middle: "1 ======\n2 ======\nremove right\n3 ======\n4 ======\nmodify\n5 ======\nmodify\n6 ======\n7 ======\ndelete modify\n8 ======",
+          right: "1 ======\n2 ======\n3 ======\nnew both\n4 ======\nmodify both\n5 ======\nmodify right\n6 ======\n7 ======\ndelete change\n8 ======",
+          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+        },
+        {
+          left: "\nint Chunk_bounds_check(Chunk *chunk, size_t start, size_t n)\n{\n  if (chunk == NULL) return 0;\n\n  return start <= chunk->length && n <= chunk->length - start;\n}\n\nvoid Chunk_copy(Chunk *src, size_t src_start, Chunk *dst, size_t dst_start, size_t n)\n{\n  if (!Chunk_bounds_check(src, src_start, n)) return;\n  if (!Chunk_bounds_check(dst, dst_start, n)) return;\n\n  memcpy(dst->data + dst_start, src->data + src_start, n);\n}\n",
+          middle: "\nvoid Chunk_copy(Chunk *src, size_t src_start, Chunk *dst, size_t dst_start, size_t n)\n{\n  if (!Chunk_bounds_check(src, src_start, n)) return;\n  if (!Chunk_bounds_check(dst, dst_start, n)) return;\n\n  memcpy(dst->data + dst_start, src->data + src_start, n);\n}\n\nint Chunk_bounds_check(Chunk *chunk, size_t start, size_t n)\n{\n  if (chunk == NULL) return 0;\n\n  return start <= chunk->length && n <= chunk->length - start;\n}\n",
+          right: "\nint Chunk_bounds_check(Chunk *chunk, size_t start, size_t n)\n{\n  if (chunk == NULL) return 0;\n\n  return start <= chunk->length && n <= chunk->length - start;\n}\n\nvoid Chunk_copy(Chunk *src, size_t src_start, Chunk *dst, size_t dst_start, size_t n)\n{\n  if (!Chunk_bounds_check(src, src_start, n)) return;\n  if (!Chunk_bounds_check(dst, dst_start, n)) return;\n\n  memcpy(dst->data + dst_start, src->data + src_start, n);\n}\n",
+          required_merge: REQUIRED_MERGE.GIT,
+        },
+        {
           left:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match yours",
           middle:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match your interests",
           right:"commonInterests: People with common business interests\nwithCommonInterests: People with common business interests\nwithMatchingActivities: People whose sales match your business interests",
@@ -206,7 +218,7 @@
 
       window.addEventListener('load', () => {
         content = "";
-        for (let i = 1; i <= examples.length - 1; i++) {
+        for (let i = 0; i <= examples.length - 1; i++) {
           content += `<option value=${i} onclick="setExample(${i})">Example ${i}</option>`
         }
         document.getElementById("examples_dropdown").innerHTML = content;
