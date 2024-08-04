@@ -3,10 +3,10 @@ import diff.util.ThreeSide;
 import diff.fragments.TextMergeChange;
 
 class Diff {
-	private final DELETED_COLOUR = "#880000";
-	private final INSERTED_COLOUR = "#008800";
-	private final MODIFIED_COLOUR = "#000088";
-	private final CONFLICT_COLOUR = "#884444";
+	private final DELETED_COLOUR = "#800000";
+	private final INSERTED_COLOUR = "#008000";
+	private final MODIFIED_COLOUR = "#404080";
+	private final CONFLICT_COLOUR = "#806000";
 
 	private final myChanges:Array<TextMergeChange>;
 
