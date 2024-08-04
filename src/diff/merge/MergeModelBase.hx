@@ -156,6 +156,7 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 		var offset2 = 0;
 
 		if (newContent.length == 0) {
+			// Delete
 			newString = "";
 
 			var range = DiffUtil.getLinesRangeA(myDocument, outputStartLine, outputEndLine);
@@ -168,12 +169,19 @@ abstract class MergeModelBase<S:MergeModelBaseState> {
 				offset2++;
 			}
 		} else {
-			offset1 = getLineStartOffset(outputStartLine);
-			offset2 = getLineStartOffset(outputEndLine);
-			if (index == lines) {
-				newString = "\n" + newContent.join("\n");
+			var range = DiffUtil.getLinesRangeA(myDocument, outputStartLine, outputEndLine);
+			offset1 = range.getStartOffset();
+			offset2 = range.getEndOffset();
+			if (outputStartLine == outputEndLine) {
+				// Insert
+				if (index == lines) {
+					newString = "\n" + newContent.join("\n");
+				} else {
+					newString = newContent.join("\n") + "\n";
+				}
 			} else {
-				newString = newContent.join("\n") + "\n";
+				// Replace
+				newString = newContent.join("\n");
 			}
 		}
 
