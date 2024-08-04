@@ -86,7 +86,7 @@
           left:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match yours",
           middle:"commonInterests: People with common interests\nwithCommonInterests: People with common interests\nwithMatchingActivities: People whose activities match your interests",
           right:"commonInterests: People with common business interests\nwithCommonInterests: People with common business interests\nwithMatchingActivities: People whose sales match your business interests",
-          required_merge: REQUIRED_MERGE.IJ_REGULAR,
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
         },
         {
           left: "a X b",
@@ -128,7 +128,7 @@
           left: "type: Business Type\napproved: Approved\ndeclined: Declined",
           middle: "type: Business Type\napproved: Approved the application\ndeclined: Declined the application",
           right: "type: Business Type",
-          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
         },
         {
           left: "import {utils} from '../api/controllers/utils';\nimport {tools} from '../api/hooks/tools';",
@@ -152,13 +152,13 @@
           left: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n\n// This interface is not so important\nexport interface KindaImportantInterface extends BaseInterface {\n  type: 'kinda-important';\n}\n\n",
           middle: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
           right: "// This interface is very important\nexport interface ImportantInterface extends BaseInterface {\n  type: 'important';\n}\n\n/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
-          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+          required_merge: REQUIRED_MERGE.GIT,
         },
         {
           left: "",
           middle: "/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
           right: "// This interface is very important\nexport interface ImportantInterface extends BaseInterface {\n  type: 'important';\n}\n\n/**\n * Show the important information\n *\n * @param data The data to operate on\n * @param [args] Extra arguments\n * @return If the information is shown\n */\nexport type Filter: (model: Obj<any>, ...args: any[]) => boolean;\n",
-          required_merge: REQUIRED_MERGE.IJ_GREEDY,
+          required_merge: REQUIRED_MERGE.IMPOSSIBLE,
         },
         {
           left: "  | RouterModule\n  | FormsModule;\n",
