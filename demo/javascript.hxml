@@ -2,4 +2,7 @@
 --class-path src
 --js demo/js/main.js
 --library thx.core
+--dce=full
+-D analyzer-optimize
+-D js-es=6
 -D no-deprecation-warnings
