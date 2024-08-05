@@ -51,6 +51,31 @@
     width: 100%;
   }
 
+  legend {
+    background-color: #000;
+    color: #fff;
+    padding: 3px 6px;
+  }
+
+  fieldset {
+    border: 1px solid gray;
+    display: inline-block;
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
+  fieldset label:not(:last-child) input[type=radio] {
+    margin-right: 2em;
+  }
+
+  input[type=radio], input[type=checkbox] {
+    accent-color: blue;
+  }
+
+  input {
+    margin: 0.4rem;
+  }
+
   code {
     font-size: 14px;
   }
@@ -59,7 +84,7 @@
     margin-top: 1em
   }
 </style>
-<body>
+  <body>
     <script src="js/main.js"></script>
     <script>
       const REQUIRED_MERGE = Object.freeze({
@@ -262,6 +287,14 @@
         return API.resolve(left, middle, right, true, greedy, patience, true);
       }
 
+      function getConfiguration() {
+        const patience = document.getElementById('patience').value;
+        const myers = document.getElementById('myers').value;
+        const greedy = document.getElementById('greedy').value;
+
+        return [patience, myers, greedy];
+      }
+
       function getIjText() {
         const left = document.getElementById('ij_left').value;
         const middle = document.getElementById('ij_middle').value;
@@ -280,8 +313,9 @@
         setResults(["", "", ""]);
       }
 
-      function doDiff(patience = false) {
+      function doDiff() {
         const [left, middle, right] = getIjText();
+        const [patience, _, greedy] = getConfiguration();
 
         clearResults()
         const results = diff(left, middle, right, patience);
@@ -289,8 +323,9 @@
         API.decorate();
       }
 
-      function doResolveNonConflicting(greedy = false, patience = false) {
+      function doResolveNonConflicting() {
         const [left, middle, right] = getIjText();
+        const [patience, _, greedy] = getConfiguration();
 
         clearResults()
         const results = resolveNonConflicting(left, middle, right, greedy, patience);
@@ -298,8 +333,9 @@
         API.decorate();
       }
 
-      function doApplyResolvableConflictedChanges(greedy = false, patience = false) {
+      function doApplyResolvableConflictedChanges() {
         const [left, middle, right] = getIjText();
+        const [patience, _, greedy] = getConfiguration();
 
         clearResults()
         const results = applyResolvableConflictedChanges(left, middle, right, greedy, patience);
@@ -362,17 +398,31 @@
       </div>
     </div>
 
-    <div class="action-buttons">
-      <button onclick="doDiff()">Render diff</button>
-      <button onclick="doDiff(true)">Render diff (patience)</button>
-      <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
-      <button onclick="doResolveNonConflicting(true)">Resolve non-conflicting changes (greedy)</button>
-      <button onclick="doResolveNonConflicting(false, true)">Resolve non-conflicting changes (patience)</button>
-      <button onclick="doResolveNonConflicting(true, true)">Resolve non-conflicting changes (greedy, patience)</button>
-      <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes ()</button>
-      <button onclick="doApplyResolvableConflictedChanges(true)">Apply resolvable conflicted changes (greedy)</button>
-      <button onclick="doApplyResolvableConflictedChanges(false, true)">Apply resolvable conflicted changes (patience)</button>
-      <button onclick="doApplyResolvableConflictedChanges(true, true)">Apply resolvable conflicted changes (greedy, patience)</button>
-    </div>
-</body>
+    <fieldset>
+      <legend>Configuration</legend>
+
+      <div>
+        <strong>Diffing algorithm: </strong>
+        <label>
+          <span>Myers</span>
+          <input type="radio" id="myers" name="algorithm" value="myers" checked />
+        </label>
+        <label>
+          <span>Patience</span>
+          <input type="radio" id="patience" name="algorithm" value="patience" />
+        </label>
+      </div>
+
+      <label>
+        <strong>Use greedy magic resolve: </strong>
+        <input type='checkbox' id="greedy", name="greedy" />
+      </label>
+
+      <div class="action-buttons">
+        <button onclick="doDiff()">Render diff</button>
+        <button onclick="doResolveNonConflicting()">Resolve non-conflicting changes</button>
+        <button onclick="doApplyResolvableConflictedChanges()">Apply resolvable conflicted changes</button>
+      </div>
+    </fieldset>
+  </body>
 </html>
