@@ -195,13 +195,13 @@ class GreedyHelper {
 			if (fragIdx1 == null) {
 				fragIdx1 = -1;
 			}
-			var fragmentIndex1:Int = fragIdx1;
+			var fragmentIndex1:Null<Int> = fragIdx1;
 
 			var fragIdx2:Null<Int> = fragments2[index2]?.getStartOffset1();
 			if (fragIdx2 == null) {
 				fragIdx2 = -1;
 			}
-			var fragmentIndex2:Int = fragIdx2;
+			var fragmentIndex2:Null<Int> = fragIdx2;
 
 			var changeStart1 = -1;
 			var changeStart2 = -1;

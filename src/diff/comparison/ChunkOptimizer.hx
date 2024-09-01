@@ -91,7 +91,7 @@ abstract class ChunkOptimizer<T> {
 	// 0 - do nothing
 	// >0 - shift forward
 	// <0 - shift backward
-	abstract private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Int;
+	abstract private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Null<Int>;
 
 	//
 	// Implementations
@@ -118,7 +118,7 @@ class WordChunkOptimizer extends ChunkOptimizer<InlineChunk> {
 		myText2 = text2;
 	}
 
-	private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Int {
+	private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Null<Int> {
 		var touchWords:Array<InlineChunk> = touchSide.selectA(myData1, myData2);
 		var touchText:String = touchSide.selectA(myText1, myText2);
 		var touchStart:Int = touchSide.selectA(range2.start1, range2.start2);
@@ -189,8 +189,8 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 		super(lines1, lines2, changes);
 	}
 
-	private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Int {
-		var shift:Int;
+	private function getShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range):Null<Int> {
+		var shift:Null<Int>;
 		var threshold:Int = ComparisonUtil.getUnimportantLineCharCount();
 
 		shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
@@ -216,7 +216,7 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 		return 0;
 	}
 
-	static private function getShiftB(shiftForward:Int, shiftBackward:Int):Int {
+	static private function getShiftB(shiftForward:Int, shiftBackward:Int):Null<Int> {
 		if (shiftForward == -1 && shiftBackward == -1) {
 			return null;
 		}
@@ -231,7 +231,7 @@ class LineChunkOptimizer extends ChunkOptimizer<Line> {
 	 * search for an empty line boundary in unchanged lines
 	 * ie: we want insertion/deletion to go right before/after of an empty line
 	 */
-	private function getUnchangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Int {
+	private function getUnchangedBoundaryShift(touchSide:Side, equalForward:Int, equalBackward:Int, range1:Range, range2:Range, threshold:Int):Null<Int> {
 		var touchLines:Array<Line> = touchSide.selectA(myData1, myData2);
 		var touchStart:Int = touchSide.selectA(range2.start1, range2.start2);
 

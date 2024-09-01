@@ -49,7 +49,7 @@ class Enumerator<T:HashableType> {
 			return 0;
 		}
 
-		var number:Int = myNumbers.get(object.hashCode());
+		var number:Null<Int> = myNumbers.get(object.hashCode());
 		if (number == null) {
 			number = myNextNumber++;
 			myNumbers.set(object.hashCode(), number);

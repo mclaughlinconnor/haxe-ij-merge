@@ -174,7 +174,7 @@ class DiffIterableUtil {
 	private static function verifyFullCover(iterable:DiffIterable):Void {
 		var last1:Int = 0;
 		var last2:Int = 0;
-		var lastEquals:Bool = null;
+		var lastEquals:Null<Bool> = null;
 
 		for (pair in iterateAll(iterable)) {
 			var range:Range = pair.first;
