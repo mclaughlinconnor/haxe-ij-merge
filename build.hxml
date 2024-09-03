@@ -1,5 +1,5 @@
 --main Main
 --class-path src
---interp
+--jvm haxe-ij-merge.jar
 --library thx.core
 -D no-deprecation-warnings
