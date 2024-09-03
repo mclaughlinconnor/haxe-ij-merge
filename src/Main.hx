@@ -1,11 +1,26 @@
-import diff.comparison.MergeResolveUtil;
 import diff.merge.MergeThreesideViewer;
 import diff.util.ThreeSide;
 import config.DiffConfig;
+import MergeDriver;
 
 class Main {
 	static public function main():Void {
 		trace("Loaded haxe-ij-merge");
+
+		#if sys
+		var args = Sys.args();
+		if (args.length < 3) {
+			return;
+		}
+
+		try {
+			Sys.exit(MergeDriver.mergeFiles(args[0], args[1], args[2]) ? 0 : 1);
+		} catch (e) {
+			trace(e.message);
+			// https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver
+			Sys.exit(129);
+		}
+		#end
 	}
 }
 
@@ -25,7 +40,7 @@ class API {
 
 		var finalMergedText = viewer.myModel.getDocument();
 
-		var diff = new Diff(viewer.myAllMergeChanges);
+		var diff = new HtmlDiff(viewer.myAllMergeChanges);
 
 		var formattedLeft = diff.formatSide(left, ThreeSideEnum.LEFT);
 		var formattedMiddle = diff.formatSide(finalMergedText, ThreeSideEnum.BASE);

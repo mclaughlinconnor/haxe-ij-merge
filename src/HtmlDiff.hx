@@ -1,8 +1,9 @@
+import util.PushLineUntil.pushLinesUntil;
 import diff.util.MergeConflictType;
 import diff.util.ThreeSide;
 import diff.fragments.TextMergeChange;
 
-class Diff {
+class HtmlDiff {
 	private final DELETED_COLOUR = "#800000";
 	private final INSERTED_COLOUR = "#008000";
 	private final MODIFIED_COLOUR = "#404080";
@@ -30,7 +31,7 @@ class Diff {
 			var start = change.getStartLineB(side);
 			var end = change.getEndLineB(ThreeSide.fromEnum(side));
 
-			pushLinesUntil(formattedString, lines, start);
+			currentLine = pushLinesUntil(formattedString, lines, currentLine, start);
 
 			var type = change.getConflictType();
 			var isThisSide = type.isChangeB(side);
@@ -46,11 +47,11 @@ class Diff {
 			}
 
 			formattedString.add(prefix);
-			pushLinesUntil(formattedString, lines, end);
+			currentLine = pushLinesUntil(formattedString, lines, currentLine, end);
 			formattedString.add(suffix);
 		}
 
-		pushLinesUntil(formattedString, lines, lines.length);
+    currentLine = pushLinesUntil(formattedString, lines, currentLine, lines.length);
 
 		return formattedString.toString();
 	}
@@ -99,14 +100,6 @@ class Diff {
 				return createHr(change.isResolvedA() ? RESOLVED_MODIFIED_COLOUR : MODIFIED_COLOUR, change.getIndex());
 			case MergeConflictTypeEnum.CONFLICT:
 				return createHr(change.isResolvedA() ? RESOLVED_CONFLICT_COLOUR : CONFLICT_COLOUR, change.getIndex());
-		}
-	}
-
-	private function pushLinesUntil(formattedString:StringBuf, lines:Array<String>, end:Int) {
-		while (currentLine < end) {
-			formattedString.add(lines[currentLine]);
-			formattedString.add("\n");
-			currentLine++;
 		}
 	}
 }
