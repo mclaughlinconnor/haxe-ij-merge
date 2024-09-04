@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package util.diff;
 
+import diff.comparison.Chunk;
 using util.HashableString;
 import util.Hashable.HashableType;
 import util.HashableString;
@@ -24,8 +25,8 @@ class Diff {
 		return s.length == 0 ? [""] : LineTokenizer.tokenizeB(s, false, false);
 	}
 
-	@:generic
-	public static function buildChangesX<T:(EqualsType<Dynamic> & HashableType)>(objects1:Array<T>, objects2:Array<T>):Change {
+  @:generic
+	public static function buildChangesX<T:Chunk>(objects1:Array<T>, objects2:Array<T>):Change {
 		// Old variant of enumerator worked incorrectly with null values.
 		// This check is to ensure that the corrected version does not Introduce bugs.
 		// for (anObjects1 in objects1) {
@@ -167,7 +168,8 @@ class Diff {
 		return idx;
 	}
 
-	static public function getEndCutX<T:EqualsType<Dynamic>>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
+  @:generic
+	static public function getEndCutX<T:Chunk & EqualsType<Chunk>>(o1:Array<T>, o2:Array<T>, startShift:Int):Int {
 		final size:Int = Std.int(Math.min(o1.length, o2.length) - startShift);
 		var x = 2;
 		var idx:Int = 0;

@@ -386,7 +386,7 @@ class ByWordRt {
 //
 // Helpers
 //
-class WordChunk implements InlineChunk<WordChunk> {
+class WordChunk extends InlineChunk {
 	private var myText:String;
 	private var myOffset1:Int;
 	private var myOffset2:Int;
@@ -411,7 +411,7 @@ class WordChunk implements InlineChunk<WordChunk> {
 		return myOffset2;
 	}
 
-	public function equals(o:WordChunk):Bool {
+	public function equals(o:Chunk):Bool {
 		if (this == o) {
 			return true;
 		}
@@ -428,7 +428,7 @@ class WordChunk implements InlineChunk<WordChunk> {
 	}
 }
 
-class NewlineChunk implements InlineChunk<NewlineChunk> {
+class NewlineChunk extends InlineChunk {
 	private var myOffset:Int;
 
 	public function new(offset:Int) {
@@ -443,7 +443,7 @@ class NewlineChunk implements InlineChunk<NewlineChunk> {
 		return myOffset + 1;
 	}
 
-	public function equals(o:InlineChunk):Bool {
+	public function equals(o:Chunk):Bool {
 		if (this == o) {
 			return true;
 		}
@@ -464,6 +464,10 @@ class NewlineChunk implements InlineChunk<NewlineChunk> {
 		}
 
 		return hash;
+	}
+
+	public function getContent():String {
+    return "\n";
 	}
 }
 
@@ -718,10 +722,10 @@ class MergeTrimSpacesCorrector {
 	}
 }
 
-interface InlineChunk<T = Dynamic> extends Equals<T> extends Hashable {
-	public function getOffset1():Int;
+abstract class InlineChunk extends Chunk {
+	abstract public function getOffset1():Int;
 
-	public function getOffset2():Int;
+	abstract public function getOffset2():Int;
 }
 
 //

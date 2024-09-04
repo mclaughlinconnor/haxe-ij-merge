@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package diff.comparison;
 
+import util.Hashable;
+import util.Equals;
 import diff.comparison.ComparisonMergeUtil.SideEquality;
 import diff.comparison.iterables.DiffIterableUtil.ExpandChangeBuilder;
 import ds.Pair;
@@ -200,7 +202,7 @@ class ByLineRt {
 	}
 }
 
-class Line {
+class Line extends Chunk implements Equals<Line> implements Hashable {
 	private var myText:String;
 	private var myPolicy:ComparisonPolicy;
 	private var myHash:Int = 0;
@@ -224,7 +226,7 @@ class Line {
 		return myNonSpaceChars;
 	}
 
-	public function equals(l:Line):Bool {
+	public function equals(l:Chunk):Bool {
 		if (this == l) {
 			return true;
 		}

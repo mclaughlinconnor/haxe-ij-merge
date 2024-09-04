@@ -49,8 +49,8 @@ class DiffIterableUtil {
 	/*
 	 * Compare two arrays, basing on equals() and hashCode() of it's elements
 	 */
-	@:generic
-	public static function diffX<T:(EqualsType<Dynamic> & HashableType)>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
+  @:generic
+	public static function diffX<T:Chunk>(data1:Array<T>, data2:Array<T>):FairDiffIterable {
 		var fairIter:FairDiffIterable;
 		try {
 			// TODO: use CancellationChecker inside
