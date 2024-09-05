@@ -49,11 +49,11 @@ class MyersLCS {
 			myChanges2 = changes2;
 		}
 
-		for (i in myStart1...myStart1 + myCount1 + 1) {
+		for (i in myStart1...myStart1 + myCount1) {
 			myChanges1.setAt(i, true);
 		}
 
-		for (i in myStart2...myStart2 + myCount2 + 1) {
+		for (i in myStart2...myStart2 + myCount2) {
 			myChanges2.setAt(i, true);
 		}
 
