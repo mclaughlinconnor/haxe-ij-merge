@@ -6,7 +6,7 @@ class GitDiff {
 	private static final LEFT_MARKER = "<<<<<<< ours\n";
 	private static final PRE_BASE_MARKER = "||||||| base\n";
 	private static final POST_BASE_MARKER = "=======\n";
-	private static final RIGHT_MARKER = ">>>>>>> theirs";
+	private static final RIGHT_MARKER = ">>>>>>> theirs\n";
 
 	private final myChanges:Array<TextMergeChange>;
 	private final myLines:Array<Array<String>>;
