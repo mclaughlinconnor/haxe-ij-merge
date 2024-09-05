@@ -27,6 +27,21 @@ class ComparisonUtil {
 		}
 	}
 
+	static public function hashCode(text:String, policy:ComparisonPolicy) {
+		switch (policy) {
+			case DEFAULT:
+				return stringHashCode(text, 0, text.length);
+			case TRIM_WHITESPACES:
+				var offset1 = trimStart(text, 0, text.length);
+				var offset2 = trimEnd(text, offset1, text.length);
+				return stringHashCode(text, offset1, offset2);
+			case IGNORE_WHITESPACES:
+				return stringHashCodeIgnoreWhitespaces(text);
+			default:
+				throw new IllegalArgumentException(policy.getName());
+		}
+	}
+
 	static public function isEqualTexts(text1:String, text2:String, policy:ComparisonPolicy):Bool {
 		switch (policy) {
 			case DEFAULT:
@@ -141,4 +156,23 @@ function equalsIgnoreWhitespaces(s1:Null<String>, s2:Null<String>):Bool {
 	}
 
 	return true;
+}
+
+function stringHashCode(chars:String, from:Int, to:Int):Int {
+	var h = 0;
+	for (off in from...to) {
+		h = 31 * h + chars.charCodeAt(off);
+	}
+	return h;
+}
+
+function stringHashCodeIgnoreWhitespaces(chars:String):Int {
+	var h = 0;
+	for (off in 0...chars.length) {
+		var c = chars.charCodeAt(off);
+		if (!TrimUtil.isWhiteSpaceCodePoint(c)) {
+			h = 31 * h + c;
+		}
+	}
+	return h;
 }

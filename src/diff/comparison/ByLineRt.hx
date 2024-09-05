@@ -211,6 +211,7 @@ class Line extends Chunk implements Equals<Line> implements Hashable {
 	public function new(text:String, policy:ComparisonPolicy) {
 		myText = text;
 		myPolicy = policy;
+		myHash = ComparisonUtil.hashCode(text, policy);
 		myNonSpaceChars = countNonSpaceChars(text);
 	}
 
@@ -240,22 +241,6 @@ class Line extends Chunk implements Equals<Line> implements Hashable {
 	}
 
 	public function hashCode():Int {
-		if (myHash == 0) {
-			var prime = 31;
-			myHash = 1;
-
-			var textHash = myHash;
-			if (myText != null) {
-				for (i in 0...myText.length) {
-					textHash = prime * textHash + myText.charCodeAt(i);
-				}
-			}
-
-			myHash = prime * myHash + (myText != null ? textHash : 0);
-			myHash = prime * myHash + myPolicy.getIndex();
-			myHash = prime * myHash + myNonSpaceChars;
-		}
-
 		return myHash;
 	}
 
