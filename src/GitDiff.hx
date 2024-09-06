@@ -67,7 +67,7 @@ class GitDiff {
 		var start = change.getStartLineB(sideEnum);
 		var end = change.getEndLineB(side);
 
-		currentLine = pushLinesUntil(hunk, myLines[side.getIndex()], start, end);
+		pushLinesUntil(hunk, myLines[side.getIndex()], start, end);
 
 		hunk.add(PRE_BASE_MARKER);
 
@@ -85,7 +85,7 @@ class GitDiff {
 		start = change.getStartLineB(sideEnum);
 		end = change.getEndLineB(side);
 
-		currentLine = pushLinesUntil(hunk, myLines[side.getIndex()], start, end);
+		pushLinesUntil(hunk, myLines[side.getIndex()], start, end);
 
 		hunk.add(RIGHT_MARKER);
 
