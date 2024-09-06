@@ -6,7 +6,7 @@ class GitDiff {
 	private static final LEFT_MARKER = "<<<<<<< ours\n";
 	private static final PRE_BASE_MARKER = "||||||| base\n";
 	private static final POST_BASE_MARKER = "=======\n";
-	private static final RIGHT_MARKER = ">>>>>>> theirs\n";
+	private static final RIGHT_MARKER = ">>>>>>> theirs";
 
 	private final myChanges:Array<TextMergeChange>;
 	private final myLines:Array<Array<String>>;
@@ -23,17 +23,33 @@ class GitDiff {
 		var baseSide = ThreeSide.fromEnum(ThreeSideEnum.BASE);
 		var baseLines = myLines[baseSide.getIndex()];
 
+		var isFirst = true;
+
 		for (change in myChanges) {
 			var changeStartLine = change.getStartLineA();
+			var changeEndLine = change.getEndLineA();
 
 			if (currentLine < changeStartLine) {
 				currentLine = pushLinesUntil(formattedString, baseLines, currentLine, changeStartLine);
 			}
 
 			if (change.isResolvedA()) {
-				currentLine = pushLinesUntil(formattedString, baseLines, changeStartLine, change.getEndLineA());
+				currentLine = pushLinesUntil(formattedString, baseLines, changeStartLine, changeEndLine, changeEndLine < baseLines.length);
 			} else {
+				// There needs to be a newline at the end of >>>>>>>, but hard coding that means there could be an
+				// extra newline at the end of the file, so I need to add it before the hunk, but not before every
+				// hunk because that would put an extra newline at the start
+				if (!isFirst) {
+					formattedString.add("\n");
+				} else {
+					isFirst = false;
+				}
+
 				formattedString.add(createConflictHunk(change));
+
+				if (changeEndLine < baseLines.length) {
+					formattedString.add("\n");
+				}
 			}
 		}
 
