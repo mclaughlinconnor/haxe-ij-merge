@@ -9,7 +9,7 @@ class MergeDriver {
 
 		See https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver
 	**/
-	static public function mergeStrings(base:String, current:String, other:String, opts:Int):String {
+	static public function mergeStrings(base:String, current:String, other:String, opts:Int):{diff:String, noConflicts:Bool} {
 		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = (opts & (1 << 0)) != 0;
 		DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE = (opts & (1 << 1)) != 0;
 		DiffConfig.USE_PATIENCE_ALG = (opts & (1 << 2)) != 0;
@@ -23,7 +23,7 @@ class MergeDriver {
 		}
 
 		var git = new GitDiff([current, viewer.myModel.getDocument(), other], viewer.myAllMergeChanges);
-		return git.formatDiff();
+		return {diff: git.formatDiff(), noConflicts: viewer.getChanges().length == 0};
 	}
 
 	/** 

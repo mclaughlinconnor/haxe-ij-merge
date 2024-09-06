@@ -29,8 +29,8 @@ class Main {
 				}
 			case "cli":
 				var result = MergeDriver.mergeStrings(args[1], args[2], args[3], Std.parseInt(args[4]));
-				Sys.print(result);
-				return 0;
+				Sys.print(result.diff);
+				return result.noConflicts ? 0 : 1;
 			default:
 				trace("Invalid command");
 				return -1;
