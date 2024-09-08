@@ -27,10 +27,18 @@ class Main {
 					// https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver
 					return 129;
 				}
-			case "cli":
+			case "mergestrings":
 				var result = MergeDriver.mergeStrings(args[1], args[2], args[3], Std.parseInt(args[4]));
 				Sys.print(result.diff);
 				return result.noConflicts ? 0 : 1;
+			case "mergeatcursor":
+				var result = MergeDriver.mergeStringsAtBaseLine(args[1], args[2], args[3], Std.parseInt(args[4]), Std.parseInt(args[5]));
+				Sys.print(result.buffer);
+				return result.resolved ? 0 : 1;
+			case "getSide":
+				var result = MergeDriver.getSide(args[1], args[2], Std.parseInt(args[5]));
+				Sys.print(result);
+				return 0;
 			default:
 				trace("Invalid command");
 				return -1;

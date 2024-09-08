@@ -1,3 +1,5 @@
+import diff.util.ThreeSide;
+import diff.util.ThreeSide.ThreeSideEnum;
 import diff.merge.MergeThreesideViewer;
 import config.DiffConfig;
 
@@ -26,6 +28,32 @@ class MergeDriver {
 		return {diff: git.formatDiff(), noConflicts: viewer.getChanges().length == 0};
 	}
 
+	static public function mergeStringsAtBaseLine(base:String, current:String, other:String, line:Int, opts:Int):{buffer:String, resolved:Bool} {
+		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = (opts & (1 << 0)) != 0;
+		DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE = (opts & (1 << 1)) != 0;
+		DiffConfig.USE_PATIENCE_ALG = (opts & (1 << 2)) != 0;
+		var conflicts = (opts & (1 << 3)) != 0;
+
+		var viewer = new MergeThreesideViewer([current, base, other], base);
+		viewer.rediff(false);
+
+		if (conflicts) {
+			viewer.applyResolvableConflictedChanges();
+		}
+
+		final baseSide = ThreeSide.fromEnum(ThreeSideEnum.BASE);
+
+		for (change in viewer.myAllMergeChanges) {
+			if (change.getStartLineA() < line && change.getEndLineA() >= line) {
+				if (viewer.canResolveChangeAutomatically(change, baseSide)) {
+					viewer.resolveChangesAutomatically([change], ThreeSide.fromEnum(ThreeSideEnum.BASE));
+					return {buffer: viewer.myModel.getDocument(), resolved: true};
+				}
+			}
+		}
+
+		return {buffer: viewer.myModel.getDocument(), resolved: false};
+	}
 	/** 
 		Merges base, current, other into result other
 
