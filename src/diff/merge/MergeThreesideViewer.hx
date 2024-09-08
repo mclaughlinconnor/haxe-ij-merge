@@ -198,7 +198,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		}
 	}
 
-	public function replaceChange(change:TextMergeChange, side:Side, resolveChange:Bool):LineRange {
+	private function replaceChange(change:TextMergeChange, side:Side, resolveChange:Bool):LineRange {
 		if (change.isResolvedB(side))
 			return null;
 		if (!change.isChangeA(side)) {
@@ -334,7 +334,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	}
 
 	public function resolveChangesAutomatically(changes:Array<TextMergeChange>, threeSide:ThreeSide):Void {
-		processChangesAndTransferData(changes, threeSide, function(change) {
+		processChangesAndTransferData(changes, function(change) {
 			return resolveChangeAutomatically(change, threeSide);
 		});
 	}
@@ -344,15 +344,14 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 	}
 
 	public function replaceChanges(changes:Array<TextMergeChange>, side:Side, resolveChanges:Bool):Void {
-		processChangesAndTransferData(changes, side.selectA(ThreeSide.fromEnum(ThreeSideEnum.LEFT), ThreeSide.fromEnum(ThreeSideEnum.RIGHT)),
-			(change) -> replaceChange(change, side, resolveChanges));
+		processChangesAndTransferData(changes, (change) -> replaceChange(change, side, resolveChanges));
 	}
 
 	public function replaceSingleChange(change:TextMergeChange, side:Side, resolveChange:Bool):Void {
 		replaceChanges([change], side, resolveChange);
 	}
 
-	private function processChangesAndTransferData(changes:Array<TextMergeChange>, side:ThreeSide, processor:TextMergeChange->LineRange):Void {
+	private function processChangesAndTransferData(changes:Array<TextMergeChange>, processor:TextMergeChange->LineRange):Void {
 		var newRanges:Array<LineRange> = [];
 		var filteredChanges:Array<TextMergeChange> = [];
 
@@ -368,7 +367,7 @@ class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 		}
 	}
 
-	public function resolveChangeAutomatically(change:TextMergeChange, side:ThreeSide):LineRange {
+	private function resolveChangeAutomatically(change:TextMergeChange, side:ThreeSide):LineRange {
 		if (!canResolveChangeAutomatically(change, side))
 			return null;
 
