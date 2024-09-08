@@ -1,3 +1,4 @@
+import diff.util.Side;
 import diff.util.ThreeSide;
 import diff.util.ThreeSide.ThreeSideEnum;
 import diff.merge.MergeThreesideViewer;
@@ -54,6 +55,40 @@ class MergeDriver {
 
 		return {buffer: viewer.myModel.getDocument(), resolved: false};
 	}
+
+	#if sys
+	static public function getSide(path:String, sideStr:String, opts:Int):String {
+		DiffConfig.AUTO_APPLY_NON_CONFLICTED_CHANGES = true;
+		DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE = (opts & (1 << 1)) != 0;
+		DiffConfig.USE_PATIENCE_ALG = (opts & (1 << 2)) != 0;
+
+		// :1: is the state of this file in the LCA (the merge-base)
+		// :2: is the ours version
+		// :3: is the theirs version
+
+		var current = new sys.io.Process("git", ["cat-file", "--textconv", ':2:$path']).stdout.readAll().toString();
+		var base = new sys.io.Process("git", ["cat-file", "--textconv", ':1:$path']).stdout.readAll().toString();
+		var other = new sys.io.Process("git", ["cat-file", "--textconv", ':3:$path']).stdout.readAll().toString();
+
+		var viewer = new MergeThreesideViewer([current, base, other], base);
+		viewer.rediff(false);
+
+		if (sideStr == "base") {
+			return viewer.myModel.getDocument();
+		}
+
+		final side = Side.fromEnum(Side.fromLeft(sideStr == "left"));
+
+		for (change in viewer.myAllMergeChanges) {
+			if (change.isConflict()) {
+				viewer.replaceSingleChange(change, side, true);
+			}
+		}
+
+		return viewer.myModel.getDocument();
+	}
+	#end
+
 	/** 
 		Merges base, current, other into result other
 
