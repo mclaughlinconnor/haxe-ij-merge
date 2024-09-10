@@ -1,3 +1,4 @@
+import util.TrimTrailingNewline.trimTrailingNewline;
 import diff.util.Side;
 import diff.util.ThreeSide;
 import diff.util.ThreeSide.ThreeSideEnum;
@@ -74,7 +75,7 @@ class MergeDriver {
 		viewer.rediff(false);
 
 		if (sideStr == "base") {
-			return viewer.myModel.getDocument();
+			return trimTrailingNewline(viewer.myModel.getDocument());
 		}
 
 		final side = Side.fromEnum(Side.fromLeft(sideStr == "left"));
@@ -85,7 +86,7 @@ class MergeDriver {
 			}
 		}
 
-		return viewer.myModel.getDocument();
+		return trimTrailingNewline(viewer.myModel.getDocument());
 	}
 	#end
 
